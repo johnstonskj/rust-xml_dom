@@ -6,15 +6,16 @@ A reasonably faithful implementation of the W3C [Document Object Model Core, Lev
 
 ```rust
 use xml_dom::*;
+use xml_dom::convert::*;
 
 let mut document_node =
     Implementation::create_document("uri:urn:simons:thing:1", "root", None).unwrap();
 
-let document = &document_node as &dyn Document;
+let document = as_document(&document_node).unwrap();
 let root = document.create_element("root").unwrap();
 
 let mut root_node = document_node.append_child(root).unwrap();
-let root = &mut root_node as &mut dyn Element;
+let root = as_element_mut(&mut root_node).unwrap();
 root.set_attribute("version", "1.0");
 root.set_attribute("something", "else");
 
@@ -122,8 +123,10 @@ unused_results,
 extern crate log;
 
 // ------------------------------------------------------------------------------------------------
-// Modules
+// Public Modules
 // ------------------------------------------------------------------------------------------------
+
+pub mod convert;
 
 mod error;
 pub use error::*;
@@ -131,12 +134,16 @@ pub use error::*;
 mod name;
 pub use name::*;
 
-mod rc_cell;
-
 mod traits;
 pub use traits::*;
 
 mod trait_impls;
 pub use trait_impls::*;
 
-pub(crate) mod syntax;
+// ------------------------------------------------------------------------------------------------
+// Private Modules
+// ------------------------------------------------------------------------------------------------
+
+mod rc_cell;
+
+mod syntax;
