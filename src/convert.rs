@@ -84,6 +84,17 @@ pub fn as_element_mut(ref_node: &mut RefNode) -> Result<&mut dyn Element>  {
 }
 
 ///
+/// Determines if the specified node is a type of `CharacterData`.
+///
+#[inline]
+pub fn is_character_data(ref_node: &RefNode) -> bool {
+    match ref_node.borrow().i_node_type {
+        NodeType::CData | NodeType::Comment | NodeType::Text => true,
+        _ => false,
+    }
+}
+
+///
 /// Determines if the specified node is of type `NodeType::Text`.
 ///
 #[inline]
