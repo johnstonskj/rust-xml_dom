@@ -45,9 +45,13 @@ println!("document 2: {}", xml);
 
 ## Changes
 
+**Version 0.1.1**
+
+* Focus on examples, fleshing out more of the common methods.
+
 **Version 0.1.0**
 
-* Focus on modeling as traits, not all functions actually implemented.
+* Focus on modeling as traits, not all methods actually implemented.
 * Note, this is NOT YET ready for production usage.
 
 ## TODO
