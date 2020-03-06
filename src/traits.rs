@@ -1124,6 +1124,10 @@ pub trait EntityReference: Node {}
 ///
 /// This corresponds to the DOM `DOMImplementation` interface.
 ///
+/// The instance used to create a document can be retrieved using the `implementation` method on
+/// [`Document`](trait.Document.html). To fetch an implementation to create a document iun the
+/// first place use the function [`get_implementation`](fn.get_implementation.html).
+///
 /// # Specification
 ///
 /// The `DOMImplementation` interface provides a number of methods for performing operations that
