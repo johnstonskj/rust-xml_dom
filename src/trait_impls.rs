@@ -1,5 +1,5 @@
-use self::super::error::*;
-use self::super::name::*;
+use self::super::error::{Error, Result};
+use self::super::name::Name;
 use self::super::rc_cell::*;
 use self::super::syntax::*;
 use self::super::traits::*;
@@ -645,8 +645,12 @@ impl NodeImpl {
         };
         let mut ref_node: RefNode = RcRefCell::new(new_doc_type);
         let as_element = &mut ref_node as &mut dyn Element;
-        as_element.set_attribute(XML_DOCTYPE_PUBLIC, public_id).expect("invalid public ID");
-        as_element.set_attribute(XML_DOCTYPE_SYSTEM, system_id).expect("invalid system ID");
+        as_element
+            .set_attribute(XML_DOCTYPE_PUBLIC, public_id)
+            .expect("invalid public ID");
+        as_element
+            .set_attribute(XML_DOCTYPE_SYSTEM, system_id)
+            .expect("invalid system ID");
         ref_node.unwrap()
     }
 }
@@ -671,7 +675,8 @@ impl DOMImplementation for Implementation {
         let node_impl = NodeImpl::new_document(name, doc_type);
         Ok(RefNode::new(node_impl))
     }
-    fn create_document_type(&self,
+    fn create_document_type(
+        &self,
         qualified_name: &str,
         public_id: &str,
         system_id: &str,
@@ -681,12 +686,12 @@ impl DOMImplementation for Implementation {
         Ok(RefNode::new(node_impl))
     }
     fn has_feature(&self, feature: &str, version: &str) -> bool {
-        (feature == XML_FEATURE_CORE || feature == XML_FEATURE_XML) &&
-            (version == XML_FEATURE_V1 || version == XML_FEATURE_V2)
+        (feature == XML_FEATURE_CORE || feature == XML_FEATURE_XML)
+            && (version == XML_FEATURE_V1 || version == XML_FEATURE_V2)
     }
 }
 
-const THIS_IMPLEMENTATION: &'static dyn DOMImplementation = &Implementation{};
+const THIS_IMPLEMENTATION: &'static dyn DOMImplementation = &Implementation {};
 
 ///
 /// Return a reference to an instance of this `DOMImplementation` implementation.
@@ -694,6 +699,14 @@ const THIS_IMPLEMENTATION: &'static dyn DOMImplementation = &Implementation{};
 /// This function gets around the DOM bootstrap issue, the `implementation` method on the
 /// [`Document`](trait.Document.html) trait requires an instance of `Document`; however, the
 /// `create_document` method on `DOMImplementation` requires an instance from `implementation`.
+///
+/// Note that Java, for example, solves the bootstrap problem with a factory and builder pattern:
+///
+/// ```java
+/// DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+/// DocumentBuilder builder = factory.newDocumentBuilder();
+/// Document doc = builder.newDocument();
+/// ```
 ///
 pub fn get_implementation() -> &'static dyn DOMImplementation {
     THIS_IMPLEMENTATION

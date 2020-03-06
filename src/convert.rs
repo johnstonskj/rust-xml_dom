@@ -8,7 +8,7 @@ Note that all of the `as_{name}` functions work as follows.
 * If the `node_type` is not implemented it returns `Error::NotSupported`.
 
 */
-use self::super::error::*;
+use self::super::error::{Error, Result};
 use self::super::traits::*;
 
 // ------------------------------------------------------------------------------------------------
