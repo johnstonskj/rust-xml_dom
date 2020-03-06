@@ -119,12 +119,22 @@ impl TryFrom<&[u8]> for Name {
 // ------------------------------------------------------------------------------------------------
 
 impl Name {
+    ///
+    /// Construct a new `Name` from the specified namespace URI and qualified name.
+    ///
+    /// Note, errors include a malformed URI, or malformed prefix or local name.
+    ///
     pub fn new_ns(namespace_uri: &str, qualified_name: &str) -> Result<Self> {
         let mut parsed = Name::from_str(qualified_name)?;
         parsed.namespace_uri = Some(Self::check_namespace_uri(namespace_uri, &parsed.prefix)?);
         Ok(parsed)
     }
 
+    ///
+    /// Construct a new `Name` from any combination of local name, prefix, and namespace URI.
+    ///
+    /// Note, errors include a malformed URI, or malformed prefix or local name.
+    ///
     fn new(local_name: String, prefix: Option<String>, namespace_uri: Option<String>) -> Self {
         Self {
             namespace_uri,
@@ -165,41 +175,60 @@ impl Name {
         }
     }
 
+    ///
+    /// Return the reserved name for CDATA section nodes
+    ///
     pub fn for_cdata() -> Self {
         Self::new(XML_NAME_CDATA.to_string(), None, None)
     }
 
+    ///
+    /// Return the reserved name for Comment nodes
+    ///
     pub fn for_comment() -> Self {
         Self::new(XML_NAME_COMMENT.to_string(), None, None)
     }
 
+    ///
+    /// Return the reserved name for Document nodes
+    ///
     pub fn for_document() -> Self {
         Self::new(XML_NAME_DOCUMENT.to_string(), None, None)
     }
 
+    ///
+    /// Return the reserved name for Text nodes
+    ///
     pub fn for_text() -> Self {
         Self::new(XML_NAME_TEXT.to_string(), None, None)
     }
 
+    ///
+    /// Return this name's namespace URI.
+    ///
     pub fn namespace_uri(&self) -> &Option<String> {
         &self.namespace_uri
     }
 
+    ///
+    /// Return this name's local name.
+    ///
     pub fn local_name(&self) -> &String {
         &self.local_name
     }
 
+    ///
+    /// Return this name's prefix.
+    ///
     pub fn prefix(&self) -> &Option<String> {
         &self.prefix
     }
 
-    pub fn set_prefix(&mut self, new_prefix: &str) -> Result<()> {
-        self.prefix = Some(new_prefix.to_string());
-        Ok(())
-    }
-
-    pub fn unset_prefix(&mut self) -> Result<()> {
-        self.prefix = None;
+    ///
+    /// Set this name's prefix.
+    ///
+    pub fn set_prefix(&mut self, new_prefix: Option<&str>) -> Result<()> {
+        self.prefix = new_prefix.map(String::from);
         Ok(())
     }
 }

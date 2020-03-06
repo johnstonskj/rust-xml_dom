@@ -17,8 +17,10 @@ pub trait Attribute: Node {
     /// # Specification
     ///
     /// Character and general entity references are replaced with their values. See also the method
-    /// [getAttribute](trait.Element.html#tymethod.get_attribute) on the [Element](trait.Element.html) interface.
-    /// On setting, this creates a Text node with the unparsed contents of the string. I.e. any
+    /// [getAttribute](trait.Element.html#tymethod.get_attribute) on the [Element](trait.Element.html)
+    /// interface.
+    ///
+    /// On setting, this creates a `Text` node with the unparsed contents of the string. I.e. any
     /// characters that an XML processor would recognize as markup are instead treated as literal
     /// text. See also the method setAttribute on the Element interface.
     ///
@@ -313,17 +315,298 @@ pub trait Document: Node {
     /// A DOM application may use objects from multiple implementations.
     ///
     fn implementation(&self) -> &Implementation;
+    ///
+    /// Creates an [Attribute](trait.Attribute.html) of the given name. Note that the `Attr`
+    /// instance can then be set on an [Element](trait.Element.html) using the `setAttributeNode`
+    /// method.
+    ///
+    /// # Specification
+    ///
+    /// To create an attribute with a qualified name and namespace URI, use the `createAttributeNS`
+    /// method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `name` of type `DOMString`: The name of the attribute.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Attr`: A new `Attr` object with the `nodeName` attribute set to name, and `localName`,
+    ///   `prefix`, and `namespaceURI` set to `null`. The value of the attribute is the empty string.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified name contains an illegal character.
+    ///
     fn create_attribute(&self, name: &str) -> Result<RefNode>;
+    ///
+    /// Implementation defined extension: this is the same as `create_attribute` except that it
+    /// also sets the attribute value.
+    ///
     fn create_attribute_with(&self, name: &str, value: &str) -> Result<RefNode>;
+    ///
+    /// Creates an attribute of the given qualified name and namespace URI. 
+    /// 
+    /// # Specification
+    /// 
+    /// HTML-only DOM implementations do not need to implement this method.
+    /// 
+    /// **Parameters**
+    /// 
+    /// * `namespaceURI` of type `DOMString`: The namespace URI of the attribute to create.
+    /// * `qualifiedName` of type `DOMString`: The qualified name of the attribute to instantiate.
+    /// 
+    /// **Return Value**
+    /// 
+    /// * [Attr](trait.Attribute.html): A new `Attr` object with the following attributes:
+    /// 
+    /// | Attribute           | Value               |
+    /// |---------------------|---------------------|
+    /// | `Node.nodeName`     | `qualifiedName`     |
+    /// | `Node.namespaceURI` | `namespaceURI`      |
+    /// | `Node.prefix`       | prefix, extracted from `qualifiedName`, or `null` if there is no prefix |
+    /// | `Node.localName`    | local name, extracted from `qualifiedName` |
+    /// | `Attr.name`         | `qualifiedName`     |
+    /// | `Node.nodeValue`    | the empty string    |
+    /// 
+    /// **Exceptions**
+    /// 
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified qualified name contains an illegal 
+    ///   character.
+    /// * `NAMESPACE_ERR`: Raised if the `qualifiedName` is malformed, if the `qualifiedName` has
+    ///   a `prefix` and the `namespaceURI` is `null`, if the `qualifiedName` has a `prefix` that 
+    ///   is "xml" and the `namespaceURI` is different from "http://www.w3.org/XML/1998/namespace", 
+    ///   or if the `qualifiedName` is "xmlns" and the namespaceURI is different from 
+    ///   "http://www.w3.org/2000/xmlns/".
+    ///
     fn create_attribute_ns(&self, namespace_uri: &str, qualified_name: &str) -> Result<RefNode>;
+    ///
+    /// Creates a [CDataSection](trait.CDataSection.html) node whose value is the specified string.
+    ///
+    /// # Specification
+    ///
+    /// **Parameters**
+    ///
+    /// * `data` of type `DOMString`: The data for the `CDATASection` contents.
+    ///
+    /// **Return Value**
+    ///
+    /// * `CDATASection`: The new `CDATASection` object.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `NOT_SUPPORTED_ERR`: Raised if this document is an HTML document.
+    ///
     fn create_cdata_section(&self, data: &str) -> Result<RefNode>;
+    ///
+    /// Creates an empty DocumentFragment object.
+     ///
+    /// # Specification
+    ///
+    /// **Return Value**
+    ///
+    /// `DocumentFragment`: A new `DocumentFragment`.
+    ///
+    fn create_document_fragment(&self) -> Result<RefNode>;
+    ///
+    /// Creates an `EntityReference` object.
+    ///
+    /// # Specification
+    ///
+    /// In addition, if the referenced entity is known, the child list of the `EntityReference`
+    /// node is made the same as that of the corresponding `Entity` node.
+    ///
+    /// **Note:** If any descendant of the `Entity` node has an unbound namespace prefix, the
+    /// corresponding descendant of the created `EntityReference` node is also unbound; (its
+    /// `namespaceURI` is `null`). The DOM Level 2 does not support any mechanism to resolve
+    /// namespace prefixes.
+    ///
+    /// **Parameters**
+    ///
+    /// * `name` of type `DOMString`: The name of the entity to reference.
+    ///
+    /// **Return Value**
+    ///
+    /// * `EntityReference`: The new `EntityReference` object.
+    ///
+    /// **Exceptions**
+    ///
+    ///
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified name contains an illegal character.
+    /// * `NOT_SUPPORTED_ERR`: Raised if this document is an HTML document.
+    ///
+    fn create_entity_reference(&self, name: &str) -> Result<RefNode>;
+    ///
+    /// Creates a [Comment](trait.Comment.html) node given the specified string.
+    ///
+    /// # Specification
+    ///
+    /// **Parameters**
+    ///
+    /// * `data` of type `DOMString`: The data for the node.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Comment`: The new `Comment` object.
+    ///
     fn create_comment(&self, data: &str) -> RefNode;
+    ///
+    /// Creates an element of the type specified.
+    ///
+    /// # Specification
+    ///
+    /// Note that the instance returned implements the [Element](trait.Element.html) interface, so
+    /// attributes can be specified directly on the returned object.
+    ///
+    /// In addition, if there are known attributes with default values, [Attr](trait.Attribute.html)
+    /// nodes representing them are automatically created and attached to the element.
+    ///
+    /// To create an element with a qualified name and namespace URI, use the `createElementNS` method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `tagName` of type `DOMString:  The name of the element type to instantiate. For XML, this
+    ///   is case-sensitive. For HTML, the `tagName` parameter may be provided in any case, but
+    ///   it must be mapped to the canonical uppercase form by the DOM implementation.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Element`: A new `Element` object with the `nodeName` attribute set to `tagName`, and
+    ///   `localName`, `prefix`, and `namespaceURI` set to `null`.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified name contains an illegal character.
+    ///
     fn create_element(&self, tag_name: &str) -> Result<RefNode>;
+    ///
+    /// Creates an element of the given qualified name and namespace URI.
+    ///
+    /// # Specification
+    ///
+    /// HTML-only DOM implementations do not need to implement this method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `namespaceURI` of type `DOMString`: The namespace URI of the attribute to create.
+    /// * `qualifiedName` of type `DOMString`: The qualified name of the attribute to instantiate.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Element`: A new Element object with the following attributes:
+    ///
+    /// | Attribute           | Value               |
+    /// |---------------------|---------------------|
+    /// | `Node.nodeName`     | `qualifiedName`     |
+    /// | `Node.namespaceURI` | `namespaceURI`      |
+    /// | `Node.prefix`       | prefix, extracted from `qualifiedName`, or `null` if there is no prefix |
+    /// | `Node.localName`    | local name, extracted from `qualifiedName` |
+    /// | `Attr.name`         | `qualifiedName`     |
+    /// | `Node.nodeValue`    | the empty string    |
+    ///
+    /// **Exceptions**
+    ///
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified qualified name contains an illegal
+    ///   character.
+    /// * `NAMESPACE_ERR`: Raised if the `qualifiedName` is malformed, if the `qualifiedName` has
+    ///   a `prefix` and the `namespaceURI` is `null`, if the `qualifiedName` has a `prefix` that
+    ///   is "xml" and the `namespaceURI` is different from "http://www.w3.org/XML/1998/namespace",
+    ///   or if the `qualifiedName` is "xmlns" and the namespaceURI is different from
+    ///   "http://www.w3.org/2000/xmlns/".
+    ///
     fn create_element_ns(&self, namespace_uri: &str, qualified_name: &str) -> Result<RefNode>;
+    ///
+    /// Creates a [ProcessingInstruction](trait.ProcessingInstruction.html) node given the
+    /// specified name and data strings.
+    ///
+    /// # Specification
+    ///
+    /// **Parameters**
+    ///
+    /// * `target` of type `DOMString`: The target part of the processing instruction.
+    /// * `data` of type `DOMString`: The `data` for the `node`.
+    ///
+    /// **Return Value**
+    ///
+    /// * `ProcessingInstruction`: The new `ProcessingInstruction` object.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified target contains an illegal character.
+    /// * `NOT_SUPPORTED_ERR`: Raised if this document is an HTML document.
+    ///
     fn create_processing_instruction(&self, target: &str, data: Option<&str>) -> Result<RefNode>;
+    ///
+    /// Creates a [Text](trait.Text.html) node given the specified string.
+    ///
+    /// # Specification
+    ///
+    /// **Parameters**
+    ///
+    /// * `data` of type `DOMString`: The data for the node.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Text`: The new Text object.
+    ///
     fn create_text_node(&self, data: &str) -> RefNode;
+    ///
+    /// Returns the [Element](trait.Element.html) whose ID is given by `elementId`.
+    ///
+    /// Note: this implementation does not support this method.
+    ///
+    ///# Specification
+    ///
+    /// If no such element exists, returns `null`. Behavior is not defined if more than one element
+    /// has this ID.
+    ///
+    /// **Note:** The DOM implementation must have information that says which attributes are of type
+    /// ID. Attributes with the name "ID" are not of type ID unless so defined. Implementations
+    /// that do not know whether attributes are of type ID or not are expected to return `null`.
+    ///
+    /// **Parameters**
+    ///
+    /// * `elementId` of type `DOMString`: The unique id value for an element.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Element`: The matching element.
+    ///
     fn get_element_by_id(&self, id: &str) -> Option<RefNode>;
+    ///
+    /// Returns a `NodeList` of all the [Elements](trait.Element.html) with a given tag name in the
+    /// order in which they are encountered in a preorder traversal of the Document tree.
+    ///
+    ///# Specification
+    ///
+    /// **Parameters**
+    ///
+    /// * `tagname` of type `DOMString`: The name of the tag to match on. The special value "*"
+    ///   matches all tags.
+    ///
+    /// **Return Value**
+    ///
+    /// * `NodeList`: A new `NodeList` object containing all the matched `Element`s.
+    ///
     fn get_elements_by_tag_name(&self, tag_name: &str) -> Vec<RefNode>;
+    ///
+    /// Returns a `NodeList` of all the [Elements](trait.Element.html) with a given local name and
+    /// namespace URI in the order in which they are encountered in a preorder traversal of the
+    /// Document tree.
+    ///
+    ///# Specification
+    ///
+    /// **Parameters**
+    ///
+    /// * `namespaceURI` of type `DOMString`: The namespace URI of the elements to match on. The
+    ///   special value "*" matches all namespaces.
+    /// * `localName` of type `DOMString`: The local name of the elements to match on. The special
+    ///   value "*" matches all local names.
+    ///
+    /// **Return Value**
+    ///
+    /// * `NodeList`: A new `NodeList` object containing all the matched `Element`s.
+    ///
     fn get_elements_by_tag_name_ns(&self, namespace_uri: &str, local_name: &str) -> Vec<RefNode>;
 }
 
@@ -390,26 +673,354 @@ pub trait DocumentType: Node {
 ///
 /// This corresponds to the DOM `Element` interface.
 ///
+/// # Specification
+///
+/// The `Element` interface represents an element in an HTML or XML document. Elements may have
+/// attributes associated with them; since the `Element` interface inherits from [Node](trait.Node.html),
+/// the generic `Node` interface attribute attributes may be used to retrieve the set of all
+/// attributes for an element. There are methods on the `Element` interface to retrieve either an
+/// [Attr](trait.Attribute.html) object by name or an attribute value by name. In XML, where an
+/// attribute value may contain entity references, an `Attr` object should be retrieved to examine
+/// the possibly fairly complex sub-tree representing the attribute value. On the other hand, in
+/// HTML, where all attributes have simple string values, methods to directly access an attribute
+/// value can safely be used as a convenience.
+///
+/// **Note:** In DOM Level 2, the method `normalize` is inherited from the `Node` interface where
+/// it was moved.
+///
 pub trait Element: Node {
+    ///
+    /// The name of the element.
+    ///
+    /// # Specification
+    ///
+    /// For example, in:
+    ///
+    /// ```xml
+    /// <elementExample id="demo">
+    ///         ...
+    /// </elementExample>
+    /// ```
+    ///
+    /// `tagName` has the value "elementExample". Note that this is case-preserving in XML, as
+    /// are all of the operations of the DOM. The HTML DOM returns the `tagName` of an HTML element
+    /// in the canonical uppercase form, regardless of the case in the source HTML document.
+    ///
+    fn tag_name(&self) -> String { Node::name(self).to_string() }
+    ///
+    /// Retrieves an attribute value by name.
+    ///
+    /// # Specification
+    ///
+    /// **Parameters**
+    ///
+    /// * `name` of type `DOMString`: The name of the attribute to retrieve.
+    ///
+    /// **Return Value**
+    ///
+    /// * `DOMString`: The `Attr` value as a string, or the empty string if that attribute does not
+    /// have a specified or default value.
+    ///
     fn get_attribute(&self, name: &str) -> Option<String>;
+    ///
+    /// Adds a new attribute.
+    ///
+    /// # Specification
+    ///
+    /// If an attribute with that name is already present in the element, its value is changed to
+    /// be that of the value parameter. This value is a simple string; it is not parsed as it is
+    /// being set. So any markup (such as syntax to be recognized as an entity reference) is
+    /// treated as literal text, and needs to be appropriately escaped by the implementation when
+    /// it is written out. In order to assign an attribute value that contains entity references,
+    /// the user must create an Attr node plus any Text and EntityReference nodes, build the
+    /// appropriate subtree, and use setAttributeNode to assign it as the value of an attribute.
+    ///
+    /// To set an attribute with a qualified name and namespace URI, use the `setAttributeNS` method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `name` of type `DOMString`: The name of the attribute to create or alter.
+    /// `value` of type `DOMString`: Value to set in string form.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified name contains an illegal character.
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
+    ///
     fn set_attribute(&mut self, name: &str, value: &str) -> Result<()>;
+    ///
+    /// Removes an attribute by name. If the removed attribute is known to have a default value, an attribute immediately appears containing the default value as well as the corresponding namespace URI, local name, and prefix when applicable.
+    ///
+    /// # Specification
+    ///
+    /// To remove an attribute by local name and namespace URI, use the `removeAttributeNS` method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `name` of type `DOMString`: The name of the attribute to remove.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
+    ///
     fn remove_attribute(&mut self, _name: &str) -> Result<()>;
+    ///
+    /// Retrieves an attribute node by name.
+    ///
+    /// # Specification
+    ///
+    /// To retrieve an attribute node by qualified name and namespace URI, use the
+    /// `getAttributeNodeNS` method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `name` of type `DOMString`: The name (`nodeName`) of the attribute to retrieve.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Attr`: The `Attr` node with the specified name (`nodeName`) or null if there is no such
+    /// attribute.
+    ///
     fn get_attribute_node(&self, name: &str) -> Option<RefNode>;
+    ///
+    /// Adds a new attribute node.
+    ///
+    /// # Specification
+    ///
+    /// If an attribute with that name (`nodeName`) is already present in the element, it is
+    /// replaced by the new one.
+    ///
+    /// To add a new attribute node with a qualified name and namespace URI, use the
+    /// `setAttributeNodeNS` method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `newAttr` of type `Attr`: The `Attr` node to add to the attribute list.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Attr`: If the `newAttr` attribute replaces an existing attribute, the replaced `Attr`
+    ///   node is returned, otherwise `null` is returned.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `WRONG_DOCUMENT_ERR`: Raised if `newAttr` was created from a different document than the
+    ///   one that created the element.
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
+    /// * `INUSE_ATTRIBUTE_ERR`: Raised if `newAttr` is already an attribute of another `Element`
+    ///   object. The DOM user must explicitly clone `Attr` nodes to re-use them in other elements.
+    ///
     fn set_attribute_node(&mut self, _new_attribute: RefNode) -> Result<RefNode>;
+    ///
+    /// Removes the specified attribute node.
+    ///
+    /// # Specification
+    ///
+    /// If the removed `Attr` has a default value it is immediately replaced. The replacing
+    /// attribute has the same namespace URI and local name, as well as the original prefix, when
+    /// applicable.
+    ///
+    /// **Parameters**
+    ///
+    /// * `oldAttr` of type `Attr`: The `Attr` node to remove from the attribute list.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Attr`: The `Attr` node that was removed.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
+    /// * `NOT_FOUND_ERR`: Raised if oldAttr is not an attribute of the element.
+    ///
     fn remove_attribute_node(&mut self, _old_attribute: RefNode) -> Result<RefNode>;
+    ///
+    /// Returns a `NodeList` of all descendant `Element`s with a given tag name, in the order in
+    /// which they are encountered in a preorder traversal of this `Element` tree.
+    ///
+    /// # Specification
+    ///
+    /// **Parameters**
+    ///
+    /// `name` of type `DOMString`: The name of the tag to match on. The special value "*" matches all tags.
+    ///
+    /// **Return Value**
+    ///
+    /// * `NodeList`: A list of matching `Element` nodes.
+    ///
     fn get_elements_by_tag_name(&self, _tag_name: &str) -> Vec<RefNode>;
+    ///
+    /// Retrieves an attribute value by local name and namespace URI.
+    ///
+    /// # Specification
+    ///
+    /// HTML-only DOM implementations do not need to implement this method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `namespaceURI` of type `DOMString`: The namespace URI of the attribute to retrieve.
+    /// * `localName` of type `DOMString`: The local name of the attribute to retrieve.
+    ///
+    /// **Return Value**
+    ///
+    /// * `DOMString`: The `Attr` value as a string, or the empty string if that attribute does not
+    ///   have a specified or default value.
+    ///
     fn get_attribute_ns(&self, _namespace_uri: &str, _local_name: &str) -> Option<String>;
+    ///
+    /// Adds a new attribute.
+    ///
+    /// # Specification
+    ///
+    /// If an attribute with the same local name and namespace URI is already present on the
+    /// element, its `prefix` is changed to be the prefix part of the `qualifiedName`, and its
+    /// `value` is changed to be the value parameter. This value is a simple string; it is not
+    /// parsed as it is being set. So any markup (such as syntax to be recognized as an entity
+    /// reference) is treated as literal text, and needs to be appropriately escaped by the
+    /// implementation when it is written out. In order to assign an attribute value that contains
+    /// entity references, the user must create an `Attr` node plus any `Text` and `EntityReference`
+    /// nodes, build the appropriate subtree, and use `setAttributeNodeNS` or `setAttributeNode`
+    /// to assign it as the value of an attribute.
+    ///
+    /// HTML-only DOM implementations do not need to implement this method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `namespaceURI` of type `DOMString`: The namespace URI of the attribute to create or alter.
+    /// * `qualifiedName` of type `DOMString`: The qualified name of the attribute to create or alter.
+    /// * `value` of type `DOMString`: The value to set in string form.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified qualified name contains an illegal character.
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
+    /// * `NAMESPACE_ERR`: Raised if the `qualifiedName` is malformed, if the `qualifiedName` has a
+    ///   prefix and the `namespaceURI` is null, if the `qualifiedName` has a prefix that is "xml"
+    ///   and the `namespaceURI` is different from "http://www.w3.org/XML/1998/namespace", or if
+    ///   the `qualifiedName` is "xmlns" and the `namespaceURI` is different from
+    /// "http://www.w3.org/2000/xmlns/".
+    ///
     fn set_attribute_ns(
         &mut self,
         namespace_uri: &str,
         qualified_name: &str,
         value: &str,
     ) -> Result<()>;
+    ///
+    /// Removes an attribute by local name and namespace URI.
+    ///
+    /// # Specification
+    ///
+    /// If the removed attribute has a default value it is immediately replaced. The replacing
+    /// attribute has the same namespace URI and local name, as well as the original prefix.
+    ///
+    /// HTML-only DOM implementations do not need to implement this method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `namespaceURI` of type `DOMString`: The namespace URI of the attribute to remove.
+    /// * `localName` of type `DOMString`: The local name of the attribute to remove.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
+    ///
     fn remove_attribute_ns(&mut self, _namespace_uri: &str, _local_name: &str) -> Result<()>;
+    ///
+    /// Retrieves an Attr node by local name and namespace URI.
+    ///
+    /// # Specification
+    ///
+    /// HTML-only DOM implementations do not need to implement this method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `namespaceURI` of type `DOMString`: The namespace URI of the attribute to retrieve.
+    /// * `localName` of type `DOMString`: The local name of the attribute to retrieve.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Attr`: The `Attr` node with the specified attribute local name and namespace URI or
+    ///   `null` if there is no such attribute.
+    ///
     fn get_attribute_node_ns(&self, _namespace_uri: &str, _local_name: &str) -> Option<RefNode>;
+    ///
+    /// Adds a new attribute.
+    ///
+    /// # Specification
+    ///
+    /// If an attribute with that local name and that namespace URI is already present in the
+    /// element, it is replaced by the new one.
+    ///
+    /// HTML-only DOM implementations do not need to implement this method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `newAttr` of type `Attr`: The `Attr` node to add to the attribute list.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Attr`: If the `newAttr` attribute replaces an existing attribute with the same local name and namespace URI, the replaced Attr node is returned, otherwise null is returned.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `WRONG_DOCUMENT_ERR`: Raised if newAttr was created from a different document than the one that created the element.
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
+    /// * `INUSE_ATTRIBUTE_ERR`: Raised if newAttr is already an attribute of another Element object. The DOM user must explicitly clone Attr nodes to re-use them in other elements.
+    ///
     fn set_attribute_node_ns(&mut self, _new_attribute: RefNode) -> Result<RefNode>;
+    ///
+    /// Returns a `NodeList` of all the descendant `Element`s with a given local name and namespace
+    /// URI in the order in which they are encountered in a preorder traversal of this Element tree.
+    ///
+    /// # Specification
+    ///
+    /// HTML-only DOM implementations do not need to implement this method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `namespaceURI` of type `DOMString`: The namespace URI of the elements to match on. The special value "*" matches all namespaces.
+    /// * `localName` of type `DOMString`: The local name of the elements to match on. The special value "*" matches all local names.
+    ///
+    /// **Return Value**
+    ///
+    /// * `NodeList`: A new `NodeList` object containing all the matched `Element`s.
+    ///
     fn get_elements_by_tag_name_ns(&self, _namespace_uri: &str, _local_name: &str) -> Vec<RefNode>;
+    ///
+    /// Returns `true` when an attribute with a given name is specified on this element or has a default
+    /// value, `false` otherwise.
+    ///
+    /// # Specification
+    ///
+    /// **Parameters**
+    ///
+    /// * `name` of type `DOMString`: The name of the attribute to look for.
+    ///
+    /// **Return Value**
+    ///
+    /// * `boolean`: `true` if an attribute with the given name is specified on this element or
+    ///   has a default value, `false` otherwise.
+    ///
     fn has_attribute(&self, name: &str) -> bool;
+    ///
+    /// Returns `true` when an attribute with a given local name and namespace URI is specified on
+    /// this element or has a default value, `false` otherwise.
+    ///
+    /// # Specification
+    ///
+    /// HTML-only DOM implementations do not need to implement this method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `namespaceURI` of type `DOMString`: The namespace URI of the attribute to look for.
+    /// `localName` of type `DOMString`: The local name of the attribute to look for.
+    ///
+    /// **Return Value**
+    ///
+    /// * `boolean`: `true` if an attribute with the given local name and namespace URI is
+    ///   specified or has a default value on this element, `false` otherwise.
+    ///
     fn has_attribute_ns(&self, namespace_uri: &str, local_name: &str) -> bool;
 }
 
@@ -450,8 +1061,29 @@ pub trait Element: Node {
 /// Level 2 does not support any mechanism to resolve namespace prefixes.
 ///
 pub trait Entity: Node {
+    ///
+    /// The public identifier associated with the entity, if specified.
+    ///
+    /// # Specification
+    ///
+    /// If the public identifier was not specified, this is `null`.
+    ///
     fn public_id(&self) -> Option<String>;
+    ///
+    /// The system identifier associated with the entity, if specified.
+    ///
+    /// # Specification
+    ///
+    /// If the system identifier was not specified, this is `null`.
+    ///
     fn system_id(&self) -> Option<String>;
+    ///
+    /// For unparsed entities, the name of the notation for the entity.
+    ///
+    ///# Specification
+    ///
+    /// For parsed entities, this is `null`.
+    ///
     fn notation_name(&self) -> Option<String>;
 }
 
@@ -512,7 +1144,7 @@ pub trait EntityReference: Node {}
 /// | `Element`               | tag name                  | `None`                              | `HashMap`    |
 /// | `Entity`                | entity name               | `None`                              | `None`       |
 /// | `EntityReference`       | name of entity referenced | `None`                              | `None`       |
-/// | `Notatio`n              | notation name             | `None`                              | `None`       |
+/// | `Notation`              | notation name             | `None`                              | `None`       |
 /// | `ProcessingInstruction` | `target`                  | entire content excluding the target | `None`       |
 /// | `Text`                  | `"#text"`                 | content of the text node            | `None`       |
 ///
@@ -587,8 +1219,67 @@ pub trait Node {
     /// not used with any `Document` yet, this is `None`.
     ///
     fn owner_document(&self) -> Option<RefNode>;
-    fn insert_before(&mut self, _new_child: RefNode, _ref_child: &RefNode) -> Result<RefNode>;
-    fn replace_child(&mut self, _new_child: RefNode, _old_child: &RefNode) -> Result<RefNode>;
+    ///
+    /// Inserts the node `newChild` before the existing child node `refChild`.
+    ///
+    /// # Specification
+    ///
+    /// If `refChild` is `null`, insert `newChild` at the end of the list of children.
+    ///
+    /// If `newChild` is a `DocumentFragment` object, all of its children are inserted, in the
+    /// same order, before `refChild`. If the `newChild` is already in the tree, it is first removed.
+    ///
+    /// **Parameters**
+    ///
+    /// * `newChild` of type `Node`: The node to insert.
+    /// * `refChild `of type `Node`: The reference node, i.e., the node before which the new node
+    ///   must be inserted.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Node`: The node being inserted.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `HIERARCHY_REQUEST_ERR`: Raised if this node is of a type that does not allow children
+    ///   of the type of the `newChild` node, or if the node to insert is one of this node's
+    ///   ancestors.
+    /// * `WRONG_DOCUMENT_ERR`: Raised if `newChild` was created from a different document than the
+    ///   one that created this node.
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly or if the parent of the
+    ///   node being inserted is readonly.
+    /// * `NOT_FOUND_ERR`: Raised if `refChild` is not a child of this node.
+    ///
+    fn insert_before(&mut self, new_child: RefNode, ref_child: &RefNode) -> Result<RefNode>;
+    ///
+    /// Replaces the child node `oldChild` with `newChild` in the list of children, and returns the
+    /// `oldChild` node.
+    ///
+    /// # Specification
+    ///
+    /// If `newChild` is a `DocumentFragment` object, `oldChild` is replaced by all of the
+    /// `DocumentFragment` children, which are inserted in the same order. If the `newChild` is
+    /// already in the tree, it is first removed.
+    ///
+    /// **Parameters**
+    ///
+    /// * `newChild` of type `Node`: The new node to put in the child list.
+    /// * `oldChild` of type `Node`: The node being replaced in the list.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Node`: The node replaced.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `HIERARCHY_REQUEST_ERR`: Raised if this node is of a type that does not allow children of
+    ///   the type of the newChild node, or if the node to put in is one of this node's ancestors.
+    /// * `WRONG_DOCUMENT_ERR`: Raised if `newChild` was created from a different document than the
+    ///   one that created this node.
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node or the parent of the new node is readonly.
+    /// * `NOT_FOUND_ERR`: Raised if oldChild is not a child of this node.
+    ///
+    fn replace_child(&mut self, new_child: RefNode, old_child: &RefNode) -> Result<RefNode>;
     ///
     /// Adds the node `newChild` to the end of the list of children of this node.
     ///
@@ -614,10 +1305,90 @@ pub trait Node {
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     ///
     fn append_child(&mut self, new_child: RefNode) -> Result<RefNode>;
+    ///
+    /// Returns whether this node has any children.
+    ///
+    /// # Specification
+    ///
+    /// **Return Value**
+    ///
+    /// * `boolean`: `true` if this node has any children, `false` otherwise.
+    ///
     fn has_child_nodes(&self) -> bool;
-    fn clone_node(&self, _deep: bool) -> Option<RefNode>;
+    ///
+    /// Returns a duplicate of this node, i.e., serves as a generic copy constructor for nodes.
+    ///
+    /// # Specification
+    ///
+    /// The duplicate node has no parent; (`parentNode` is null.).
+    ///
+    /// Cloning an [Element](trait.Element.html) copies all attributes and their values, including
+    /// those generated by the XML processor to represent defaulted attributes, but this method does
+    /// not copy any text it contains unless it is a deep clone, since the text is contained in a
+    /// child [Text](trait.Text.html) node. Cloning an [Attribute](trait.Attribute.html) directly,
+    /// as opposed to be cloned as part of an `Element` cloning operation, returns a specified
+    /// attribute (`specified` is `true`). Cloning any other type of node simply returns a copy of
+    /// this node.
+    ///
+    /// Note that cloning an immutable subtree results in a mutable copy, but the children of an
+    /// `EntityReference` clone are readonly. In addition, clones of unspecified `Attr` nodes are
+    /// specified. And, cloning `Document`, `DocumentType`, `Entity`, and `Notation` nodes is
+    /// implementation dependent.
+    ///
+    /// **Parameters**
+    ///
+    /// * `deep` of type `boolean`: If `true`, recursively clone the subtree under the specified
+    ///   node; if `false`, clone only the node itself (and its attributes, if it is an `Element`).
+    ///
+    /// **Return Value**
+    ///
+    /// * `Node`:The duplicate node.
+    ///
+    fn clone_node(&self, deep: bool) -> Option<RefNode>;
+    ///
+    /// Puts all [Text](trait.Text.html) nodes in the full depth of the sub-tree underneath this
+    /// `Node`, including attribute nodes, into a "normal" form where only structure (e.g.,
+    /// elements, comments, processing instructions, CDATA sections, and entity references)
+    /// separates `Text` nodes, i.e., there are neither adjacent `Text` nodes nor empty `Text` nodes.
+    ///
+    /// # Specification
+    ///
+    /// This can be used to ensure that the DOM view of a document is the same as if it were saved
+    /// and re-loaded, and is useful when operations (such as XPointer lookups) that depend on a
+    /// particular document tree structure are to be used.
+    ///
+    /// Note: In cases where the document contains [CDataSection](trait.CDataSection.html), the
+    /// normalize operation alone may not be sufficient, since XPointers do not differentiate
+    /// between `Text` nodes and `CDATASection` nodes.
+    ///
     fn normalize(&mut self);
+    ///
+    /// Tests whether the DOM implementation implements a specific feature and that feature is
+    /// supported by this node.
+    ///
+    /// # Specification
+    ///
+    /// **Parameters**
+    ///
+    /// * `feature` of type `DOMString`: The name of the feature to test. This is the same name
+    ///   which can be passed to the method `hasFeature` on `DOMImplementation`.
+    /// * `version` of type `DOMString`: This is the version number of the feature to test. In
+    ///   Level 2, version 1, this is the string "2.0". If the version is not specified, supporting
+    ///   any version of the feature will cause the method to return true.
+    ///
+    /// **Return Value**
+    ///
+    /// * `boolean`: Returns `true` if the specified feature is supported on this node, `false`
+    ///   otherwise.
+    ///
     fn is_supported(&self, feature: String, version: String) -> bool;
+    ///
+    /// Returns whether this node (if it is an element) has any attributes.
+    ///
+    /// **Return Value**
+    ///
+    /// * `boolean`: `true` if this node has any attributes, `false` otherwise.
+    ///
     fn has_attributes(&self) -> bool;
 }
 
@@ -644,7 +1415,7 @@ pub trait Notation: Node {
     ///
     /// # Specification
     ///
-    /// If the public identifier was not specified, this is null.
+    /// If the public identifier was not specified, this is `null`.
     ///
     fn public_id(&self) -> Option<String>;
     ///
@@ -652,7 +1423,7 @@ pub trait Notation: Node {
     ///
     /// # Specification
     ///
-    /// If the system identifier was not specified, this is null.
+    /// If the system identifier was not specified, this is `null`.
     ///
     fn system_id(&self) -> Option<String>;
 }
@@ -760,8 +1531,8 @@ pub trait Text: CharacterData {
     ///
     /// **Exceptions**
     ///
-    /// * `INDEX_SIZE_ERR: Raised if the specified offset is negative or greater than the number of 16-bit units in data.
-    /// * `NO_MODIFICATION_ALLOWED_ERR: Raised if this node is readonly.
+    /// * `INDEX_SIZE_ERR`: Raised if the specified offset is negative or greater than the number of 16-bit units in data.
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     ///
     fn split(offset: usize) -> Result<RefNode>;
 }

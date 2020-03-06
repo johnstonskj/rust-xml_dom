@@ -59,25 +59,25 @@ and [WeakRefNode](type.WeakRefNode.html) which in turn are references to the opa
 [NodeImpl](struct.NodeImpl.html) struct. Only `RefNode` implements all of the DOM interfaces
 and in general the programmer should never need to interact with `WeakRefNode`.
 
-| IDL Interface           | Rust Mapping                                                |
-|-------------------------|-------------------------------------------------------------|
-| `Attr`                  | [Attribute](trait.Attribute.html)                           |
-| _`CharacterData`_       | [CharacterData](trait.CharacterData.html)                   |
-| `CDATASection`          | [CDataSection](trait.CDataSection.html)                     |
-| `Comment`               | [Comment](trait.Comment.html)                               |
-| `Document`              | [Document](trait.Document.html)                             |
-| `DocumentFragment`      | Not Supported                                               |
-| `DocumentType`          | [DocumentType](trait.DocumentType.html)                     |
-| `DOMImplementation`     | [Implementation](struct.Implementation.html)                |
-| `Element`               | [Element](trait.Element.html)                               |
-| `Entity`                | Not Supported                                               |
-| `EntityReference`       | Not Supported                                               |
-| `NamedNodeMap`          | `HashMap<Name, RefNode>`                                    |
-| `Node`                  | [Node](trait.Node.html)                                     |
-| `NodeList`              | `Vec<Rc<RefNode>>`                                          |
-| `Notation`              | Not Supported                                               |
-| `ProcessingInstruction` | [ProcessingInstruction](struct.ProcessingInstruction.html)  |
-| `Text`                  | [Text](trait.Text.html)                                     |
+| IDL Interface           | Rust Mapping                                              |
+|-------------------------|-----------------------------------------------------------|
+| `Attr`                  | [Attribute](trait.Attribute.html)                         |
+| _`CharacterData`_       | [CharacterData](trait.CharacterData.html)                 |
+| `CDATASection`          | [CDataSection](trait.CDataSection.html)                   |
+| `Comment`               | [Comment](trait.Comment.html)                             |
+| `Document`              | [Document](trait.Document.html)                           |
+| `DocumentFragment`      | [DocumentFragment](trait.DocumentFragment.html)           |
+| `DocumentType`          | [DocumentType](trait.DocumentType.html)                   |
+| `DOMImplementation`     | [Implementation](struct.Implementation.html)              |
+| `Element`               | [Element](trait.Element.html)                             |
+| `Entity`                | [Entity](trait.Entity.html)                               |
+| `EntityReference`       | [EntityReference](trait.EntityReference.html)             |
+| `NamedNodeMap`          | `HashMap<Name, RefNode>`                                  |
+| `Node`                  | [Node](trait.Node.html)                                   |
+| `NodeList`              | `Vec<Rc<RefNode>>`                                        |
+| `Notation`              | [Notation](trait.Notation.html)                           |
+| `ProcessingInstruction` | [ProcessingInstruction](trait.ProcessingInstruction.html) |
+| `Text`                  | [Text](trait.Text.html)                                   |
 
 * The exception type `DOMException` and associated constants are represented by the enumeration
   `Error`.
@@ -93,12 +93,12 @@ and in general the programmer should never need to interact with `WeakRefNode`.
 
 ## Primitive Type Mapping
 
-| IDL Type         | Rust Type        | Usage                                |
-|------------------|------------------|--------------------------------------|
-| `boolean`        | `bool`           | all                                  |
-| `DOMString`      | `String`         | all                                  |
-| `unsigned short` | `Error`, `u16`   | as representation of exception code  |
-| `unsigned long`  | `usize`          | list/string indexes and lengths      |
+| IDL Type         | Rust Type      | Usage                                |
+|------------------|----------------|--------------------------------------|
+| `boolean`        | `bool`         | all                                  |
+| `DOMString`      | `String`       | all                                  |
+| `unsigned short` | `Error`, `u16` | as representation of exception code  |
+| `unsigned long`  | `usize`        | list/string indexes and lengths      |
 
 ## Ownership
 
@@ -108,9 +108,14 @@ references to children, for example the `document_element` or `attributes` use `
 
 #![warn(
 missing_debug_implementations,
-//missing_docs,
+missing_docs,
+rust_2018_idioms,
+unreachable_pub,
+unsafe_code,
 unused_extern_crates,
-rust_2018_idioms
+unused_import_braces,
+unused_qualifications,
+unused_results,
 )]
 
 #[macro_use]

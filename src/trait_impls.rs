@@ -118,17 +118,6 @@ impl Node for RefNode {
             mut_self.i_child_nodes.push(new_child.clone());
         }
 
-        let _id_map = mut_self.i_document_element.as_ref().unwrap().borrow_mut();
-
-        // if child_node_type == NodeType::Element {
-        //     let child_element = &new_child as &dyn Element;
-        //     match child_element.get_attribute(XML_DEFAULT_ID_ATTRIBUTE) {
-        //         _ => {}
-        //         // TODO: if child is an element and has an ID then add to id_map
-        //         Some(_attribute) => (),
-        //     }
-        // }
-
         Ok(new_child)
     }
 
@@ -285,6 +274,14 @@ impl Document for RefNode {
         Ok(RefNode::new(node_impl))
     }
 
+    fn create_document_fragment(&self) -> Result<RefNode> {
+        unimplemented!()
+    }
+
+    fn create_entity_reference(&self, _name: &str) -> Result<RefNode> {
+        unimplemented!()
+    }
+
     fn create_comment(&self, data: &str) -> RefNode {
         let node_impl = NodeImpl::new_comment(data);
         RefNode::new(node_impl)
@@ -309,18 +306,12 @@ impl Document for RefNode {
     }
 
     fn create_text_node(&self, data: &str) -> RefNode {
-        let node_impl = NodeImpl::new_comment(data);
+        let node_impl = NodeImpl::new_text(data);
         RefNode::new(node_impl)
     }
 
-    fn get_element_by_id(&self, id: &str) -> Option<RefNode> {
-        let ref_self = self.borrow();
-        let document = ref_self.i_document_element.as_ref().unwrap();
-        let id_map = &document.borrow().i_attributes;
-        match Name::from_str(id) {
-            Ok(id_name) => id_map.get(&id_name).map(|n| n.clone()),
-            Err(_) => None,
-        }
+    fn get_element_by_id(&self, _id: &str) -> Option<RefNode> {
+        None
     }
 
     fn get_elements_by_tag_name(&self, _tag_name: &str) -> Vec<RefNode> {
@@ -386,7 +377,7 @@ impl Element for RefNode {
 
     fn set_attribute_node(&mut self, new_attribute: RefNode) -> Result<RefNode> {
         let mut mut_self = self.borrow_mut();
-        mut_self
+        let _safe_to_ignore = mut_self
             .i_attributes
             .insert(new_attribute.name(), new_attribute.clone());
         Ok(new_attribute)
@@ -443,6 +434,14 @@ impl Element for RefNode {
 // ------------------------------------------------------------------------------------------------
 
 impl ProcessingInstruction for RefNode {}
+
+// ------------------------------------------------------------------------------------------------
+
+impl Text for RefNode {
+    fn split(_offset: usize) -> Result<RefNode> {
+        unimplemented!()
+    }
+}
 
 // ------------------------------------------------------------------------------------------------
 
@@ -647,8 +646,8 @@ impl NodeImpl {
         };
         let mut ref_node: RefNode = RcRefCell::new(new_doc_type);
         let as_element = &mut ref_node as &mut dyn Element;
-        as_element.set_attribute(XML_DOCTYPE_PUBLIC, public_id);
-        as_element.set_attribute(XML_DOCTYPE_SYSTEM, system_id);
+        as_element.set_attribute(XML_DOCTYPE_PUBLIC, public_id).expect("invalid public ID");
+        as_element.set_attribute(XML_DOCTYPE_SYSTEM, system_id).expect("invalid system ID");
         ref_node.unwrap()
     }
 }
