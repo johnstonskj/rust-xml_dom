@@ -159,6 +159,10 @@ impl Attribute for RefNode {}
 
 // ------------------------------------------------------------------------------------------------
 
+impl CDataSection for RefNode {}
+
+// ------------------------------------------------------------------------------------------------
+
 impl CharacterData for RefNode {
     fn substring(&self, offset: usize, count: usize) -> Result<String> {
         let ref_self = self.borrow();
@@ -244,6 +248,20 @@ impl Comment for RefNode {}
 // ------------------------------------------------------------------------------------------------
 
 impl Document for RefNode {
+    fn doc_type(&self) -> Option<RefNode> {
+        let ref_self = self.borrow();
+        ref_self.i_document_type.clone()
+    }
+
+    fn document_element(&self) -> Option<RefNode> {
+        let ref_self = self.borrow();
+        ref_self.i_document_element.clone()
+    }
+
+    fn implementation(&self) -> &Implementation {
+        &Implementation {}
+    }
+
     fn create_attribute(&self, name: &str) -> Result<RefNode> {
         let name = Name::from_str(name)?;
         let node_impl = NodeImpl::new_attribute(name, None);
@@ -311,20 +329,6 @@ impl Document for RefNode {
 
     fn get_elements_by_tag_name_ns(&self, _namespace_uri: &str, _local_name: &str) -> Vec<RefNode> {
         unimplemented!()
-    }
-
-    fn doc_type(&self) -> Option<RefNode> {
-        let ref_self = self.borrow();
-        ref_self.i_document_type.clone()
-    }
-
-    fn document_element(&self) -> Option<RefNode> {
-        let ref_self = self.borrow();
-        ref_self.i_document_element.clone()
-    }
-
-    fn implementation(&self) -> &Implementation {
-        &Implementation {}
     }
 }
 
@@ -730,6 +734,8 @@ impl Implementation {
     /// Test if the DOM implementation implements a specific feature.
     ///
     /// # Specification
+    ///
+    /// See DOM Level 2 Core [§1.3. Extended Interfaces](https://www.w3.org/TR/DOM-Level-2-Core/core.html#ID-E067D597)
     ///
     /// **Parameters**
     ///

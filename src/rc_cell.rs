@@ -1,12 +1,3 @@
-/*!
-One-line description.
-
-More detailed description, with
-
-# Example
-
-*/
-
 use std::cell::{Ref, RefCell, RefMut};
 use std::rc::{Rc, Weak};
 

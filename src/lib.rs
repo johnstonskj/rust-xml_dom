@@ -1,12 +1,11 @@
 /*!
 A reasonably faithful implementation of the W3C [Document Object Model Core, Level
-2](https://www.w3.org/TR/DOM-Level-2-Core), built on top of the
-[quick_xml](https://docs.rs/quick-xml) crate.
+2](https://www.w3.org/TR/DOM-Level-2-Core).
 
 # Example
 
 ```rust
-use upnp_rs::dom_core::*;
+use xml_dom::*;
 
 let mut document_node =
     Implementation::create_document("uri:urn:simons:thing:1", "root", None).unwrap();
@@ -65,7 +64,7 @@ and in general the programmer should never need to interact with `WeakRefNode`.
 | `Attr`                  | [Attribute](trait.Attribute.html)                           |
 | _`CharacterData`_       | [CharacterData](trait.CharacterData.html)                   |
 | `CDATASection`          | [CDataSection](trait.CDataSection.html)                     |
-| `Comment`               | [Document](trait.Document.html)                             |
+| `Comment`               | [Comment](trait.Comment.html)                               |
 | `Document`              | [Document](trait.Document.html)                             |
 | `DocumentFragment`      | Not Supported                                               |
 | `DocumentType`          | [DocumentType](trait.DocumentType.html)                     |
