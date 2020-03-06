@@ -1534,7 +1534,7 @@ pub trait Text: CharacterData {
     /// * `INDEX_SIZE_ERR`: Raised if the specified offset is negative or greater than the number of 16-bit units in data.
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     ///
-    fn split(offset: usize) -> Result<RefNode>;
+    fn split(&self, offset: usize) -> Result<RefNode>;
 }
 
 // ------------------------------------------------------------------------------------------------

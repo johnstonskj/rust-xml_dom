@@ -3,7 +3,6 @@ use self::super::name::*;
 use self::super::rc_cell::*;
 use self::super::syntax::*;
 use self::super::traits::*;
-
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -438,7 +437,7 @@ impl ProcessingInstruction for RefNode {}
 // ------------------------------------------------------------------------------------------------
 
 impl Text for RefNode {
-    fn split(_offset: usize) -> Result<RefNode> {
+    fn split(&self, _offset: usize) -> Result<RefNode> {
         unimplemented!()
     }
 }
