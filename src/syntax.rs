@@ -53,7 +53,7 @@ pub(crate) const XML_NAME_TEXT: &str = "#text";
 // ------------------------------------------------------------------------------------------------
 
 pub(crate) const XML_FEATURE_CORE: &str = "Core"; // DOM Level-2 "Fundamental Interfaces"
-pub(crate) const XML_FEATURE_XML: &str = "XML";   // DOM Level-2 "Extended Interfaces"
+pub(crate) const XML_FEATURE_XML: &str = "XML"; // DOM Level-2 "Extended Interfaces"
 
 pub(crate) const XML_FEATURE_V1: &str = "1.0";
 pub(crate) const XML_FEATURE_V2: &str = "2.0";

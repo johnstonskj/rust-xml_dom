@@ -27,7 +27,7 @@ pub fn is_attribute(ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a  `Attribute`.
 ///
 #[inline]
-pub fn as_attribute(ref_node: &RefNode) -> Result<&dyn Attribute>  {
+pub fn as_attribute(ref_node: &RefNode) -> Result<&dyn Attribute> {
     if ref_node.borrow().i_node_type == NodeType::Attribute {
         Ok(ref_node as &dyn Attribute)
     } else {
@@ -40,7 +40,7 @@ pub fn as_attribute(ref_node: &RefNode) -> Result<&dyn Attribute>  {
 /// Safely _cast_ the specified `RefNode` into a mutable `Attribute`.
 ///
 #[inline]
-pub fn as_attribute_mut(ref_node: &mut RefNode) -> Result<&mut dyn Attribute>  {
+pub fn as_attribute_mut(ref_node: &mut RefNode) -> Result<&mut dyn Attribute> {
     if ref_node.borrow().i_node_type == NodeType::Attribute {
         Ok(ref_node as &mut dyn Attribute)
     } else {
@@ -61,7 +61,7 @@ pub fn is_element(ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a  `Element`.
 ///
 #[inline]
-pub fn as_element(ref_node: &RefNode) -> Result<&dyn Element>  {
+pub fn as_element(ref_node: &RefNode) -> Result<&dyn Element> {
     if ref_node.borrow().i_node_type == NodeType::Element {
         Ok(ref_node as &dyn Element)
     } else {
@@ -74,7 +74,7 @@ pub fn as_element(ref_node: &RefNode) -> Result<&dyn Element>  {
 /// Safely _cast_ the specified `RefNode` into a mutable `Element`.
 ///
 #[inline]
-pub fn as_element_mut(ref_node: &mut RefNode) -> Result<&mut dyn Element>  {
+pub fn as_element_mut(ref_node: &mut RefNode) -> Result<&mut dyn Element> {
     if ref_node.borrow().i_node_type == NodeType::Element {
         Ok(ref_node as &mut dyn Element)
     } else {
@@ -106,7 +106,7 @@ pub fn is_text(ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a  `Text`.
 ///
 #[inline]
-pub fn as_text(ref_node: &RefNode) -> Result<&dyn Text>  {
+pub fn as_text(ref_node: &RefNode) -> Result<&dyn Text> {
     if ref_node.borrow().i_node_type == NodeType::Text {
         Ok(ref_node as &dyn Text)
     } else {
@@ -119,7 +119,7 @@ pub fn as_text(ref_node: &RefNode) -> Result<&dyn Text>  {
 /// Safely _cast_ the specified `RefNode` into a mutable `Text`.
 ///
 #[inline]
-pub fn as_text_mut(ref_node: &mut RefNode) -> Result<&mut dyn Text>  {
+pub fn as_text_mut(ref_node: &mut RefNode) -> Result<&mut dyn Text> {
     if ref_node.borrow().i_node_type == NodeType::Text {
         Ok(ref_node as &mut dyn Text)
     } else {
@@ -140,7 +140,7 @@ pub fn is_cdata_section(ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a  `CDataSection`.
 ///
 #[inline]
-pub fn as_cdata_section(ref_node: &RefNode) -> Result<&dyn CDataSection>  {
+pub fn as_cdata_section(ref_node: &RefNode) -> Result<&dyn CDataSection> {
     if ref_node.borrow().i_node_type == NodeType::CData {
         Ok(ref_node as &dyn CDataSection)
     } else {
@@ -153,7 +153,7 @@ pub fn as_cdata_section(ref_node: &RefNode) -> Result<&dyn CDataSection>  {
 /// Safely _cast_ the specified `RefNode` into a mutable `CDataSection`.
 ///
 #[inline]
-pub fn as_cdata_section_mut(ref_node: &mut RefNode) -> Result<&mut dyn CDataSection>  {
+pub fn as_cdata_section_mut(ref_node: &mut RefNode) -> Result<&mut dyn CDataSection> {
     if ref_node.borrow().i_node_type == NodeType::CData {
         Ok(ref_node as &mut dyn CDataSection)
     } else {
@@ -174,7 +174,7 @@ pub fn is_entity_reference(_ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a  `EntityReference`.
 ///
 #[inline]
-pub fn as_entity_reference(_ref_node: &RefNode) -> Result<&dyn EntityReference>  {
+pub fn as_entity_reference(_ref_node: &RefNode) -> Result<&dyn EntityReference> {
     warn!("node type EntityReference unsupported");
     Err(Error::NotSupported)
 }
@@ -183,7 +183,7 @@ pub fn as_entity_reference(_ref_node: &RefNode) -> Result<&dyn EntityReference> 
 /// Safely _cast_ the specified `RefNode` into a mutable `EntityReference`.
 ///
 #[inline]
-pub fn as_entity_reference_mut(_ref_node: &mut RefNode) -> Result<&mut dyn EntityReference>  {
+pub fn as_entity_reference_mut(_ref_node: &mut RefNode) -> Result<&mut dyn EntityReference> {
     warn!("node type EntityReference unsupported");
     Err(Error::NotSupported)
 }
@@ -200,7 +200,7 @@ pub fn is_entity(_ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a  `Entity`.
 ///
 #[inline]
-pub fn as_entity(_ref_node: &RefNode) -> Result<&dyn Entity>  {
+pub fn as_entity(_ref_node: &RefNode) -> Result<&dyn Entity> {
     warn!("node type Entity unsupported");
     Err(Error::NotSupported)
 }
@@ -209,7 +209,7 @@ pub fn as_entity(_ref_node: &RefNode) -> Result<&dyn Entity>  {
 /// Safely _cast_ the specified `RefNode` into a mutable `Entity`.
 ///
 #[inline]
-pub fn as_entity_mut(_ref_node: &mut RefNode) -> Result<&mut dyn Entity>  {
+pub fn as_entity_mut(_ref_node: &mut RefNode) -> Result<&mut dyn Entity> {
     warn!("node type Entity unsupported");
     Err(Error::NotSupported)
 }
@@ -226,7 +226,7 @@ pub fn is_processing_instruction(ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a  `ProcessingInstruction`.
 ///
 #[inline]
-pub fn as_processing_instruction(ref_node: &RefNode) -> Result<&dyn ProcessingInstruction>  {
+pub fn as_processing_instruction(ref_node: &RefNode) -> Result<&dyn ProcessingInstruction> {
     if ref_node.borrow().i_node_type == NodeType::ProcessingInstruction {
         Ok(ref_node as &dyn ProcessingInstruction)
     } else {
@@ -239,7 +239,9 @@ pub fn as_processing_instruction(ref_node: &RefNode) -> Result<&dyn ProcessingIn
 /// Safely _cast_ the specified `RefNode` into a mutable `ProcessingInstruction`.
 ///
 #[inline]
-pub fn as_processing_instruction_mut(ref_node: &mut RefNode) -> Result<&mut dyn ProcessingInstruction>  {
+pub fn as_processing_instruction_mut(
+    ref_node: &mut RefNode,
+) -> Result<&mut dyn ProcessingInstruction> {
     if ref_node.borrow().i_node_type == NodeType::ProcessingInstruction {
         Ok(ref_node as &mut dyn ProcessingInstruction)
     } else {
@@ -260,7 +262,7 @@ pub fn is_comment(ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a  `Comment`.
 ///
 #[inline]
-pub fn as_comment(ref_node: &RefNode) -> Result<&dyn Comment>  {
+pub fn as_comment(ref_node: &RefNode) -> Result<&dyn Comment> {
     if ref_node.borrow().i_node_type == NodeType::Comment {
         Ok(ref_node as &dyn Comment)
     } else {
@@ -273,7 +275,7 @@ pub fn as_comment(ref_node: &RefNode) -> Result<&dyn Comment>  {
 /// Safely _cast_ the specified `RefNode` into a mutable `Comment`.
 ///
 #[inline]
-pub fn as_comment_mut(ref_node: &mut RefNode) -> Result<&mut dyn Comment>  {
+pub fn as_comment_mut(ref_node: &mut RefNode) -> Result<&mut dyn Comment> {
     if ref_node.borrow().i_node_type == NodeType::Comment {
         Ok(ref_node as &mut dyn Comment)
     } else {
@@ -294,7 +296,7 @@ pub fn is_document(ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a  `Document`.
 ///
 #[inline]
-pub fn as_document(ref_node: &RefNode) -> Result<&dyn Document>  {
+pub fn as_document(ref_node: &RefNode) -> Result<&dyn Document> {
     if ref_node.borrow().i_node_type == NodeType::Document {
         Ok(ref_node as &dyn Document)
     } else {
@@ -307,7 +309,7 @@ pub fn as_document(ref_node: &RefNode) -> Result<&dyn Document>  {
 /// Safely _cast_ the specified `RefNode` into a mutable `Document`.
 ///
 #[inline]
-pub fn as_document_mut(ref_node: &mut RefNode) -> Result<&mut dyn Document>  {
+pub fn as_document_mut(ref_node: &mut RefNode) -> Result<&mut dyn Document> {
     if ref_node.borrow().i_node_type == NodeType::Document {
         Ok(ref_node as &mut dyn Document)
     } else {
@@ -328,7 +330,7 @@ pub fn is_document_type(ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a  `DocumentType`.
 ///
 #[inline]
-pub fn as_document_type(ref_node: &RefNode) -> Result<&dyn DocumentType>  {
+pub fn as_document_type(ref_node: &RefNode) -> Result<&dyn DocumentType> {
     if ref_node.borrow().i_node_type == NodeType::DocumentType {
         Ok(ref_node as &dyn DocumentType)
     } else {
@@ -341,7 +343,7 @@ pub fn as_document_type(ref_node: &RefNode) -> Result<&dyn DocumentType>  {
 /// Safely _cast_ the specified `RefNode` into a mutable `DocumentType`.
 ///
 #[inline]
-pub fn as_document_type_mut(ref_node: &mut RefNode) -> Result<&mut dyn DocumentType>  {
+pub fn as_document_type_mut(ref_node: &mut RefNode) -> Result<&mut dyn DocumentType> {
     if ref_node.borrow().i_node_type == NodeType::DocumentType {
         Ok(ref_node as &mut dyn DocumentType)
     } else {
@@ -362,7 +364,7 @@ pub fn is_document_fragment(_ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a  `DocumentFragment`.
 ///
 #[inline]
-pub fn as_document_fragment(_ref_node: &RefNode) -> Result<&dyn DocumentFragment>  {
+pub fn as_document_fragment(_ref_node: &RefNode) -> Result<&dyn DocumentFragment> {
     warn!("node type DocumentFragment unsupported");
     Err(Error::NotSupported)
 }
@@ -371,7 +373,7 @@ pub fn as_document_fragment(_ref_node: &RefNode) -> Result<&dyn DocumentFragment
 /// Safely _cast_ the specified `RefNode` into a mutable `DocumentFragment`.
 ///
 #[inline]
-pub fn as_document_fragment_mut(_ref_node: &mut RefNode) -> Result<&mut dyn DocumentFragment>  {
+pub fn as_document_fragment_mut(_ref_node: &mut RefNode) -> Result<&mut dyn DocumentFragment> {
     warn!("node type DocumentFragment unsupported");
     Err(Error::NotSupported)
 }
@@ -388,7 +390,7 @@ pub fn is_notation(_ref_node: &RefNode) -> bool {
 /// Safely _cast_ the specified `RefNode` into a `Notation`.
 ///
 #[inline]
-pub fn as_notation(_ref_node: &RefNode) -> Result<&dyn Notation>  {
+pub fn as_notation(_ref_node: &RefNode) -> Result<&dyn Notation> {
     warn!("node type Notation unsupported");
     Err(Error::NotSupported)
 }
@@ -397,7 +399,7 @@ pub fn as_notation(_ref_node: &RefNode) -> Result<&dyn Notation>  {
 /// Safely _cast_ the specified `RefNode` into a mutable `Notation`.
 ///
 #[inline]
-pub fn as_notation_mut(_ref_node: &mut RefNode) -> Result<&mut dyn Notation>  {
+pub fn as_notation_mut(_ref_node: &mut RefNode) -> Result<&mut dyn Notation> {
     warn!("node type Notation unsupported");
     Err(Error::NotSupported)
 }

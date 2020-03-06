@@ -137,15 +137,15 @@ references to children, for example the `document_element` or `attributes` use `
 */
 
 #![warn(
-missing_debug_implementations,
-missing_docs,
-rust_2018_idioms,
-unreachable_pub,
-unsafe_code,
-unused_extern_crates,
-unused_import_braces,
-unused_qualifications,
-unused_results,
+    missing_debug_implementations,
+    missing_docs,
+    rust_2018_idioms,
+    unreachable_pub,
+    unsafe_code,
+    unused_extern_crates,
+    unused_import_braces,
+    unused_qualifications,
+    unused_results
 )]
 
 #[macro_use]

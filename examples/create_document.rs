@@ -1,11 +1,12 @@
-use xml_dom::*;
 use xml_dom::convert::*;
+use xml_dom::*;
 
-//#[allow(unused_must_use)]
+#[allow(unused_must_use)]
 fn main() {
     let implementation = get_implementation();
-    let mut document_node =
-        implementation.create_document("uri:urn:simons:thing:1", "root", None).unwrap();
+    let mut document_node = implementation
+        .create_document("uri:urn:simons:thing:1", "root", None)
+        .unwrap();
     println!("document 1: {:#?}", document_node);
 
     let document = as_document(&document_node).unwrap();

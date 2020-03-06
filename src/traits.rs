@@ -1,5 +1,5 @@
-use self::super::error::*;
-use self::super::name::*;
+use self::super::error::Result;
+use self::super::name::Name;
 use self::super::rc_cell::*;
 use std::collections::HashMap;
 
@@ -345,21 +345,21 @@ pub trait Document: Node {
     ///
     fn create_attribute_with(&self, name: &str, value: &str) -> Result<RefNode>;
     ///
-    /// Creates an attribute of the given qualified name and namespace URI. 
-    /// 
+    /// Creates an attribute of the given qualified name and namespace URI.
+    ///
     /// # Specification
-    /// 
+    ///
     /// HTML-only DOM implementations do not need to implement this method.
-    /// 
+    ///
     /// **Parameters**
-    /// 
+    ///
     /// * `namespaceURI` of type `DOMString`: The namespace URI of the attribute to create.
     /// * `qualifiedName` of type `DOMString`: The qualified name of the attribute to instantiate.
-    /// 
+    ///
     /// **Return Value**
-    /// 
+    ///
     /// * [`Attr`](trait.Attribute.html): A new `Attr` object with the following attributes:
-    /// 
+    ///
     /// | Attribute           | Value               |
     /// |---------------------|---------------------|
     /// | `Node.nodeName`     | `qualifiedName`     |
@@ -368,15 +368,15 @@ pub trait Document: Node {
     /// | `Node.localName`    | local name, extracted from `qualifiedName` |
     /// | `Attr.name`         | `qualifiedName`     |
     /// | `Node.nodeValue`    | the empty string    |
-    /// 
+    ///
     /// **Exceptions**
-    /// 
-    /// * `INVALID_CHARACTER_ERR`: Raised if the specified qualified name contains an illegal 
+    ///
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified qualified name contains an illegal
     ///   character.
     /// * `NAMESPACE_ERR`: Raised if the `qualifiedName` is malformed, if the `qualifiedName` has
-    ///   a `prefix` and the `namespaceURI` is `null`, if the `qualifiedName` has a `prefix` that 
-    ///   is "xml" and the `namespaceURI` is different from "http://www.w3.org/XML/1998/namespace", 
-    ///   or if the `qualifiedName` is "xmlns" and the namespaceURI is different from 
+    ///   a `prefix` and the `namespaceURI` is `null`, if the `qualifiedName` has a `prefix` that
+    ///   is "xml" and the `namespaceURI` is different from "http://www.w3.org/XML/1998/namespace",
+    ///   or if the `qualifiedName` is "xmlns" and the namespaceURI is different from
     ///   "http://www.w3.org/2000/xmlns/".
     ///
     fn create_attribute_ns(&self, namespace_uri: &str, qualified_name: &str) -> Result<RefNode>;
@@ -400,7 +400,7 @@ pub trait Document: Node {
     fn create_cdata_section(&self, data: &str) -> Result<RefNode>;
     ///
     /// Creates an empty DocumentFragment object.
-     ///
+    ///
     /// # Specification
     ///
     /// **Return Value**
@@ -706,7 +706,9 @@ pub trait Element: Node {
     /// are all of the operations of the DOM. The HTML DOM returns the `tagName` of an HTML element
     /// in the canonical uppercase form, regardless of the case in the source HTML document.
     ///
-    fn tag_name(&self) -> String { Node::name(self).to_string() }
+    fn tag_name(&self) -> String {
+        Node::name(self).to_string()
+    }
     ///
     /// Retrieves an attribute value by name.
     ///
