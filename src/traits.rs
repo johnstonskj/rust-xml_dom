@@ -17,7 +17,7 @@ pub trait Attribute: Node {
     /// # Specification
     ///
     /// Character and general entity references are replaced with their values. See also the method
-    /// [getAttribute](trait.Element.html#tymethod.get_attribute) on the [Element](trait.Element.html)
+    /// [`getAttribute`](trait.Element.html#tymethod.get_attribute) on the [`Element`](trait.Element.html)
     /// interface.
     ///
     /// On setting, this creates a `Text` node with the unparsed contents of the string. I.e. any
@@ -32,13 +32,13 @@ pub trait Attribute: Node {
         Node::node_value(self)
     }
     ///
-    /// Set the `value` for the node; see [value()](#tymethod.value).
+    /// Set the `value` for the node; see [`value`](#tymethod.value).
     ///
     fn set_value(&mut self, value: &str) -> Result<()> {
         Node::set_node_value(self, value)
     }
     ///
-    /// Set the `value` for the node to `None`; see [value()](#tymethod.value).
+    /// Set the `value` for the node to `None`; see [`value`](#tymethod.value).
     ///
     fn unset_value(&mut self) -> Result<()> {
         Node::unset_node_value(self)
@@ -89,13 +89,13 @@ pub trait Attribute: Node {
 /// sections and that, depending on the character encoding ("charset") chosen for serialization,
 /// it may be impossible to write out some characters as part of a CDATA section.
 ///
-/// The CDATASection interface inherits from the [CharacterData](trait.CharacterData.html)
-/// interface through the [Text](trait.Text.html) interface. Adjacent CDATASection nodes are not
-/// merged by use of the normalize method of the [Node](trait.Node.html) interface.
+/// The `CDATASection` interface inherits from the [`CharacterData`](trait.CharacterData.html)
+/// interface through the [`Text`](trait.Text.html) interface. Adjacent `CDATASection` nodes are not
+/// merged by use of the normalize method of the [`Node`](trait.Node.html) interface.
 ///
-/// **Note:** Because no markup is recognized within a CDATASection, character numeric references
+/// **Note:** Because no markup is recognized within a `CDATASection`, character numeric references
 /// cannot be used as an escape mechanism when serializing. Therefore, action needs to be taken
-/// when serializing a CDATASection with a character encoding where some of the contained
+/// when serializing a `CDATASection` with a character encoding where some of the contained
 /// characters cannot be represented. Failure to do so would not produce well-formed XML.
 ///
 /// One potential solution in the serialization process is to end the CDATA section before the
@@ -114,10 +114,10 @@ pub trait CDataSection: Text {}
 ///
 /// # Specification
 ///
-/// The `CharacterData` interface extends [Node](trait.Node.html) with a set of attributes and
+/// The `CharacterData` interface extends [`Node`](trait.Node.html) with a set of attributes and
 /// methods for accessing character data in the DOM. For clarity this set is defined here rather
 /// than on each object that uses these attributes and methods. No DOM objects correspond directly
-/// to `CharacterData`, though [Text](trait.Text.html) and others do inherit the interface from it.
+/// to `CharacterData`, though [`Text`](trait.Text.html) and others do inherit the interface from it.
 /// All offsets in this interface start from 0.
 ///
 /// As explained in the `DOMString` interface, text strings in the DOM are represented in UTF-16,
@@ -273,7 +273,7 @@ pub trait CharacterData: Node {
 ///
 /// # Specification
 ///
-/// This interface inherits from [CharacterData](trait.CharacterData.html) and represents the
+/// This interface inherits from [`CharacterData`](trait.CharacterData.html) and represents the
 /// content of a comment, i.e., all the characters between the starting `'<!--'` and ending `'-->'`.
 /// Note that this is the definition of a comment in XML, and, in practice, HTML, although some
 /// HTML tools may implement the full SGML comment structure.
@@ -287,7 +287,7 @@ pub trait Comment: CharacterData {}
 ///
 pub trait Document: Node {
     ///
-    /// The Document Type Declaration (see [DocumentType](trait.DocumentType.html)) associated with
+    /// The Document Type Declaration (see [`DocumentType`](trait.DocumentType.html)) associated with
     /// this document.
     ///
     /// # Specification
@@ -295,7 +295,7 @@ pub trait Document: Node {
     /// For HTML documents as well as XML documents without a document type
     /// declaration this returns `null`. The DOM Level 2 does not support editing the Document Type
     /// Declaration. `docType` cannot be altered in any way, including through the use of methods
-    /// inherited from the [Node](trait.Node.html) interface, such as `insertNode` or `removeNode`.
+    /// inherited from the [`Node`](trait.Node.html) interface, such as `insertNode` or `removeNode`.
     ///
     fn doc_type(&self) -> Option<RefNode>;
     ///
@@ -314,10 +314,10 @@ pub trait Document: Node {
     ///
     /// A DOM application may use objects from multiple implementations.
     ///
-    fn implementation(&self) -> &Implementation;
+    fn implementation(&self) -> &dyn DOMImplementation;
     ///
-    /// Creates an [Attribute](trait.Attribute.html) of the given name. Note that the `Attr`
-    /// instance can then be set on an [Element](trait.Element.html) using the `setAttributeNode`
+    /// Creates an [`Attribute`](trait.Attribute.html) of the given name. Note that the `Attr`
+    /// instance can then be set on an [`Element`](trait.Element.html) using the `setAttributeNode`
     /// method.
     ///
     /// # Specification
@@ -358,7 +358,7 @@ pub trait Document: Node {
     /// 
     /// **Return Value**
     /// 
-    /// * [Attr](trait.Attribute.html): A new `Attr` object with the following attributes:
+    /// * [`Attr`](trait.Attribute.html): A new `Attr` object with the following attributes:
     /// 
     /// | Attribute           | Value               |
     /// |---------------------|---------------------|
@@ -381,7 +381,7 @@ pub trait Document: Node {
     ///
     fn create_attribute_ns(&self, namespace_uri: &str, qualified_name: &str) -> Result<RefNode>;
     ///
-    /// Creates a [CDataSection](trait.CDataSection.html) node whose value is the specified string.
+    /// Creates a [`CDataSection`](trait.CDataSection.html) node whose value is the specified string.
     ///
     /// # Specification
     ///
@@ -437,7 +437,7 @@ pub trait Document: Node {
     ///
     fn create_entity_reference(&self, name: &str) -> Result<RefNode>;
     ///
-    /// Creates a [Comment](trait.Comment.html) node given the specified string.
+    /// Creates a [`Comment`](trait.Comment.html) node given the specified string.
     ///
     /// # Specification
     ///
@@ -455,10 +455,10 @@ pub trait Document: Node {
     ///
     /// # Specification
     ///
-    /// Note that the instance returned implements the [Element](trait.Element.html) interface, so
+    /// Note that the instance returned implements the [`Element`](trait.Element.html) interface, so
     /// attributes can be specified directly on the returned object.
     ///
-    /// In addition, if there are known attributes with default values, [Attr](trait.Attribute.html)
+    /// In addition, if there are known attributes with default values, [`Attr`](trait.Attribute.html)
     /// nodes representing them are automatically created and attached to the element.
     ///
     /// To create an element with a qualified name and namespace URI, use the `createElementNS` method.
@@ -516,7 +516,7 @@ pub trait Document: Node {
     ///
     fn create_element_ns(&self, namespace_uri: &str, qualified_name: &str) -> Result<RefNode>;
     ///
-    /// Creates a [ProcessingInstruction](trait.ProcessingInstruction.html) node given the
+    /// Creates a [`ProcessingInstruction`](trait.ProcessingInstruction.html) node given the
     /// specified name and data strings.
     ///
     /// # Specification
@@ -537,7 +537,7 @@ pub trait Document: Node {
     ///
     fn create_processing_instruction(&self, target: &str, data: Option<&str>) -> Result<RefNode>;
     ///
-    /// Creates a [Text](trait.Text.html) node given the specified string.
+    /// Creates a [`Text`](trait.Text.html) node given the specified string.
     ///
     /// # Specification
     ///
@@ -551,7 +551,7 @@ pub trait Document: Node {
     ///
     fn create_text_node(&self, data: &str) -> RefNode;
     ///
-    /// Returns the [Element](trait.Element.html) whose ID is given by `elementId`.
+    /// Returns the [`Element`](trait.Element.html) whose ID is given by `elementId`.
     ///
     /// Note: this implementation does not support this method.
     ///
@@ -574,7 +574,7 @@ pub trait Document: Node {
     ///
     fn get_element_by_id(&self, id: &str) -> Option<RefNode>;
     ///
-    /// Returns a `NodeList` of all the [Elements](trait.Element.html) with a given tag name in the
+    /// Returns a `NodeList` of all the [`Element`](trait.Element.html)s with a given tag name in the
     /// order in which they are encountered in a preorder traversal of the Document tree.
     ///
     ///# Specification
@@ -590,7 +590,7 @@ pub trait Document: Node {
     ///
     fn get_elements_by_tag_name(&self, tag_name: &str) -> Vec<RefNode>;
     ///
-    /// Returns a `NodeList` of all the [Elements](trait.Element.html) with a given local name and
+    /// Returns a `NodeList` of all the [`Element`](trait.Element.html)s with a given local name and
     /// namespace URI in the order in which they are encountered in a preorder traversal of the
     /// Document tree.
     ///
@@ -617,7 +617,7 @@ pub trait Document: Node {
 ///
 /// # Specification
 ///
-/// `DocumentFragment` is a "lightweight" or "minimal" [Document](trait.Document.html) object. It
+/// `DocumentFragment` is a "lightweight" or "minimal" [`Document`](trait.Document.html) object. It
 /// is very common to want to be able to extract a portion of a document's tree or to create a new
 /// fragment of a document. Imagine implementing a user command like cut or rearranging a document
 /// by moving fragments around. It is desirable to have an object which can hold such fragments and
@@ -634,14 +634,14 @@ pub trait Document: Node {
 /// sub-trees defining the structure of the document. `DocumentFragment` nodes do not need to be
 /// well-formed XML documents (although they do need to follow the rules imposed upon well-formed
 /// XML parsed entities, which can have multiple top nodes). For example, a `DocumentFragment`
-/// might have only one child and that child node could be a [Text](trait.Text.html) node. Such a
+/// might have only one child and that child node could be a [`Text`](trait.Text.html) node. Such a
 /// structure model represents neither an HTML document nor a well-formed XML document.
 ///
 /// When a `DocumentFragment` is inserted into a `Document` (or indeed any other `Node` that may
 /// take children) the children of the `DocumentFragment` and not the `DocumentFragment` itself are
 /// inserted into the `Node`. This makes the `DocumentFragment` very useful when the user wishes
 /// to create nodes that are siblings; the `DocumentFragment` acts as the parent of these nodes
-/// so that the user can use the standard methods from the [Node](trait.Node.html) interface, such as
+/// so that the user can use the standard methods from the [`Node`](trait.Node.html) interface, such as
 /// `insertBefore` and `appendChild`.
 ///
 pub trait DocumentFragment: Node {}
@@ -653,7 +653,7 @@ pub trait DocumentFragment: Node {}
 ///
 /// # Specification
 ///
-/// Each [Document](trait.Document.html) has a `doctype` attribute whose value is either `null` or
+/// Each [`Document`](trait.Document.html) has a `doctype` attribute whose value is either `null` or
 /// a `DocumentType` object. The `DocumentType` interface in the DOM Core provides an interface
 /// to the list of entities that are defined for the document, and little else because the effect
 /// of namespaces and the various XML schema efforts on DTD representation are not clearly
@@ -676,10 +676,10 @@ pub trait DocumentType: Node {
 /// # Specification
 ///
 /// The `Element` interface represents an element in an HTML or XML document. Elements may have
-/// attributes associated with them; since the `Element` interface inherits from [Node](trait.Node.html),
+/// attributes associated with them; since the `Element` interface inherits from [`Node`](trait.Node.html),
 /// the generic `Node` interface attribute attributes may be used to retrieve the set of all
 /// attributes for an element. There are methods on the `Element` interface to retrieve either an
-/// [Attr](trait.Attribute.html) object by name or an attribute value by name. In XML, where an
+/// [`Attr`](trait.Attribute.html) object by name or an attribute value by name. In XML, where an
 /// attribute value may contain entity references, an `Attr` object should be retrieved to examine
 /// the possibly fairly complex sub-tree representing the attribute value. On the other hand, in
 /// HTML, where all attributes have simple string values, methods to directly access an attribute
@@ -749,7 +749,9 @@ pub trait Element: Node {
     ///
     fn set_attribute(&mut self, name: &str, value: &str) -> Result<()>;
     ///
-    /// Removes an attribute by name. If the removed attribute is known to have a default value, an attribute immediately appears containing the default value as well as the corresponding namespace URI, local name, and prefix when applicable.
+    /// Removes an attribute by name. If the removed attribute is known to have a default value, an
+    /// attribute immediately appears containing the default value as well as the corresponding
+    /// namespace URI, local name, and prefix when applicable.
     ///
     /// # Specification
     ///
@@ -842,7 +844,8 @@ pub trait Element: Node {
     ///
     /// **Parameters**
     ///
-    /// `name` of type `DOMString`: The name of the tag to match on. The special value "*" matches all tags.
+    /// * `name` of type `DOMString`: The name of the tag to match on. The special value "*" matches
+    ///   all tags.
     ///
     /// **Return Value**
     ///
@@ -960,13 +963,16 @@ pub trait Element: Node {
     ///
     /// **Return Value**
     ///
-    /// * `Attr`: If the `newAttr` attribute replaces an existing attribute with the same local name and namespace URI, the replaced Attr node is returned, otherwise null is returned.
+    /// * `Attr`: If the `newAttr` attribute replaces an existing attribute with the same local name
+    ///   and namespace URI, the replaced `Attr` node is returned, otherwise `null` is returned.
     ///
     /// **Exceptions**
     ///
-    /// * `WRONG_DOCUMENT_ERR`: Raised if newAttr was created from a different document than the one that created the element.
+    /// * `WRONG_DOCUMENT_ERR`: Raised if newAttr was created from a different document than the
+    ///   one that created the element.
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
-    /// * `INUSE_ATTRIBUTE_ERR`: Raised if newAttr is already an attribute of another Element object. The DOM user must explicitly clone Attr nodes to re-use them in other elements.
+    /// * `INUSE_ATTRIBUTE_ERR`: Raised if `newAttr` is already an attribute of another `Element`
+    ///   object. The DOM user must explicitly clone `Attr` nodes to re-use them in other elements.
     ///
     fn set_attribute_node_ns(&mut self, _new_attribute: RefNode) -> Result<RefNode>;
     ///
@@ -979,8 +985,10 @@ pub trait Element: Node {
     ///
     /// **Parameters**
     ///
-    /// * `namespaceURI` of type `DOMString`: The namespace URI of the elements to match on. The special value "*" matches all namespaces.
-    /// * `localName` of type `DOMString`: The local name of the elements to match on. The special value "*" matches all local names.
+    /// * `namespaceURI` of type `DOMString`: The namespace URI of the elements to match on. The
+    ///   special value "*" matches all namespaces.
+    /// * `localName` of type `DOMString`: The local name of the elements to match on. The special
+    ///   value "*" matches all local names.
     ///
     /// **Return Value**
     ///
@@ -1057,7 +1065,7 @@ pub trait Element: Node {
 /// **Note:** If the entity contains an unbound namespace prefix, the` namespaceURI` of the
 /// corresponding node in the `Entity` node subtree is `null`. The same is true for
 /// `EntityReference` nodes that refer to this entity, when they are created using the
-/// `createEntityReference` method of the [Document](trait.Document.html) interface. The DOM
+/// `createEntityReference` method of the [`Document`](trait.Document.html) interface. The DOM
 /// Level 2 does not support any mechanism to resolve namespace prefixes.
 ///
 pub trait Entity: Node {
@@ -1114,23 +1122,121 @@ pub trait EntityReference: Node {}
 // ------------------------------------------------------------------------------------------------
 
 ///
+/// This corresponds to the DOM `DOMImplementation` interface.
+///
+/// # Specification
+///
+/// The `DOMImplementation` interface provides a number of methods for performing operations that
+/// are independent of any particular instance of the document object model.
+///
+pub trait DOMImplementation {
+    ///
+    /// Creates an XML Document object of the specified type with its document element.
+    ///
+    /// # Specification
+    ///
+    /// HTML-only DOM
+    /// implementations do not need to implement this method. **Introduced in DOM Level 2**
+    ///
+    /// **Parameters**
+    ///
+    /// * `namespaceURI` of type `DOMString`: The namespace URI of the document element to create.
+    /// * `qualifiedName` of type `DOMString`: The qualified name of the document element to be created.
+    /// * `doctype` of type `DocumentType`: The type of document to be created or null.
+    ///   When doctype is not null, its Node.ownerDocument attribute is set to the document being created.
+    ///
+    /// **Return Value**
+    ///
+    /// `Document`: A new Document object.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified qualified name contains an illegal character.
+    /// * `NAMESPACE_ERR`: Raised if the qualifiedName is malformed, if the qualifiedName has a prefix
+    ///   and the namespaceURI is null, or if the qualifiedName has a prefix that is "xml" and the
+    ///   namespaceURI is different from "http://www.w3.org/XML/1998/namespace".
+    /// * `WRONG_DOCUMENT_ERR`: Raised if doctype has already been used with a different document or
+    ///   was created from a different implementation.
+    ///
+    fn create_document(
+        &self,
+        namespace_uri: &str,
+        qualified_name: &str,
+        doc_type: Option<RefNode>,
+    ) -> Result<RefNode>;
+    ///
+    /// Creates an empty `DocumentType` node.
+    ///
+    /// # Specification
+    ///
+    /// Entity declarations and notations are not made available. Entity reference expansions and
+    /// default attribute additions do not occur. It is expected that a future version of the DOM
+    /// will provide a way for populating a `DocumentType`. **Introduced in DOM Level 2**
+    ///
+    /// HTML-only DOM implementations do not need to implement this method.
+    ///
+    /// **Parameters**
+    ///
+    /// * `qualifiedName` of type `DOMString`: The qualified name of the document type to be created.
+    /// * `publicId` of type `DOMString`: The external subset public identifier.
+    /// * `systemId` of type `DOMString`: The external subset system identifier.
+    ///
+    /// **Return Value**
+    ///
+    /// `DocumentType`: A new `DocumentType` node with `Node.ownerDocument` set to null.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified qualified name contains an illegal character.
+    /// * `NAMESPACE_ERR`: Raised if the `qualifiedName` is malformed.
+    ///
+    fn create_document_type(
+        &self,
+        qualified_name: &str,
+        public_id: &str,
+        system_id: &str,
+    ) -> Result<RefNode>;
+    ///
+    /// Test if the DOM implementation implements a specific feature.
+    ///
+    /// # Specification
+    ///
+    /// See DOM Level 2 Core [§1.3. Extended Interfaces](https://www.w3.org/TR/DOM-Level-2-Core/core.html#ID-E067D597)
+    ///
+    /// **Parameters**
+    ///
+    /// * `feature` of type `DOMString`: The name of the feature to test (case-insensitive). The values used by DOM features are defined throughout the DOM Level 2 specifications and listed in the Conformance section. The name must be an XML name. To avoid possible conflicts, as a convention, names referring to features defined outside the DOM specification should be made unique by reversing the name of the Internet domain name of the person (or the organization that the person belongs to) who defines the feature, component by component, and using this as a prefix. For instance, the W3C SVG Working Group defines the feature "org.w3c.dom.svg".
+    /// * `version` of type `DOMString`: This is the version number of the feature to test. In Level 2, the string can be either "2.0" or "1.0". If the version is not specified, supporting any version of the feature causes the method to return true.
+    ///
+    /// **Return Value**
+    ///
+    /// `boolean`: true if the feature is implemented in the specified version, false otherwise.
+    ///
+    /// **No Exceptions**
+    ///
+    fn has_feature(&self, feature: &str, version: &str) -> bool;
+}
+
+// ------------------------------------------------------------------------------------------------
+
+///
 /// This corresponds to the DOM `Node` interface.
 ///
 /// # Specification
 ///
-/// The Node interface is the primary datatype for the entire Document Object Model. It represents
-/// a single node in the document tree. While all objects implementing the Node interface expose
-/// methods for dealing with children, not all objects implementing the Node interface may have
-/// children. For example, Text nodes may not have children, and adding children to such nodes
-/// results in a DOMException being raised.
+/// The `Node` interface is the primary datatype for the entire Document Object Model. It represents
+/// a single node in the document tree. While all objects implementing the `Node` interface expose
+/// methods for dealing with children, not all objects implementing the `Node` interface may have
+/// children. For example, `Text` nodes may not have children, and adding children to such nodes
+/// results in a `DOMException` being raised.
 ///
-/// The attributes nodeName, nodeValue and attributes are included as a mechanism to get at node
+/// The attributes `nodeName`, `nodeValue` and `attributes` are included as a mechanism to get at node
 /// information without casting down to the specific derived interface. In cases where there is no
-/// obvious mapping of these attributes for a specific nodeType (e.g., nodeValue for an Element or
-/// attributes for a Comment), this returns null. Note that the specialized interfaces may contain
+/// obvious mapping of these attributes for a specific nodeType (e.g., `nodeValue` for an `Element` or
+/// `attributes` for a `Comment`), this returns `null`. Note that the specialized interfaces may contain
 /// additional and more convenient mechanisms to get and set the relevant information.
 ///
-/// The values of nodeName, nodeValue, and attributes vary according to the node type as follows:
+/// The values of `nodeName`, `nodeValue`, and `attributes` vary according to the node type as follows:
 ///
 ///
 /// | Interface               | nodeName                  | nodeValue                           | attributes   |
@@ -1170,11 +1276,11 @@ pub trait Node {
     ///
     fn node_value(&self) -> Option<String>;
     ///
-    /// Set the `value` for the node; see [node_value()](#tymethod.node_value).
+    /// Set the `value` for the node; see [`node_value`](#tymethod.node_value).
     ///
     fn set_node_value(&mut self, value: &str) -> Result<()>;
     ///
-    /// Set the `value` for the node to `None`; see [node_value()](#tymethod.node_value).
+    /// Set the `value` for the node to `None`; see [`node_value`](#tymethod.node_value).
     ///
     fn unset_node_value(&mut self) -> Result<()>;
     ///
@@ -1322,10 +1428,10 @@ pub trait Node {
     ///
     /// The duplicate node has no parent; (`parentNode` is null.).
     ///
-    /// Cloning an [Element](trait.Element.html) copies all attributes and their values, including
+    /// Cloning an [`Element`](trait.Element.html) copies all attributes and their values, including
     /// those generated by the XML processor to represent defaulted attributes, but this method does
     /// not copy any text it contains unless it is a deep clone, since the text is contained in a
-    /// child [Text](trait.Text.html) node. Cloning an [Attribute](trait.Attribute.html) directly,
+    /// child [`Text`](trait.Text.html) node. Cloning an [`Attribute`](trait.Attribute.html) directly,
     /// as opposed to be cloned as part of an `Element` cloning operation, returns a specified
     /// attribute (`specified` is `true`). Cloning any other type of node simply returns a copy of
     /// this node.
@@ -1346,7 +1452,7 @@ pub trait Node {
     ///
     fn clone_node(&self, deep: bool) -> Option<RefNode>;
     ///
-    /// Puts all [Text](trait.Text.html) nodes in the full depth of the sub-tree underneath this
+    /// Puts all [`Text`](trait.Text.html) nodes in the full depth of the sub-tree underneath this
     /// `Node`, including attribute nodes, into a "normal" form where only structure (e.g.,
     /// elements, comments, processing instructions, CDATA sections, and entity references)
     /// separates `Text` nodes, i.e., there are neither adjacent `Text` nodes nor empty `Text` nodes.
@@ -1357,7 +1463,7 @@ pub trait Node {
     /// and re-loaded, and is useful when operations (such as XPointer lookups) that depend on a
     /// particular document tree structure are to be used.
     ///
-    /// Note: In cases where the document contains [CDataSection](trait.CDataSection.html), the
+    /// Note: In cases where the document contains [`CDataSection`](trait.CDataSection.html), the
     /// normalize operation alone may not be sufficient, since XPointers do not differentiate
     /// between `Text` nodes and `CDATASection` nodes.
     ///
@@ -1402,7 +1508,7 @@ pub trait Node {
 /// This interface represents a notation declared in the DTD. A notation either declares, by name,
 /// the format of an unparsed entity (see section 4.7 of the XML 1.0 specification), or is used
 /// for formal declaration of processing instruction targets (see section 2.6 of the XML 1.0
-/// specification). The `nodeName` attribute inherited from [Node](trait.Node.html) is set to the
+/// specification). The `nodeName` attribute inherited from [`Node`](trait.Node.html) is set to the
 /// declared name of the notation.
 ///
 /// The DOM Level 1 does not support editing `Notation` nodes; they are therefore readonly.
@@ -1464,13 +1570,13 @@ pub trait ProcessingInstruction: Node {
         Node::node_value(self)
     }
     ///
-    /// Set the `data` for the node; see [data()](#tymethod.data).
+    /// Set the `data` for the node; see [`data`](#tymethod.data).
     ///
     fn set_data(&mut self, data: &str) -> Result<()> {
         Node::set_node_value(self, data)
     }
     ///
-    /// Set the `data` for the node to `None`; see [data()](#tymethod.data).
+    /// Set the `data` for the node to `None`; see [`data`](#tymethod.data).
     ///
     fn unset_data(&mut self) -> Result<()> {
         Node::unset_node_value(self)
@@ -1495,9 +1601,9 @@ pub trait ProcessingInstruction: Node {
 ///
 /// # Specification
 ///
-/// The `Text` interface inherits from [CharacterData](trait.CharacterData.html) and represents the
-/// textual content (termed character data in XML) of an [Element](trait.Element.html) or
-/// [Attr](trait.Attribute.html). If there is no markup inside an element's content, the text is
+/// The `Text` interface inherits from [`CharacterData`](trait.CharacterData.html) and represents the
+/// textual content (termed character data in XML) of an [`Element`](trait.Element.html) or
+/// [`Attr`](trait.Attribute.html). If there is no markup inside an element's content, the text is
 /// contained in a single object implementing the `Text` interface that is the only child of the
 /// element. If there is markup, it is parsed into the information items (elements, comments,
 /// etc.) and `Text` nodes that form the list of children of the element.
@@ -1506,7 +1612,7 @@ pub trait ProcessingInstruction: Node {
 /// block of text. Users may create adjacent `Text` nodes that represent the contents of a given
 /// element without any intervening markup, but should be aware that there is no way to represent
 /// the separations between these nodes in XML or HTML, so they will not (in general) persist
-/// between DOM editing sessions. The `normalize()` method on [Node](trait.Node.html) merges any
+/// between DOM editing sessions. The `normalize()` method on [`Node`](trait.Node.html) merges any
 /// such adjacent `Text` objects into a single node for each block of text.
 ///
 pub trait Text: CharacterData {
@@ -1531,7 +1637,8 @@ pub trait Text: CharacterData {
     ///
     /// **Exceptions**
     ///
-    /// * `INDEX_SIZE_ERR`: Raised if the specified offset is negative or greater than the number of 16-bit units in data.
+    /// * `INDEX_SIZE_ERR`: Raised if the specified offset is negative or greater than the number
+    ///   of 16-bit units in data.
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     ///
     fn split(&self, offset: usize) -> Result<RefNode>;
@@ -1550,12 +1657,20 @@ pub struct Implementation {}
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Internal DOM tree node owned reference
+/// Internal DOM tree node owned reference.
+///
+/// This is the common response type for DOM actions and can be cast to specific traits either
+/// by-hand or using the [`xml_dom::convert`](convert/index.html) module. Also, note that this type
+/// supports[`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html) and so two nodes
+/// can be tested to ensure they are the same.
 ///
 pub type RefNode = RcRefCell<NodeImpl>;
 
 ///
-/// Internal DOM tree node weak reference
+/// Internal DOM tree node weak reference.
+///
+/// This is an opaque reference and can only used when converted into a
+/// [`RefNode`](type.RefNode.html).
 ///
 pub type WeakRefNode = WeakRefCell<NodeImpl>;
 
@@ -1567,25 +1682,25 @@ pub type WeakRefNode = WeakRefCell<NodeImpl>;
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[repr(u16)]
 pub enum NodeType {
-    /// The node is an [Element](trait.Element.html)
+    /// The node is an [`Element`](trait.Element.html)
     Element = 1,
-    /// The node is an [Attribute](trait.Attribute.html)
+    /// The node is an [`Attribute`](trait.Attribute.html)
     Attribute,
-    /// The node is a [Text](trait.Text.html)
+    /// The node is a [`Text`](trait.Text.html)
     Text,
-    /// The node is a [CDataSection](trait.CDataSection.html)
+    /// The node is a [`CDataSection`](trait.CDataSection.html)
     CData,
     /// The node is an `EntityReference`
     EntityReference,
     /// The node is an `Entity`
     Entity,
-    /// The node is a [ProcessingInstruction](trait.ProcessingInstruction.html)
+    /// The node is a [`ProcessingInstruction`](trait.ProcessingInstruction.html)
     ProcessingInstruction,
-    /// The node is a [Comment](trait.Comment.html)
+    /// The node is a [`Comment`](trait.Comment.html)
     Comment,
-    /// The node is a [Document](trait.Document.html)
+    /// The node is a [`Document`](trait.Document.html)
     Document,
-    /// The node is a [DocumentType](trait.DocumentType.html)
+    /// The node is a [`DocumentType`](trait.DocumentType.html)
     DocumentType,
     /// The node is a `DocumentFragment`
     DocumentFragment,
@@ -1598,6 +1713,7 @@ pub enum NodeType {
 ///
 /// Internal container for DOM tree node data and state.
 ///
+#[doc(hidden)]
 #[derive(Clone, Debug)]
 pub struct NodeImpl {
     pub(crate) i_node_type: NodeType,

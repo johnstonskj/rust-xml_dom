@@ -5,11 +5,13 @@ use std::rc::{Rc, Weak};
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
+#[doc(hidden)]
 #[derive(Debug)]
 pub struct RcRefCell<T: Sized> {
     inner: Rc<RefCell<T>>,
 }
 
+#[doc(hidden)]
 #[derive(Debug)]
 pub struct WeakRefCell<T: Sized> {
     inner: Weak<RefCell<T>>,
@@ -24,6 +26,13 @@ impl<T> Clone for RcRefCell<T> {
         Self {
             inner: self.inner.clone(),
         }
+    }
+}
+
+impl<T> PartialEq for RcRefCell<T> {
+    fn eq(&self, other: &Self) -> bool {
+        // RefNodes are equal if the two Rc point to the same RefCell.
+        Rc::ptr_eq(&self.inner, &other.inner)
     }
 }
 

@@ -246,8 +246,8 @@ impl Document for RefNode {
         ref_self.i_document_element.clone()
     }
 
-    fn implementation(&self) -> &Implementation {
-        &Implementation {}
+    fn implementation(&self) -> &dyn DOMImplementation {
+        get_implementation()
     }
 
     fn create_attribute(&self, name: &str) -> Result<RefNode> {
@@ -653,36 +653,16 @@ impl NodeImpl {
 
 // ------------------------------------------------------------------------------------------------
 
-impl Implementation {
-    ///
-    /// Creates an XML Document object of the specified type with its document element.
-    ///
-    /// # Specification
-    ///
-    /// HTML-only DOM
-    /// implementations do not need to implement this method. **Introduced in DOM Level 2**
-    ///
-    /// **Parameters**
-    ///
-    /// * `namespaceURI` of type `DOMString`: The namespace URI of the document element to create.
-    /// * `qualifiedName` of type `DOMString`: The qualified name of the document element to be created.
-    /// * `doctype` of type `DocumentType`: The type of document to be created or null.
-    ///   When doctype is not null, its Node.ownerDocument attribute is set to the document being created.
-    ///
-    /// **Return Value**
-    ///
-    /// `Document`: A new Document object.
-    ///
-    /// **Exceptions**
-    ///
-    /// * `INVALID_CHARACTER_ERR`: Raised if the specified qualified name contains an illegal character.
-    /// * `NAMESPACE_ERR`: Raised if the qualifiedName is malformed, if the qualifiedName has a prefix
-    ///   and the namespaceURI is null, or if the qualifiedName has a prefix that is "xml" and the
-    ///   namespaceURI is different from "http://www.w3.org/XML/1998/namespace".
-    /// * `WRONG_DOCUMENT_ERR`: Raised if doctype has already been used with a different document or
-    ///   was created from a different implementation.
-    ///
-    pub fn create_document(
+///
+/// Internal use only
+///
+#[doc(hidden)]
+#[derive(Clone, Debug)]
+struct Implementation {}
+
+impl DOMImplementation for Implementation {
+    fn create_document(
+        &self,
         namespace_uri: &str,
         qualified_name: &str,
         doc_type: Option<RefNode>,
@@ -691,34 +671,7 @@ impl Implementation {
         let node_impl = NodeImpl::new_document(name, doc_type);
         Ok(RefNode::new(node_impl))
     }
-
-    ///
-    /// Creates an empty `DocumentType` node.
-    ///
-    /// # Specification
-    ///
-    /// Entity declarations and notations are not made available. Entity reference expansions and
-    /// default attribute additions do not occur. It is expected that a future version of the DOM
-    /// will provide a way for populating a `DocumentType`. **Introduced in DOM Level 2**
-    ///
-    /// HTML-only DOM implementations do not need to implement this method.
-    ///
-    /// **Parameters**
-    ///
-    /// * `qualifiedName` of type `DOMString`: The qualified name of the document type to be created.
-    /// * `publicId` of type `DOMString`: The external subset public identifier.
-    /// * `systemId` of type `DOMString`: The external subset system identifier.
-    ///
-    /// **Return Value**
-    ///
-    /// `DocumentType`: A new `DocumentType` node with `Node.ownerDocument` set to null.
-    ///
-    /// **Exceptions**
-    ///
-    /// * `INVALID_CHARACTER_ERR`: Raised if the specified qualified name contains an illegal character.
-    /// * `NAMESPACE_ERR`: Raised if the `qualifiedName` is malformed.
-    ///
-    pub fn create_document_type(
+    fn create_document_type(&self,
         qualified_name: &str,
         public_id: &str,
         system_id: &str,
@@ -727,26 +680,21 @@ impl Implementation {
         let node_impl = NodeImpl::new_document_type(name, public_id, system_id);
         Ok(RefNode::new(node_impl))
     }
-
-    ///
-    /// Test if the DOM implementation implements a specific feature.
-    ///
-    /// # Specification
-    ///
-    /// See DOM Level 2 Core [§1.3. Extended Interfaces](https://www.w3.org/TR/DOM-Level-2-Core/core.html#ID-E067D597)
-    ///
-    /// **Parameters**
-    ///
-    /// * `feature` of type `DOMString`: The name of the feature to test (case-insensitive). The values used by DOM features are defined throughout the DOM Level 2 specifications and listed in the Conformance section. The name must be an XML name. To avoid possible conflicts, as a convention, names referring to features defined outside the DOM specification should be made unique by reversing the name of the Internet domain name of the person (or the organization that the person belongs to) who defines the feature, component by component, and using this as a prefix. For instance, the W3C SVG Working Group defines the feature "org.w3c.dom.svg".
-    /// * `version` of type `DOMString`: This is the version number of the feature to test. In Level 2, the string can be either "2.0" or "1.0". If the version is not specified, supporting any version of the feature causes the method to return true.
-    ///
-    /// **Return Value**
-    ///
-    /// `boolean`: true if the feature is implemented in the specified version, false otherwise.
-    ///
-    /// **No Exceptions**
-    ///
-    pub fn has_feature(_feature: String, _version: String) -> bool {
-        unimplemented!()
+    fn has_feature(&self, feature: &str, version: &str) -> bool {
+        (feature == XML_FEATURE_CORE || feature == XML_FEATURE_XML) &&
+            (version == XML_FEATURE_V1 || version == XML_FEATURE_V2)
     }
+}
+
+const THIS_IMPLEMENTATION: &'static dyn DOMImplementation = &Implementation{};
+
+///
+/// Return a reference to an instance of this `DOMImplementation` implementation.
+///
+/// This function gets around the DOM bootstrap issue, the `implementation` method on the
+/// [`Document`](trait.Document.html) trait requires an instance of `Document`; however, the
+/// `create_document` method on `DOMImplementation` requires an instance from `implementation`.
+///
+pub fn get_implementation() -> &'static dyn DOMImplementation {
+    THIS_IMPLEMENTATION
 }
