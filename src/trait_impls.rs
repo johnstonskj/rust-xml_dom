@@ -1,5 +1,6 @@
 use self::super::error::{Error, Result};
 use self::super::name::Name;
+use self::super::node_impl::*;
 use self::super::rc_cell::*;
 use self::super::syntax::*;
 use self::super::traits::*;
@@ -14,6 +15,8 @@ use std::str::FromStr;
 // ------------------------------------------------------------------------------------------------
 
 impl Node for RefNode {
+    type RefNode = RefNode;
+
     fn name(&self) -> Name {
         let ref_self = self.borrow();
         ref_self.i_name.clone()
@@ -159,15 +162,21 @@ impl Node for RefNode {
 
 // ------------------------------------------------------------------------------------------------
 
-impl Attribute for RefNode {}
+impl Attribute for RefNode {
+    type RefNode = RefNode;
+}
 
 // ------------------------------------------------------------------------------------------------
 
-impl CDataSection for RefNode {}
+impl CDataSection for RefNode {
+    type RefNode = RefNode;
+}
 
 // ------------------------------------------------------------------------------------------------
 
 impl CharacterData for RefNode {
+    type RefNode = RefNode;
+
     fn substring(&self, offset: usize, count: usize) -> Result<String> {
         let ref_self = self.borrow();
         match &ref_self.i_value {
@@ -248,11 +257,15 @@ impl CharacterData for RefNode {
 
 // ------------------------------------------------------------------------------------------------
 
-impl Comment for RefNode {}
+impl Comment for RefNode {
+    type RefNode = RefNode;
+}
 
 // ------------------------------------------------------------------------------------------------
 
 impl Document for RefNode {
+    type RefNode = RefNode;
+
     fn doc_type(&self) -> Option<RefNode> {
         let ref_self = self.borrow();
         ref_self.i_document_type.clone()
@@ -368,6 +381,8 @@ impl Document for RefNode {
 // ------------------------------------------------------------------------------------------------
 
 impl DocumentType for RefNode {
+    type RefNode = RefNode;
+
     fn public_id(&self) -> Option<String> {
         let as_element = self as &dyn Element;
         as_element.get_attribute(XML_DOCTYPE_PUBLIC)
@@ -382,6 +397,8 @@ impl DocumentType for RefNode {
 // ------------------------------------------------------------------------------------------------
 
 impl Element for RefNode {
+    type RefNode = RefNode;
+
     fn get_attribute(&self, name: &str) -> Option<String> {
         if !is_element(self) {
             // shortcut as only elements have attributes
@@ -514,11 +531,15 @@ impl Element for RefNode {
 
 // ------------------------------------------------------------------------------------------------
 
-impl ProcessingInstruction for RefNode {}
+impl ProcessingInstruction for RefNode {
+    type RefNode = RefNode;
+}
 
 // ------------------------------------------------------------------------------------------------
 
 impl Text for RefNode {
+    type RefNode = RefNode;
+
     fn split(&self, _offset: usize) -> Result<RefNode> {
         unimplemented!()
     }
@@ -747,6 +768,8 @@ impl NodeImpl {
 struct Implementation {}
 
 impl DOMImplementation for Implementation {
+    type RefNode = RefNode;
+
     fn create_document(
         &self,
         namespace_uri: &str,

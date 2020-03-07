@@ -173,6 +173,8 @@ pub use trait_impls::*;
 // Private Modules
 // ------------------------------------------------------------------------------------------------
 
+mod node_impl;
+
 mod rc_cell;
 
 mod syntax;

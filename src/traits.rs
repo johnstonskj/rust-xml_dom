@@ -1,6 +1,5 @@
 use self::super::error::Result;
 use self::super::name::Name;
-use self::super::rc_cell::*;
 use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
@@ -11,6 +10,7 @@ use std::collections::HashMap;
 /// This corresponds to the DOM `Attr` interface.
 ///
 pub trait Attribute: Node {
+    type RefNode;
     ///
     /// On retrieval, the value of the attribute is returned as a string.
     ///
@@ -105,7 +105,9 @@ pub trait Attribute: Node {
 /// character is missing from the encoding, making the task of ensuring that data is not corrupted
 /// on serialization more difficult.
 ///
-pub trait CDataSection: Text {}
+pub trait CDataSection: Text {
+    type RefNode;
+}
 
 // ------------------------------------------------------------------------------------------------
 
@@ -125,6 +127,7 @@ pub trait CDataSection: Text {}
 /// necessary to indicate that indexing on `CharacterData` is done in 16-bit units.
 ///
 pub trait CharacterData: Node {
+    type RefNode;
     ///
     /// The number of 16-bit units that are available through data and the `substringData` method
     /// below. This may have the value zero, i.e., `CharacterData` nodes may be empty.
@@ -278,7 +281,9 @@ pub trait CharacterData: Node {
 /// Note that this is the definition of a comment in XML, and, in practice, HTML, although some
 /// HTML tools may implement the full SGML comment structure.
 ///
-pub trait Comment: CharacterData {}
+pub trait Comment: CharacterData {
+    type RefNode;
+}
 
 // ------------------------------------------------------------------------------------------------
 
@@ -286,6 +291,7 @@ pub trait Comment: CharacterData {}
 /// This corresponds to the DOM `Document` interface.
 ///
 pub trait Document: Node {
+    type RefNode;
     ///
     /// The Document Type Declaration (see [`DocumentType`](trait.DocumentType.html)) associated with
     /// this document.
@@ -297,7 +303,7 @@ pub trait Document: Node {
     /// Declaration. `docType` cannot be altered in any way, including through the use of methods
     /// inherited from the [`Node`](trait.Node.html) interface, such as `insertNode` or `removeNode`.
     ///
-    fn doc_type(&self) -> Option<RefNode>;
+    fn doc_type(&self) -> Option<Self::RefNode>;
     ///
     /// This is a convenience attribute that allows direct access to the child node that is the
     /// root element of the document.
@@ -306,7 +312,7 @@ pub trait Document: Node {
     ///
     /// For HTML documents, this is the element with the tagName `"HTML"`.
     ///
-    fn document_element(&self) -> Option<RefNode>;
+    fn document_element(&self) -> Option<Self::RefNode>;
     ///
     /// The DOMImplementation object that handles this document.
     ///
@@ -338,12 +344,12 @@ pub trait Document: Node {
     ///
     /// * `INVALID_CHARACTER_ERR`: Raised if the specified name contains an illegal character.
     ///
-    fn create_attribute(&self, name: &str) -> Result<RefNode>;
+    fn create_attribute(&self, name: &str) -> Result<Self::RefNode>;
     ///
     /// Implementation defined extension: this is the same as `create_attribute` except that it
     /// also sets the attribute value.
     ///
-    fn create_attribute_with(&self, name: &str, value: &str) -> Result<RefNode>;
+    fn create_attribute_with(&self, name: &str, value: &str) -> Result<Self::RefNode>;
     ///
     /// Creates an attribute of the given qualified name and namespace URI.
     ///
@@ -379,7 +385,11 @@ pub trait Document: Node {
     ///   or if the `qualifiedName` is "xmlns" and the namespaceURI is different from
     ///   "http://www.w3.org/2000/xmlns/".
     ///
-    fn create_attribute_ns(&self, namespace_uri: &str, qualified_name: &str) -> Result<RefNode>;
+    fn create_attribute_ns(
+        &self,
+        namespace_uri: &str,
+        qualified_name: &str,
+    ) -> Result<Self::RefNode>;
     ///
     /// Creates a [`CDataSection`](trait.CDataSection.html) node whose value is the specified string.
     ///
@@ -397,7 +407,7 @@ pub trait Document: Node {
     ///
     /// * `NOT_SUPPORTED_ERR`: Raised if this document is an HTML document.
     ///
-    fn create_cdata_section(&self, data: &str) -> Result<RefNode>;
+    fn create_cdata_section(&self, data: &str) -> Result<Self::RefNode>;
     ///
     /// Creates an empty DocumentFragment object.
     ///
@@ -407,7 +417,7 @@ pub trait Document: Node {
     ///
     /// `DocumentFragment`: A new `DocumentFragment`.
     ///
-    fn create_document_fragment(&self) -> Result<RefNode>;
+    fn create_document_fragment(&self) -> Result<Self::RefNode>;
     ///
     /// Creates an `EntityReference` object.
     ///
@@ -435,7 +445,7 @@ pub trait Document: Node {
     /// * `INVALID_CHARACTER_ERR`: Raised if the specified name contains an illegal character.
     /// * `NOT_SUPPORTED_ERR`: Raised if this document is an HTML document.
     ///
-    fn create_entity_reference(&self, name: &str) -> Result<RefNode>;
+    fn create_entity_reference(&self, name: &str) -> Result<Self::RefNode>;
     ///
     /// Creates a [`Comment`](trait.Comment.html) node given the specified string.
     ///
@@ -449,7 +459,7 @@ pub trait Document: Node {
     ///
     /// * `Comment`: The new `Comment` object.
     ///
-    fn create_comment(&self, data: &str) -> RefNode;
+    fn create_comment(&self, data: &str) -> Self::RefNode;
     ///
     /// Creates an element of the type specified.
     ///
@@ -478,7 +488,7 @@ pub trait Document: Node {
     ///
     /// * `INVALID_CHARACTER_ERR`: Raised if the specified name contains an illegal character.
     ///
-    fn create_element(&self, tag_name: &str) -> Result<RefNode>;
+    fn create_element(&self, tag_name: &str) -> Result<Self::RefNode>;
     ///
     /// Creates an element of the given qualified name and namespace URI.
     ///
@@ -514,7 +524,8 @@ pub trait Document: Node {
     ///   or if the `qualifiedName` is "xmlns" and the namespaceURI is different from
     ///   "http://www.w3.org/2000/xmlns/".
     ///
-    fn create_element_ns(&self, namespace_uri: &str, qualified_name: &str) -> Result<RefNode>;
+    fn create_element_ns(&self, namespace_uri: &str, qualified_name: &str)
+        -> Result<Self::RefNode>;
     ///
     /// Creates a [`ProcessingInstruction`](trait.ProcessingInstruction.html) node given the
     /// specified name and data strings.
@@ -535,7 +546,11 @@ pub trait Document: Node {
     /// * `INVALID_CHARACTER_ERR`: Raised if the specified target contains an illegal character.
     /// * `NOT_SUPPORTED_ERR`: Raised if this document is an HTML document.
     ///
-    fn create_processing_instruction(&self, target: &str, data: Option<&str>) -> Result<RefNode>;
+    fn create_processing_instruction(
+        &self,
+        target: &str,
+        data: Option<&str>,
+    ) -> Result<Self::RefNode>;
     ///
     /// Creates a [`Text`](trait.Text.html) node given the specified string.
     ///
@@ -549,7 +564,7 @@ pub trait Document: Node {
     ///
     /// * `Text`: The new Text object.
     ///
-    fn create_text_node(&self, data: &str) -> RefNode;
+    fn create_text_node(&self, data: &str) -> Self::RefNode;
     ///
     /// Returns the [`Element`](trait.Element.html) whose ID is given by `elementId`.
     ///
@@ -572,7 +587,7 @@ pub trait Document: Node {
     ///
     /// * `Element`: The matching element.
     ///
-    fn get_element_by_id(&self, id: &str) -> Option<RefNode>;
+    fn get_element_by_id(&self, id: &str) -> Option<Self::RefNode>;
     ///
     /// Returns a `NodeList` of all the [`Element`](trait.Element.html)s with a given tag name in the
     /// order in which they are encountered in a preorder traversal of the Document tree.
@@ -588,7 +603,7 @@ pub trait Document: Node {
     ///
     /// * `NodeList`: A new `NodeList` object containing all the matched `Element`s.
     ///
-    fn get_elements_by_tag_name(&self, tag_name: &str) -> Vec<RefNode>;
+    fn get_elements_by_tag_name(&self, tag_name: &str) -> Vec<Self::RefNode>;
     ///
     /// Returns a `NodeList` of all the [`Element`](trait.Element.html)s with a given local name and
     /// namespace URI in the order in which they are encountered in a preorder traversal of the
@@ -607,7 +622,11 @@ pub trait Document: Node {
     ///
     /// * `NodeList`: A new `NodeList` object containing all the matched `Element`s.
     ///
-    fn get_elements_by_tag_name_ns(&self, namespace_uri: &str, local_name: &str) -> Vec<RefNode>;
+    fn get_elements_by_tag_name_ns(
+        &self,
+        namespace_uri: &str,
+        local_name: &str,
+    ) -> Vec<Self::RefNode>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -644,7 +663,9 @@ pub trait Document: Node {
 /// so that the user can use the standard methods from the [`Node`](trait.Node.html) interface, such as
 /// `insertBefore` and `appendChild`.
 ///
-pub trait DocumentFragment: Node {}
+pub trait DocumentFragment: Node {
+    type RefNode;
+}
 
 // ------------------------------------------------------------------------------------------------
 
@@ -662,6 +683,7 @@ pub trait DocumentFragment: Node {}
 /// The DOM Level 2 doesn't support editing `DocumentType` nodes.
 ///
 pub trait DocumentType: Node {
+    type RefNode;
     /// The public identifier of the external subset.
     fn public_id(&self) -> Option<String>;
     /// The system identifier of the external subset.
@@ -689,6 +711,7 @@ pub trait DocumentType: Node {
 /// it was moved.
 ///
 pub trait Element: Node {
+    type RefNode;
     ///
     /// The name of the element.
     ///
@@ -785,7 +808,7 @@ pub trait Element: Node {
     /// * `Attr`: The `Attr` node with the specified name (`nodeName`) or null if there is no such
     /// attribute.
     ///
-    fn get_attribute_node(&self, name: &str) -> Option<RefNode>;
+    fn get_attribute_node(&self, name: &str) -> Option<Self::RefNode>;
     ///
     /// Adds a new attribute node.
     ///
@@ -814,7 +837,7 @@ pub trait Element: Node {
     /// * `INUSE_ATTRIBUTE_ERR`: Raised if `newAttr` is already an attribute of another `Element`
     ///   object. The DOM user must explicitly clone `Attr` nodes to re-use them in other elements.
     ///
-    fn set_attribute_node(&mut self, _new_attribute: RefNode) -> Result<RefNode>;
+    fn set_attribute_node(&mut self, new_attribute: Self::RefNode) -> Result<Self::RefNode>;
     ///
     /// Removes the specified attribute node.
     ///
@@ -837,7 +860,7 @@ pub trait Element: Node {
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     /// * `NOT_FOUND_ERR`: Raised if oldAttr is not an attribute of the element.
     ///
-    fn remove_attribute_node(&mut self, _old_attribute: RefNode) -> Result<RefNode>;
+    fn remove_attribute_node(&mut self, _old_attribute: Self::RefNode) -> Result<Self::RefNode>;
     ///
     /// Returns a `NodeList` of all descendant `Element`s with a given tag name, in the order in
     /// which they are encountered in a preorder traversal of this `Element` tree.
@@ -853,7 +876,7 @@ pub trait Element: Node {
     ///
     /// * `NodeList`: A list of matching `Element` nodes.
     ///
-    fn get_elements_by_tag_name(&self, _tag_name: &str) -> Vec<RefNode>;
+    fn get_elements_by_tag_name(&self, _tag_name: &str) -> Vec<Self::RefNode>;
     ///
     /// Retrieves an attribute value by local name and namespace URI.
     ///
@@ -948,7 +971,11 @@ pub trait Element: Node {
     /// * `Attr`: The `Attr` node with the specified attribute local name and namespace URI or
     ///   `null` if there is no such attribute.
     ///
-    fn get_attribute_node_ns(&self, _namespace_uri: &str, _local_name: &str) -> Option<RefNode>;
+    fn get_attribute_node_ns(
+        &self,
+        _namespace_uri: &str,
+        _local_name: &str,
+    ) -> Option<Self::RefNode>;
     ///
     /// Adds a new attribute.
     ///
@@ -976,7 +1003,7 @@ pub trait Element: Node {
     /// * `INUSE_ATTRIBUTE_ERR`: Raised if `newAttr` is already an attribute of another `Element`
     ///   object. The DOM user must explicitly clone `Attr` nodes to re-use them in other elements.
     ///
-    fn set_attribute_node_ns(&mut self, _new_attribute: RefNode) -> Result<RefNode>;
+    fn set_attribute_node_ns(&mut self, _new_attribute: Self::RefNode) -> Result<Self::RefNode>;
     ///
     /// Returns a `NodeList` of all the descendant `Element`s with a given local name and namespace
     /// URI in the order in which they are encountered in a preorder traversal of this Element tree.
@@ -996,7 +1023,11 @@ pub trait Element: Node {
     ///
     /// * `NodeList`: A new `NodeList` object containing all the matched `Element`s.
     ///
-    fn get_elements_by_tag_name_ns(&self, _namespace_uri: &str, _local_name: &str) -> Vec<RefNode>;
+    fn get_elements_by_tag_name_ns(
+        &self,
+        _namespace_uri: &str,
+        _local_name: &str,
+    ) -> Vec<Self::RefNode>;
     ///
     /// Returns `true` when an attribute with a given name is specified on this element or has a default
     /// value, `false` otherwise.
@@ -1071,6 +1102,7 @@ pub trait Element: Node {
 /// Level 2 does not support any mechanism to resolve namespace prefixes.
 ///
 pub trait Entity: Node {
+    type RefNode;
     ///
     /// The public identifier associated with the entity, if specified.
     ///
@@ -1119,7 +1151,9 @@ pub trait Entity: Node {
 ///
 /// As for `Entity` nodes, `EntityReference` nodes and all their descendants are readonly.
 ///
-pub trait EntityReference: Node {}
+pub trait EntityReference: Node {
+    type RefNode;
+}
 
 // ------------------------------------------------------------------------------------------------
 
@@ -1136,6 +1170,7 @@ pub trait EntityReference: Node {}
 /// are independent of any particular instance of the document object model.
 ///
 pub trait DOMImplementation {
+    type RefNode;
     ///
     /// Creates an XML Document object of the specified type with its document element.
     ///
@@ -1168,8 +1203,8 @@ pub trait DOMImplementation {
         &self,
         namespace_uri: &str,
         qualified_name: &str,
-        doc_type: Option<RefNode>,
-    ) -> Result<RefNode>;
+        doc_type: Option<Self::RefNode>,
+    ) -> Result<Self::RefNode>;
     ///
     /// Creates an empty `DocumentType` node.
     ///
@@ -1201,7 +1236,7 @@ pub trait DOMImplementation {
         qualified_name: &str,
         public_id: &str,
         system_id: &str,
-    ) -> Result<RefNode>;
+    ) -> Result<Self::RefNode>;
     ///
     /// Test if the DOM implementation implements a specific feature.
     ///
@@ -1261,6 +1296,7 @@ pub trait DOMImplementation {
 /// | `Text`                  | `"#text"`                 | content of the text node            | `None`       |
 ///
 pub trait Node {
+    type RefNode;
     ///
     /// The name of this node, depending on its type; see the table above.
     ///
@@ -1298,39 +1334,39 @@ pub trait Node {
     /// `Entity`, and `Notation` may have a parent. However, if a node has just been created and not
     /// yet added to the tree, or if it has been removed from the tree, this is `None`.
     ///
-    fn parent_node(&self) -> Option<RefNode>;
+    fn parent_node(&self) -> Option<Self::RefNode>;
     ///
     /// A `Vec` that contains all children of this node. If there are no children,
     /// this is a `Vec` containing no nodes.
     ///
-    fn child_nodes(&self) -> Vec<RefNode>;
+    fn child_nodes(&self) -> Vec<Self::RefNode>;
     ///
     /// The first child of this node. If there is no such node, this returns `None`.
     ///
-    fn first_child(&self) -> Option<RefNode>;
+    fn first_child(&self) -> Option<Self::RefNode>;
     ///
     /// The last child of this node. If there is no such node, this returns `None`.
     ///
-    fn last_child(&self) -> Option<RefNode>;
+    fn last_child(&self) -> Option<Self::RefNode>;
     ///
     /// The node immediately preceding this node. If there is no such node, this returns `None`.
     ///
-    fn previous_sibling(&self) -> Option<RefNode>;
+    fn previous_sibling(&self) -> Option<Self::RefNode>;
     ///
     /// The node immediately following this node. If there is no such node, this returns `None`.
     ///
-    fn next_sibling(&self) -> Option<RefNode>;
+    fn next_sibling(&self) -> Option<Self::RefNode>;
     ///
     /// A `HashMap` containing the attributes of this node (if it is an `Element`) or
     /// `None` otherwise.
     ///
-    fn attributes(&self) -> HashMap<Name, RefNode>;
+    fn attributes(&self) -> HashMap<Name, Self::RefNode>;
     ///
     /// The `Document` object associated with this node. This is also the `Document`
     /// object used to create new nodes. When this node is a `Document` or a `DocumentType` which is
     /// not used with any `Document` yet, this is `None`.
     ///
-    fn owner_document(&self) -> Option<RefNode>;
+    fn owner_document(&self) -> Option<Self::RefNode>;
     ///
     /// Inserts the node `newChild` before the existing child node `refChild`.
     ///
@@ -1362,7 +1398,11 @@ pub trait Node {
     ///   node being inserted is readonly.
     /// * `NOT_FOUND_ERR`: Raised if `refChild` is not a child of this node.
     ///
-    fn insert_before(&mut self, new_child: RefNode, ref_child: &RefNode) -> Result<RefNode>;
+    fn insert_before(
+        &mut self,
+        new_child: Self::RefNode,
+        ref_child: &Self::RefNode,
+    ) -> Result<Self::RefNode>;
     ///
     /// Replaces the child node `oldChild` with `newChild` in the list of children, and returns the
     /// `oldChild` node.
@@ -1391,7 +1431,11 @@ pub trait Node {
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node or the parent of the new node is readonly.
     /// * `NOT_FOUND_ERR`: Raised if oldChild is not a child of this node.
     ///
-    fn replace_child(&mut self, new_child: RefNode, old_child: &RefNode) -> Result<RefNode>;
+    fn replace_child(
+        &mut self,
+        new_child: Self::RefNode,
+        old_child: &Self::RefNode,
+    ) -> Result<Self::RefNode>;
     ///
     /// Adds the node `newChild` to the end of the list of children of this node.
     ///
@@ -1416,7 +1460,7 @@ pub trait Node {
     ///   the one that created this node.
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     ///
-    fn append_child(&mut self, new_child: RefNode) -> Result<RefNode>;
+    fn append_child(&mut self, new_child: Self::RefNode) -> Result<Self::RefNode>;
     ///
     /// Returns whether this node has any children.
     ///
@@ -1456,7 +1500,7 @@ pub trait Node {
     ///
     /// * `Node`:The duplicate node.
     ///
-    fn clone_node(&self, deep: bool) -> Option<RefNode>;
+    fn clone_node(&self, deep: bool) -> Option<Self::RefNode>;
     ///
     /// Puts all [`Text`](trait.Text.html) nodes in the full depth of the sub-tree underneath this
     /// `Node`, including attribute nodes, into a "normal" form where only structure (e.g.,
@@ -1522,6 +1566,7 @@ pub trait Node {
 /// A `Notation` node does not have any parent.
 ///
 pub trait Notation: Node {
+    type RefNode;
     ///
     /// The public identifier of this notation.
     ///
@@ -1551,6 +1596,7 @@ pub trait Notation: Node {
 /// way to keep processor-specific information in the text of the document.
 ///
 pub trait ProcessingInstruction: Node {
+    type RefNode;
     ///
     /// The number of 16-bit units that are available through `data`.
     ///
@@ -1622,6 +1668,7 @@ pub trait ProcessingInstruction: Node {
 /// such adjacent `Text` objects into a single node for each block of text.
 ///
 pub trait Text: CharacterData {
+    type RefNode;
     ///
     /// Breaks this node into two nodes at the specified offset, keeping both in the tree as siblings.
     ///
@@ -1647,38 +1694,8 @@ pub trait Text: CharacterData {
     ///   of 16-bit units in data.
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     ///
-    fn split(&self, offset: usize) -> Result<RefNode>;
+    fn split(&self, offset: usize) -> Result<Self::RefNode>;
 }
-
-// ------------------------------------------------------------------------------------------------
-// Public Types
-// ------------------------------------------------------------------------------------------------
-
-///
-/// This corresponds to the DOM `DOMImplementation` interface.
-///
-#[derive(Debug)]
-pub struct Implementation {}
-
-// ------------------------------------------------------------------------------------------------
-
-///
-/// Internal DOM tree node owned reference.
-///
-/// This is the common response type for DOM actions and can be cast to specific traits either
-/// by-hand or using the [`xml_dom::convert`](convert/index.html) module. Also, note that this type
-/// supports[`PartialEq`](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html) and so two nodes
-/// can be tested to ensure they are the same.
-///
-pub type RefNode = RcRefCell<NodeImpl>;
-
-///
-/// Internal DOM tree node weak reference.
-///
-/// This is an opaque reference and can only used when converted into a
-/// [`RefNode`](type.RefNode.html).
-///
-pub type WeakRefNode = WeakRefCell<NodeImpl>;
 
 // ------------------------------------------------------------------------------------------------
 
@@ -1712,24 +1729,4 @@ pub enum NodeType {
     DocumentFragment,
     /// The node is a `Notation`
     Notation,
-}
-
-// ------------------------------------------------------------------------------------------------
-
-///
-/// Internal container for DOM tree node data and state.
-///
-#[doc(hidden)]
-#[derive(Clone, Debug)]
-pub struct NodeImpl {
-    pub(crate) i_node_type: NodeType,
-    pub(crate) i_name: Name,
-    pub(crate) i_value: Option<String>,
-    pub(crate) i_parent_node: Option<WeakRefNode>,
-    pub(crate) i_owner_document: Option<WeakRefNode>,
-    pub(crate) i_attributes: HashMap<Name, RefNode>,
-    pub(crate) i_child_nodes: Vec<RefNode>,
-    // for Document
-    pub(crate) i_document_element: Option<RefNode>,
-    pub(crate) i_document_type: Option<RefNode>,
 }
