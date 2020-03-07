@@ -90,15 +90,27 @@ impl Node for RefNode {
         }
     }
 
-    fn insert_before(&mut self, _new_child: RefNode, _ref_child: &RefNode) -> Result<RefNode> {
-        unimplemented!()
+    fn insert_before(&mut self, new_child: RefNode, ref_child: &RefNode) -> Result<RefNode> {
+        // TODO: see `append_child` for specifics
+        let mut mut_self = self.borrow_mut();
+        match mut_self
+            .i_child_nodes
+            .iter()
+            .position(|child| child == ref_child)
+        {
+            None => mut_self.i_child_nodes.push(new_child.clone()),
+            Some(position) => mut_self.i_child_nodes.insert(position, new_child.clone()),
+        }
+        Ok(new_child)
     }
 
     fn replace_child(&mut self, _new_child: RefNode, _old_child: &RefNode) -> Result<RefNode> {
+        // TODO: see `append_child` for specifics
         unimplemented!()
     }
 
     fn append_child(&mut self, new_child: RefNode) -> Result<RefNode> {
+        // TODO: Check to see if it is in the tree already, if so remove it
         // update child with references
         {
             let mut mut_child = new_child.borrow_mut();
@@ -109,6 +121,7 @@ impl Node for RefNode {
         }
         let mut mut_self = self.borrow_mut();
 
+        // TODO: generalize, for each parent type, is child allowed
         let child_node_type = new_child.node_type();
         if mut_self.i_node_type == NodeType::Document && child_node_type == NodeType::Element {
             // a document may only have one child element
@@ -116,6 +129,8 @@ impl Node for RefNode {
         } else {
             mut_self.i_child_nodes.push(new_child.clone());
         }
+
+        // TODO: deal with document fragment as special case
 
         Ok(new_child)
     }
@@ -132,8 +147,8 @@ impl Node for RefNode {
         unimplemented!()
     }
 
-    fn is_supported(&self, _feature: String, _version: String) -> bool {
-        unimplemented!()
+    fn is_supported(&self, feature: &str, version: &str) -> bool {
+        get_implementation().has_feature(feature, version)
     }
 
     fn has_attributes(&self) -> bool {
