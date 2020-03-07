@@ -1493,7 +1493,7 @@ pub trait Node {
     /// * `boolean`: Returns `true` if the specified feature is supported on this node, `false`
     ///   otherwise.
     ///
-    fn is_supported(&self, feature: String, version: String) -> bool;
+    fn is_supported(&self, feature: &str, version: &str) -> bool;
     ///
     /// Returns whether this node (if it is an element) has any attributes.
     ///
