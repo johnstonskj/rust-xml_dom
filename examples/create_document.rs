@@ -10,8 +10,7 @@ fn main() {
     println!("document 1: {:#?}", document_node);
 
     let document = as_document(&document_node).unwrap();
-    let root = document.create_element("root").unwrap();
-    println!("element 1: {:#?}", root);
+    let root = document.document_element().unwrap();
 
     let mut root_node = document_node.append_child(root).unwrap();
     let root = as_element_mut(&mut root_node).unwrap();

@@ -4,14 +4,13 @@ use xml_dom::*;
 #[allow(unused_must_use)]
 fn main() {
     let implementation = get_implementation();
-    let mut document_node = implementation
-        .create_document("uri:urn:simons:thing:1", "root", None)
+    let document_node = implementation
+        .create_document("zetcode.com", "users", None)
         .unwrap();
 
     let mut root_node = {
         let document = as_document(&document_node).unwrap();
-        let root = document.create_element_ns("zetcode.com", "users").unwrap();
-        document_node.append_child(root).unwrap()
+        document.document_element().expect("should have a node?")
     };
 
     let document = as_document(&document_node).unwrap();

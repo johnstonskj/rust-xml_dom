@@ -10,7 +10,8 @@ use std::collections::HashMap;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Internal DOM tree node owned reference.
+/// Opaque DOM tree node reference. This is the type used by this implementation as the concrete
+/// type for the `NodeRef` associated type in the  [`Node`](trait.Node.html) trait.
 ///
 /// This is the common response type for DOM actions and can be cast to specific traits either
 /// by-hand or using the [`xml_dom::convert`](convert/index.html) module. Also, note that this type

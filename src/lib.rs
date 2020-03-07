@@ -53,7 +53,7 @@ The `has_feature` method [`DOMImplementation`](struct.DOMImplementation.html) an
 feature and supports both version 1.0 and version 2.0 of these features.
 
 ```rust
-use xml_dom::{Implementation, get_implementation};
+use xml_dom::{DOMImplementation, get_implementation};
 
 let implementation = get_implementation();
 assert!(implementation.has_feature("Core", "1.0"));

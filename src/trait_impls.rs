@@ -641,8 +641,18 @@ impl DOMImplementation for Implementation {
     ) -> Result<RefNode> {
         let name = Name::new_ns(namespace_uri, qualified_name)?;
         let node_impl = NodeImpl::new_document(name, doc_type);
-        Ok(RefNode::new(node_impl))
+        let mut document_node = RefNode::new(node_impl);
+        let document =
+            as_document_mut(&mut document_node).expect("could not cast node to Document");
+        let element = document
+            .create_element_ns(namespace_uri, qualified_name)
+            .expect("could not create document_element");
+        let _dont_care = document
+            .append_child(element)
+            .expect("could not add document_element");
+        Ok(document_node)
     }
+
     fn create_document_type(
         &self,
         qualified_name: &str,
@@ -653,6 +663,7 @@ impl DOMImplementation for Implementation {
         let node_impl = NodeImpl::new_document_type(name, public_id, system_id);
         Ok(RefNode::new(node_impl))
     }
+
     fn has_feature(&self, feature: &str, version: &str) -> bool {
         (feature == XML_FEATURE_CORE || feature == XML_FEATURE_XML)
             && (version == XML_FEATURE_V1 || version == XML_FEATURE_V2)
@@ -668,12 +679,15 @@ const THIS_IMPLEMENTATION: &'static dyn DOMImplementation<NodeRef = RefNode> = &
 /// [`Document`](trait.Document.html) trait requires an instance of `Document`; however, the
 /// `create_document` method on `DOMImplementation` requires an instance from `implementation`.
 ///
-/// Note that Java, for example, solves the bootstrap problem with a factory and builder pattern:
+/// # Example
 ///
-/// ```java
-/// DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-/// DocumentBuilder builder = factory.newDocumentBuilder();
-/// Document doc = builder.newDocument();
+/// ```rust
+/// use xml_dom::get_implementation;
+///
+/// let implementation = get_implementation();
+/// let mut document_node = implementation
+///     .create_document("http://www.w3.org/1999/xhtml", "html", None)
+///     .unwrap();
 /// ```
 ///
 pub fn get_implementation() -> &'static dyn DOMImplementation<NodeRef = RefNode> {
