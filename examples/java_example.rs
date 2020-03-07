@@ -24,7 +24,7 @@ fn main() {
 }
 
 fn create_user<'a>(
-    doc: &'a dyn Document,
+    doc: RefDocument,
     id: &str,
     first_name: &str,
     last_name: &str,
@@ -40,7 +40,7 @@ fn create_user<'a>(
     user
 }
 
-fn create_user_element(doc: &dyn Document, name: &str, value: &str) -> RefNode {
+fn create_user_element(doc: RefDocument, name: &str, value: &str) -> RefNode {
     let mut node = doc
         .create_element(name)
         .expect("could not create a new element");

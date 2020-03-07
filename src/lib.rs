@@ -163,6 +163,9 @@ pub use error::*;
 mod name;
 pub use name::*;
 
+mod node_impl;
+pub use node_impl::RefNode;
+
 mod traits;
 pub use traits::*;
 
@@ -172,8 +175,6 @@ pub use trait_impls::*;
 // ------------------------------------------------------------------------------------------------
 // Private Modules
 // ------------------------------------------------------------------------------------------------
-
-mod node_impl;
 
 mod rc_cell;
 

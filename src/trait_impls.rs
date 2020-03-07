@@ -1,7 +1,6 @@
 use self::super::error::{Error, Result};
 use self::super::name::Name;
 use self::super::node_impl::*;
-use self::super::rc_cell::*;
 use self::super::syntax::*;
 use self::super::traits::*;
 use crate::convert::*;
@@ -15,7 +14,7 @@ use std::str::FromStr;
 // ------------------------------------------------------------------------------------------------
 
 impl Node for RefNode {
-    type RefNode = RefNode;
+    type NodeRef = RefNode;
 
     fn name(&self) -> Name {
         let ref_self = self.borrow();
@@ -162,21 +161,15 @@ impl Node for RefNode {
 
 // ------------------------------------------------------------------------------------------------
 
-impl Attribute for RefNode {
-    type RefNode = RefNode;
-}
+impl Attribute for RefNode {}
 
 // ------------------------------------------------------------------------------------------------
 
-impl CDataSection for RefNode {
-    type RefNode = RefNode;
-}
+impl CDataSection for RefNode {}
 
 // ------------------------------------------------------------------------------------------------
 
 impl CharacterData for RefNode {
-    type RefNode = RefNode;
-
     fn substring(&self, offset: usize, count: usize) -> Result<String> {
         let ref_self = self.borrow();
         match &ref_self.i_value {
@@ -257,15 +250,11 @@ impl CharacterData for RefNode {
 
 // ------------------------------------------------------------------------------------------------
 
-impl Comment for RefNode {
-    type RefNode = RefNode;
-}
+impl Comment for RefNode {}
 
 // ------------------------------------------------------------------------------------------------
 
 impl Document for RefNode {
-    type RefNode = RefNode;
-
     fn doc_type(&self) -> Option<RefNode> {
         let ref_self = self.borrow();
         ref_self.i_document_type.clone()
@@ -276,7 +265,7 @@ impl Document for RefNode {
         ref_self.i_document_element.clone()
     }
 
-    fn implementation(&self) -> &dyn DOMImplementation {
+    fn implementation(&self) -> &dyn DOMImplementation<NodeRef = RefNode> {
         get_implementation()
     }
 
@@ -381,15 +370,13 @@ impl Document for RefNode {
 // ------------------------------------------------------------------------------------------------
 
 impl DocumentType for RefNode {
-    type RefNode = RefNode;
-
     fn public_id(&self) -> Option<String> {
-        let as_element = self as &dyn Element;
+        let as_element = self as &dyn Element<NodeRef = RefNode>;
         as_element.get_attribute(XML_DOCTYPE_PUBLIC)
     }
 
     fn system_id(&self) -> Option<String> {
-        let as_element = self as &dyn Element;
+        let as_element = self as &dyn Element<NodeRef = RefNode>;
         as_element.get_attribute(XML_DOCTYPE_SYSTEM)
     }
 }
@@ -397,8 +384,6 @@ impl DocumentType for RefNode {
 // ------------------------------------------------------------------------------------------------
 
 impl Element for RefNode {
-    type RefNode = RefNode;
-
     fn get_attribute(&self, name: &str) -> Option<String> {
         if !is_element(self) {
             // shortcut as only elements have attributes
@@ -531,15 +516,11 @@ impl Element for RefNode {
 
 // ------------------------------------------------------------------------------------------------
 
-impl ProcessingInstruction for RefNode {
-    type RefNode = RefNode;
-}
+impl ProcessingInstruction for RefNode {}
 
 // ------------------------------------------------------------------------------------------------
 
 impl Text for RefNode {
-    type RefNode = RefNode;
-
     fn split(&self, _offset: usize) -> Result<RefNode> {
         unimplemented!()
     }
@@ -551,7 +532,7 @@ impl Display for RefNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self.node_type() {
             NodeType::Element => {
-                let element = self as &dyn Element;
+                let element = self as &dyn Element<NodeRef = RefNode>;
                 write!(f, "{}{}", XML_ELEMENT_START_START, element.name())?;
                 for attr in element.attributes().values() {
                     write!(f, " {}", attr.to_string())?;
@@ -569,7 +550,7 @@ impl Display for RefNode {
                 )
             }
             NodeType::Attribute => {
-                let attribute = self as &dyn Attribute;
+                let attribute = self as &dyn Attribute<NodeRef = RefNode>;
                 write!(
                     f,
                     "\"{}\"=\"{}\"",
@@ -578,21 +559,21 @@ impl Display for RefNode {
                 )
             }
             NodeType::Text => {
-                let char_data = self as &dyn CharacterData;
+                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
                 match char_data.data() {
                     None => write!(f, ""),
                     Some(data) => write!(f, "{}", data),
                 }
             }
             NodeType::CData => {
-                let char_data = self as &dyn CharacterData;
+                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
                 match char_data.data() {
                     None => write!(f, ""),
                     Some(data) => write!(f, "{} {} {}", XML_COMMENT_START, data, XML_COMMENT_END),
                 }
             }
             NodeType::ProcessingInstruction => {
-                let pi = self as &dyn ProcessingInstruction;
+                let pi = self as &dyn ProcessingInstruction<NodeRef = RefNode>;
                 match pi.data() {
                     None => write!(f, "{}{}{}", XML_PI_START, self.target(), XML_PI_END),
                     Some(data) => {
@@ -601,7 +582,7 @@ impl Display for RefNode {
                 }
             }
             NodeType::Comment => {
-                let char_data = self as &dyn CharacterData;
+                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
                 match char_data.data() {
                     None => write!(f, ""),
                     Some(data) => write!(f, "{}{}{}", XML_CDATA_START, data, XML_CDATA_END),
@@ -611,14 +592,14 @@ impl Display for RefNode {
                 for child in self.child_nodes() {
                     write!(f, "{}", child.to_string())?;
                 }
-                let document = self as &dyn Document;
+                let document = self as &dyn Document<NodeRef = RefNode>;
                 match document.document_element() {
                     None => write!(f, ""),
                     Some(document_element) => write!(f, "{}", document_element),
                 }
             }
             NodeType::DocumentType => {
-                let doc_type = self as &dyn DocumentType;
+                let doc_type = self as &dyn DocumentType<NodeRef = RefNode>;
                 write!(
                     f,
                     "{} {} {} {} {}",
@@ -642,124 +623,6 @@ impl Display for RefNode {
 
 // ------------------------------------------------------------------------------------------------
 
-impl NodeImpl {
-    pub(crate) fn new_element(name: Name) -> Self {
-        Self {
-            i_node_type: NodeType::Element,
-            i_name: name,
-            i_value: None,
-            i_parent_node: None,
-            i_owner_document: None,
-            i_attributes: Default::default(),
-            i_child_nodes: vec![],
-            i_document_element: None,
-            i_document_type: None,
-        }
-    }
-    pub(crate) fn new_attribute(name: Name, value: Option<&str>) -> Self {
-        Self {
-            i_node_type: NodeType::Attribute,
-            i_name: name,
-            i_value: value.map(|v| v.to_string()),
-            i_parent_node: None,
-            i_owner_document: None,
-            i_attributes: Default::default(),
-            i_child_nodes: vec![],
-            i_document_element: None,
-            i_document_type: None,
-        }
-    }
-    pub(crate) fn new_text(data: &str) -> Self {
-        Self {
-            i_node_type: NodeType::Text,
-            i_name: Name::for_text(),
-            i_value: Some(data.to_string()),
-            i_parent_node: None,
-            i_owner_document: None,
-            i_attributes: Default::default(),
-            i_child_nodes: vec![],
-            i_document_element: None,
-            i_document_type: None,
-        }
-    }
-    pub(crate) fn new_cdata(data: &str) -> Self {
-        Self {
-            i_node_type: NodeType::CData,
-            i_name: Name::for_cdata(),
-            i_value: Some(data.to_string()),
-            i_parent_node: None,
-            i_owner_document: None,
-            i_attributes: Default::default(),
-            i_child_nodes: vec![],
-            i_document_element: None,
-            i_document_type: None,
-        }
-    }
-    pub(crate) fn new_processing_instruction(target: Name, data: Option<&str>) -> Self {
-        Self {
-            i_node_type: NodeType::ProcessingInstruction,
-            i_name: target,
-            i_value: data.map(|v| v.to_string()),
-            i_parent_node: None,
-            i_owner_document: None,
-            i_attributes: Default::default(),
-            i_child_nodes: vec![],
-            i_document_element: None,
-            i_document_type: None,
-        }
-    }
-    pub(crate) fn new_comment(data: &str) -> Self {
-        Self {
-            i_node_type: NodeType::Comment,
-            i_name: Name::for_cdata(),
-            i_value: Some(data.to_string()),
-            i_parent_node: None,
-            i_owner_document: None,
-            i_attributes: Default::default(),
-            i_child_nodes: vec![],
-            i_document_element: None,
-            i_document_type: None,
-        }
-    }
-    pub(crate) fn new_document(name: Name, doc_type: Option<RefNode>) -> Self {
-        Self {
-            i_node_type: NodeType::Document,
-            i_name: name,
-            i_value: None,
-            i_parent_node: None,
-            i_owner_document: None,
-            i_attributes: Default::default(),
-            i_child_nodes: vec![],
-            i_document_element: None,
-            i_document_type: doc_type,
-        }
-    }
-    pub(crate) fn new_document_type(name: Name, public_id: &str, system_id: &str) -> Self {
-        let new_doc_type = Self {
-            i_node_type: NodeType::DocumentType,
-            i_name: name,
-            i_value: None,
-            i_parent_node: None,
-            i_owner_document: None,
-            i_attributes: Default::default(),
-            i_child_nodes: vec![],
-            i_document_element: None,
-            i_document_type: None,
-        };
-        let mut ref_node: RefNode = RcRefCell::new(new_doc_type);
-        let as_element = &mut ref_node as &mut dyn Element;
-        as_element
-            .set_attribute(XML_DOCTYPE_PUBLIC, public_id)
-            .expect("invalid public ID");
-        as_element
-            .set_attribute(XML_DOCTYPE_SYSTEM, system_id)
-            .expect("invalid system ID");
-        ref_node.unwrap()
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-
 ///
 /// Internal use only
 ///
@@ -768,7 +631,7 @@ impl NodeImpl {
 struct Implementation {}
 
 impl DOMImplementation for Implementation {
-    type RefNode = RefNode;
+    type NodeRef = RefNode;
 
     fn create_document(
         &self,
@@ -796,7 +659,7 @@ impl DOMImplementation for Implementation {
     }
 }
 
-const THIS_IMPLEMENTATION: &'static dyn DOMImplementation = &Implementation {};
+const THIS_IMPLEMENTATION: &'static dyn DOMImplementation<NodeRef = RefNode> = &Implementation {};
 
 ///
 /// Return a reference to an instance of this `DOMImplementation` implementation.
@@ -813,6 +676,6 @@ const THIS_IMPLEMENTATION: &'static dyn DOMImplementation = &Implementation {};
 /// Document doc = builder.newDocument();
 /// ```
 ///
-pub fn get_implementation() -> &'static dyn DOMImplementation {
+pub fn get_implementation() -> &'static dyn DOMImplementation<NodeRef = RefNode> {
     THIS_IMPLEMENTATION
 }
