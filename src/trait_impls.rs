@@ -3,6 +3,7 @@ use self::super::name::Name;
 use self::super::rc_cell::*;
 use self::super::syntax::*;
 use self::super::traits::*;
+use crate::convert::*;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -213,7 +214,8 @@ impl CharacterData for RefNode {
     }
 
     fn delete(&mut self, offset: usize, count: usize) -> Result<()> {
-        self.replace(offset, count, "")
+        const NOTHING: &str = "";
+        self.replace(offset, count, NOTHING)
     }
 
     fn replace(&mut self, offset: usize, count: usize, replace_data: &str) -> Result<()> {
@@ -325,15 +327,41 @@ impl Document for RefNode {
     }
 
     fn get_element_by_id(&self, _id: &str) -> Option<RefNode> {
+        //
+        // Until we are schema/data-type aware we do not know which attributes are actually XML
+        // identifiers. A common, but erroneous, implementation is to look for attributes named
+        // "id", we aren't going to do that. It may be possible to make that a flag on
+        // implementation for those that want the lax behavior.
+        //
         None
     }
 
-    fn get_elements_by_tag_name(&self, _tag_name: &str) -> Vec<RefNode> {
-        unimplemented!()
+    fn get_elements_by_tag_name(&self, tag_name: &str) -> Vec<RefNode> {
+        //
+        // Delegate this call to the document element
+        //
+        let ref_self = self.borrow();
+        match &ref_self.i_document_element {
+            None => Vec::default(),
+            Some(root_node) => {
+                let root_element = as_element(root_node).expect("invalid node type");
+                root_element.get_elements_by_tag_name(tag_name)
+            }
+        }
     }
 
-    fn get_elements_by_tag_name_ns(&self, _namespace_uri: &str, _local_name: &str) -> Vec<RefNode> {
-        unimplemented!()
+    fn get_elements_by_tag_name_ns(&self, namespace_uri: &str, local_name: &str) -> Vec<RefNode> {
+        //
+        // Delegate this call to the document element
+        //
+        let ref_self = self.borrow();
+        match &ref_self.i_document_element {
+            None => Vec::default(),
+            Some(root_node) => {
+                let root_element = as_element(root_node).expect("invalid node type");
+                root_element.get_elements_by_tag_name_ns(namespace_uri, local_name)
+            }
+        }
     }
 }
 
@@ -355,22 +383,27 @@ impl DocumentType for RefNode {
 
 impl Element for RefNode {
     fn get_attribute(&self, name: &str) -> Option<String> {
-        match Name::from_str(name) {
-            Ok(attr_name) => {
-                let self_copy = self.clone();
-                let self_copy = self_copy.borrow();
-                match self_copy.i_attributes.get(&attr_name) {
-                    None => None,
-                    Some(attr_node) => {
-                        let attribute = attr_node.borrow();
-                        match &attribute.i_value {
-                            None => None,
-                            Some(value) => Some(value.clone()),
+        if !is_element(self) {
+            // shortcut as only elements have attributes
+            None
+        } else {
+            match Name::from_str(name) {
+                Ok(attr_name) => {
+                    let self_copy = self.clone();
+                    let self_copy = self_copy.borrow();
+                    match self_copy.i_attributes.get(&attr_name) {
+                        None => None,
+                        Some(attr_node) => {
+                            let attribute = attr_node.borrow();
+                            match &attribute.i_value {
+                                None => None,
+                                Some(value) => Some(value.clone()),
+                            }
                         }
                     }
                 }
+                Err(_) => None,
             }
-            Err(_) => None,
         }
     }
 
@@ -380,21 +413,35 @@ impl Element for RefNode {
         self.set_attribute_node(RefNode::new(attr_node)).map(|_| ())
     }
 
-    fn remove_attribute(&mut self, name: &str) -> Result<()> {
-        let _attr_name = Name::from_str(name)?;
-        unimplemented!()
+    fn remove_attribute(&mut self, _name: &str) -> Result<()> {
+        if !is_element(self) {
+            // shortcut as only elements have attributes
+            Ok(())
+        } else {
+            unimplemented!()
+        }
     }
 
     fn get_attribute_node(&self, _name: &str) -> Option<RefNode> {
-        unimplemented!()
+        if !is_element(self) {
+            // shortcut as only elements have attributes
+            None
+        } else {
+            unimplemented!()
+        }
     }
 
     fn set_attribute_node(&mut self, new_attribute: RefNode) -> Result<RefNode> {
-        let mut mut_self = self.borrow_mut();
-        let _safe_to_ignore = mut_self
-            .i_attributes
-            .insert(new_attribute.name(), new_attribute.clone());
-        Ok(new_attribute)
+        // ENSURE: You can ONLY add attributes to an element
+        if !is_element(self) || !is_attribute(&new_attribute) {
+            Err(Error::InvalidState)
+        } else {
+            let mut mut_self = self.borrow_mut();
+            let _safe_to_ignore = mut_self
+                .i_attributes
+                .insert(new_attribute.name(), new_attribute.clone());
+            Ok(new_attribute)
+        }
     }
 
     fn remove_attribute_node(&mut self, _old_attribute: RefNode) -> Result<RefNode> {
@@ -402,11 +449,21 @@ impl Element for RefNode {
     }
 
     fn get_elements_by_tag_name(&self, _tag_name: &str) -> Vec<RefNode> {
-        unimplemented!()
+        if !is_element(self) {
+            // shortcut as only elements have attributes
+            Vec::default()
+        } else {
+            unimplemented!()
+        }
     }
 
     fn get_attribute_ns(&self, _namespace_uri: &str, _local_name: &str) -> Option<String> {
-        unimplemented!()
+        if !is_element(self) {
+            // shortcut as only elements have attributes
+            None
+        } else {
+            unimplemented!()
+        }
     }
 
     fn set_attribute_ns(
@@ -437,11 +494,21 @@ impl Element for RefNode {
     }
 
     fn has_attribute(&self, _name: &str) -> bool {
-        unimplemented!()
+        if !is_element(self) {
+            // shortcut as only elements have attributes
+            false
+        } else {
+            unimplemented!()
+        }
     }
 
     fn has_attribute_ns(&self, _namespace_uri: &str, _local_name: &str) -> bool {
-        unimplemented!()
+        if !is_element(self) {
+            // shortcut as only elements have attributes
+            false
+        } else {
+            unimplemented!()
+        }
     }
 }
 
@@ -506,9 +573,9 @@ impl Display for RefNode {
             NodeType::ProcessingInstruction => {
                 let pi = self as &dyn ProcessingInstruction;
                 match pi.data() {
-                    None => write!(f, "{}{}{}>", XML_PI_START, self.target(), XML_PI_END),
+                    None => write!(f, "{}{}{}", XML_PI_START, self.target(), XML_PI_END),
                     Some(data) => {
-                        write!(f, "{}{} {}{}>", XML_PI_START, pi.target(), data, XML_PI_END)
+                        write!(f, "{}{} {}{}", XML_PI_START, pi.target(), data, XML_PI_END)
                     }
                 }
             }
