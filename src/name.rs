@@ -176,31 +176,45 @@ impl Name {
     }
 
     ///
-    /// Return the reserved name for CDATA section nodes
+    /// Return the reserved name for `CDATA` section nodes
     ///
     pub fn for_cdata() -> Self {
         Self::new(XML_NAME_CDATA.to_string(), None, None)
     }
 
     ///
-    /// Return the reserved name for Comment nodes
+    /// Return the reserved name for `Comment` nodes
     ///
     pub fn for_comment() -> Self {
         Self::new(XML_NAME_COMMENT.to_string(), None, None)
     }
 
     ///
-    /// Return the reserved name for Document nodes
+    /// Return the reserved name for `Document` nodes
     ///
     pub fn for_document() -> Self {
         Self::new(XML_NAME_DOCUMENT.to_string(), None, None)
     }
 
     ///
-    /// Return the reserved name for Text nodes
+    /// Return the reserved name for `Text` nodes
     ///
     pub fn for_text() -> Self {
         Self::new(XML_NAME_TEXT.to_string(), None, None)
+    }
+
+    ///
+    /// Return the reserved name for `DocumentType` `public_id` attributes
+    ///
+    pub fn for_public_id() -> Self {
+        Self::new(XML_DOCTYPE_PUBLIC.to_string(), None, None)
+    }
+
+    ///
+    /// Return the reserved name for `DocumentType` `system_id` attributes
+    ///
+    pub fn for_system_id() -> Self {
+        Self::new(XML_DOCTYPE_SYSTEM.to_string(), None, None)
     }
 
     ///
@@ -231,4 +245,16 @@ impl Name {
         self.prefix = new_prefix.map(String::from);
         Ok(())
     }
+}
+
+// ------------------------------------------------------------------------------------------------
+// Unit Tests
+// ------------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_something() {}
 }

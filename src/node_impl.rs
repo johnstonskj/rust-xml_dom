@@ -1,8 +1,7 @@
 use self::super::name::Name;
 use self::super::rc_cell::*;
 use self::super::traits::NodeType;
-use crate::syntax::{XML_DOCTYPE_PUBLIC, XML_DOCTYPE_SYSTEM};
-use crate::Element;
+use crate::rc_cell::RcRefCell;
 use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
@@ -145,7 +144,9 @@ impl NodeImpl {
         }
     }
     pub(crate) fn new_document_type(name: Name, public_id: &str, system_id: &str) -> Self {
-        let new_doc_type = Self {
+        let public_id = Self::new_attribute(Name::for_public_id(), Some(public_id));
+        let system_id = Self::new_attribute(Name::for_system_id(), Some(system_id));
+        let mut doc_type = Self {
             i_node_type: NodeType::DocumentType,
             i_name: name,
             i_value: None,
@@ -156,14 +157,12 @@ impl NodeImpl {
             i_document_element: None,
             i_document_type: None,
         };
-        let mut ref_node: RefNode = RcRefCell::new(new_doc_type);
-        let as_element = &mut ref_node as &mut dyn Element<NodeRef = RefNode>;
-        as_element
-            .set_attribute(XML_DOCTYPE_PUBLIC, public_id)
-            .expect("invalid public ID");
-        as_element
-            .set_attribute(XML_DOCTYPE_SYSTEM, system_id)
-            .expect("invalid system ID");
-        ref_node.unwrap()
+        let _unused = doc_type
+            .i_attributes
+            .insert(public_id.i_name.clone(), RefNode::new(public_id));
+        let _unused = doc_type
+            .i_attributes
+            .insert(system_id.i_name.clone(), RefNode::new(system_id));
+        doc_type
     }
 }

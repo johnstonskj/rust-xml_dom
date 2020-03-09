@@ -373,13 +373,25 @@ impl Document for RefNode {
 
 impl DocumentType for RefNode {
     fn public_id(&self) -> Option<String> {
-        let as_element = self as &dyn Element<NodeRef = RefNode>;
-        as_element.get_attribute(XML_DOCTYPE_PUBLIC)
+        let ref_self = self.borrow();
+        match ref_self.i_attributes.get(&Name::for_public_id()) {
+            None => None,
+            Some(ref_node) => {
+                let ref_node = ref_node.borrow();
+                ref_node.i_value.clone()
+            }
+        }
     }
 
     fn system_id(&self) -> Option<String> {
-        let as_element = self as &dyn Element<NodeRef = RefNode>;
-        as_element.get_attribute(XML_DOCTYPE_SYSTEM)
+        let ref_self = self.borrow();
+        match ref_self.i_attributes.get(&Name::for_system_id()) {
+            None => None,
+            Some(ref_node) => {
+                let ref_node = ref_node.borrow();
+                ref_node.i_value.clone()
+            }
+        }
     }
 }
 
@@ -610,14 +622,14 @@ fn fmt_node(node: &RefNode, _namespace_map: &mut Namespaces, f: &mut Formatter<'
         NodeType::Text => {
             let char_data = node as &dyn CharacterData<NodeRef = RefNode>;
             match char_data.data() {
-                None => write!(f, ""),
+                None => Ok(()),
                 Some(data) => write!(f, "{}", data),
             }
         }
         NodeType::CData => {
             let char_data = node as &dyn CharacterData<NodeRef = RefNode>;
             match char_data.data() {
-                None => write!(f, ""),
+                None => Ok(()),
                 Some(data) => write!(f, "{} {} {}", XML_COMMENT_START, data, XML_COMMENT_END),
             }
         }
@@ -631,7 +643,7 @@ fn fmt_node(node: &RefNode, _namespace_map: &mut Namespaces, f: &mut Formatter<'
         NodeType::Comment => {
             let char_data = node as &dyn CharacterData<NodeRef = RefNode>;
             match char_data.data() {
-                None => write!(f, ""),
+                None => Ok(()),
                 Some(data) => write!(f, "{}{}{}", XML_CDATA_START, data, XML_CDATA_END),
             }
         }
@@ -640,29 +652,33 @@ fn fmt_node(node: &RefNode, _namespace_map: &mut Namespaces, f: &mut Formatter<'
                 write!(f, "{}", child.to_string())?;
             }
             let document = node as &dyn Document<NodeRef = RefNode>;
+            match document.doc_type() {
+                None => (),
+                Some(doc_type) => write!(f, "{}", doc_type)?,
+            }
             match document.document_element() {
-                None => write!(f, ""),
+                None => Ok(()),
                 Some(document_element) => write!(f, "{}", document_element),
             }
         }
         NodeType::DocumentType => {
             let doc_type = node as &dyn DocumentType<NodeRef = RefNode>;
-            write!(
-                f,
-                "{} {} {} {} {}",
-                XML_DOCTYPE_START,
-                doc_type.name(),
-                match doc_type.public_id() {
-                    None => "".to_string(),
-                    Some(public_id) => format!("{} {}", XML_DOCTYPE_PUBLIC, public_id),
-                },
-                match doc_type.system_id() {
-                    None => "".to_string(),
-                    Some(system_id) => format!("{} {}", XML_DOCTYPE_SYSTEM, system_id),
-                },
-                XML_DOCTYPE_END
-            )
+            write!(f, "{} {}", XML_DOCTYPE_START, doc_type.name())?;
+            match &doc_type.public_id() {
+                None => (),
+                Some(id) => {
+                    write!(f, " {} \"{}\"", XML_DOCTYPE_PUBLIC, id)?;
+                }
+            }
+            match &doc_type.system_id() {
+                None => (),
+                Some(id) => {
+                    write!(f, " {} \"{}\"", XML_DOCTYPE_SYSTEM, id)?;
+                }
+            }
+
+            write!(f, "{}", XML_DOCTYPE_END)
         }
-        _ => write!(f, ""),
+        _ => Ok(()),
     }
 }

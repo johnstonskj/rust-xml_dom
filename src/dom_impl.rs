@@ -13,6 +13,8 @@ pub(crate) struct Implementation {}
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
+const THIS_IMPLEMENTATION: &'static dyn DOMImplementation<NodeRef = RefNode> = &Implementation {};
+
 ///
 /// Return a reference to an instance of this `DOMImplementation` implementation.
 ///
@@ -40,8 +42,6 @@ pub fn get_implementation() -> &'static dyn DOMImplementation<NodeRef = RefNode>
 const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-const THIS_IMPLEMENTATION: &'static dyn DOMImplementation<NodeRef = RefNode> = &Implementation {};
 
 ///
 /// Return a string with the vendor/version of the implementation.
