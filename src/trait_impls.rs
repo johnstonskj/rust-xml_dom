@@ -648,13 +648,13 @@ fn fmt_node(node: &RefNode, _namespace_map: &mut Namespaces, f: &mut Formatter<'
             }
         }
         NodeType::Document => {
-            for child in node.child_nodes() {
-                write!(f, "{}", child.to_string())?;
-            }
             let document = node as &dyn Document<NodeRef = RefNode>;
             match document.doc_type() {
                 None => (),
                 Some(doc_type) => write!(f, "{}", doc_type)?,
+            }
+            for child in node.child_nodes() {
+                write!(f, "{}", child.to_string())?;
             }
             match document.document_element() {
                 None => Ok(()),
