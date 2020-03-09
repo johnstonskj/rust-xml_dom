@@ -676,7 +676,6 @@ fn fmt_node(node: &RefNode, _namespace_map: &mut Namespaces, f: &mut Formatter<'
                     write!(f, " {} \"{}\"", XML_DOCTYPE_SYSTEM, id)?;
                 }
             }
-
             write!(f, "{}", XML_DOCTYPE_END)
         }
         _ => Ok(()),

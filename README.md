@@ -33,15 +33,11 @@ let mut document_node = implementation
     .unwrap();
 
 let document = as_document_mut(&mut document_node).unwrap();
-let root = document.document_element().unwrap();
+let mut root_node = document.document_element().unwrap();
 
-let mut root_node = document.append_child(root).unwrap();
 let root = as_element_mut(&mut root_node).unwrap();
-root.set_attribute("version", "4.01");
 root.set_attribute("lang", "en");
-
 let _head = root.append_child(document.create_element("head").unwrap());
-
 let _body = root.append_child(document.create_element("body").unwrap());
 
 let xml = document_node.to_string();
