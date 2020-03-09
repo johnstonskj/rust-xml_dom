@@ -1,9 +1,11 @@
-use self::super::error::{Error, Result};
-use self::super::name::Name;
-use self::super::node_impl::*;
-use self::super::syntax::*;
-use self::super::traits::*;
 use crate::convert::*;
+use crate::dom_impl::{get_implementation, Implementation};
+use crate::error::{Error, Result};
+use crate::name::Name;
+use crate::node_impl::*;
+use crate::ns::*;
+use crate::syntax::*;
+use crate::traits::*;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -383,6 +385,48 @@ impl DocumentType for RefNode {
 
 // ------------------------------------------------------------------------------------------------
 
+impl DOMImplementation for Implementation {
+    type NodeRef = RefNode;
+
+    fn create_document(
+        &self,
+        namespace_uri: &str,
+        qualified_name: &str,
+        doc_type: Option<RefNode>,
+    ) -> Result<RefNode> {
+        let name = Name::new_ns(namespace_uri, qualified_name)?;
+        let node_impl = NodeImpl::new_document(name, doc_type);
+        let mut document_node = RefNode::new(node_impl);
+        let document =
+            as_document_mut(&mut document_node).expect("could not cast node to Document");
+        let element = document
+            .create_element_ns(namespace_uri, qualified_name)
+            .expect("could not create document_element");
+        let _dont_care = document
+            .append_child(element)
+            .expect("could not add document_element");
+        Ok(document_node)
+    }
+
+    fn create_document_type(
+        &self,
+        qualified_name: &str,
+        public_id: &str,
+        system_id: &str,
+    ) -> Result<RefNode> {
+        let name = Name::from_str(qualified_name)?;
+        let node_impl = NodeImpl::new_document_type(name, public_id, system_id);
+        Ok(RefNode::new(node_impl))
+    }
+
+    fn has_feature(&self, feature: &str, version: &str) -> bool {
+        (feature == XML_FEATURE_CORE || feature == XML_FEATURE_XML)
+            && (version == XML_FEATURE_V1 || version == XML_FEATURE_V2)
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+
 impl Element for RefNode {
     fn get_attribute(&self, name: &str) -> Option<String> {
         if !is_element(self) {
@@ -530,166 +574,95 @@ impl Text for RefNode {
 
 impl Display for RefNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        match self.node_type() {
-            NodeType::Element => {
-                let element = self as &dyn Element<NodeRef = RefNode>;
-                write!(f, "{}{}", XML_ELEMENT_START_START, element.name())?;
-                for attr in element.attributes().values() {
-                    write!(f, " {}", attr.to_string())?;
-                }
-                write!(f, "{}", XML_ELEMENT_START_END)?;
-                for child in element.child_nodes() {
-                    write!(f, "{}", child.to_string())?;
-                }
-                write!(
-                    f,
-                    "{}{}{}",
-                    XML_ELEMENT_END_START,
-                    element.name(),
-                    XML_ELEMENT_END_END
-                )
+        fmt_node(self, &mut Namespaces::default(), f)
+    }
+}
+
+fn fmt_node(node: &RefNode, _namespace_map: &mut Namespaces, f: &mut Formatter<'_>) -> FmtResult {
+    match node.node_type() {
+        NodeType::Element => {
+            let element = node as &dyn Element<NodeRef = RefNode>;
+            write!(f, "{}{}", XML_ELEMENT_START_START, element.name())?;
+            for attr in element.attributes().values() {
+                write!(f, " {}", attr.to_string())?;
             }
-            NodeType::Attribute => {
-                let attribute = self as &dyn Attribute<NodeRef = RefNode>;
-                write!(
-                    f,
-                    "\"{}\"=\"{}\"",
-                    attribute.name(),
-                    attribute.value().unwrap()
-                )
+            write!(f, "{}", XML_ELEMENT_START_END)?;
+            for child in element.child_nodes() {
+                write!(f, "{}", child.to_string())?;
             }
-            NodeType::Text => {
-                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
-                match char_data.data() {
-                    None => write!(f, ""),
-                    Some(data) => write!(f, "{}", data),
-                }
-            }
-            NodeType::CData => {
-                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
-                match char_data.data() {
-                    None => write!(f, ""),
-                    Some(data) => write!(f, "{} {} {}", XML_COMMENT_START, data, XML_COMMENT_END),
-                }
-            }
-            NodeType::ProcessingInstruction => {
-                let pi = self as &dyn ProcessingInstruction<NodeRef = RefNode>;
-                match pi.data() {
-                    None => write!(f, "{}{}{}", XML_PI_START, self.target(), XML_PI_END),
-                    Some(data) => {
-                        write!(f, "{}{} {}{}", XML_PI_START, pi.target(), data, XML_PI_END)
-                    }
-                }
-            }
-            NodeType::Comment => {
-                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
-                match char_data.data() {
-                    None => write!(f, ""),
-                    Some(data) => write!(f, "{}{}{}", XML_CDATA_START, data, XML_CDATA_END),
-                }
-            }
-            NodeType::Document => {
-                for child in self.child_nodes() {
-                    write!(f, "{}", child.to_string())?;
-                }
-                let document = self as &dyn Document<NodeRef = RefNode>;
-                match document.document_element() {
-                    None => write!(f, ""),
-                    Some(document_element) => write!(f, "{}", document_element),
-                }
-            }
-            NodeType::DocumentType => {
-                let doc_type = self as &dyn DocumentType<NodeRef = RefNode>;
-                write!(
-                    f,
-                    "{} {} {} {} {}",
-                    XML_DOCTYPE_START,
-                    doc_type.name(),
-                    match doc_type.public_id() {
-                        None => "".to_string(),
-                        Some(public_id) => format!("{} {}", XML_DOCTYPE_PUBLIC, public_id),
-                    },
-                    match doc_type.system_id() {
-                        None => "".to_string(),
-                        Some(system_id) => format!("{} {}", XML_DOCTYPE_SYSTEM, system_id),
-                    },
-                    XML_DOCTYPE_END
-                )
-            }
-            _ => write!(f, ""),
+            write!(
+                f,
+                "{}{}{}",
+                XML_ELEMENT_END_START,
+                element.name(),
+                XML_ELEMENT_END_END
+            )
         }
+        NodeType::Attribute => {
+            let attribute = node as &dyn Attribute<NodeRef = RefNode>;
+            write!(
+                f,
+                "\"{}\"=\"{}\"",
+                attribute.name(),
+                attribute.value().unwrap()
+            )
+        }
+        NodeType::Text => {
+            let char_data = node as &dyn CharacterData<NodeRef = RefNode>;
+            match char_data.data() {
+                None => write!(f, ""),
+                Some(data) => write!(f, "{}", data),
+            }
+        }
+        NodeType::CData => {
+            let char_data = node as &dyn CharacterData<NodeRef = RefNode>;
+            match char_data.data() {
+                None => write!(f, ""),
+                Some(data) => write!(f, "{} {} {}", XML_COMMENT_START, data, XML_COMMENT_END),
+            }
+        }
+        NodeType::ProcessingInstruction => {
+            let pi = node as &dyn ProcessingInstruction<NodeRef = RefNode>;
+            match pi.data() {
+                None => write!(f, "{}{}{}", XML_PI_START, node.target(), XML_PI_END),
+                Some(data) => write!(f, "{}{} {}{}", XML_PI_START, pi.target(), data, XML_PI_END),
+            }
+        }
+        NodeType::Comment => {
+            let char_data = node as &dyn CharacterData<NodeRef = RefNode>;
+            match char_data.data() {
+                None => write!(f, ""),
+                Some(data) => write!(f, "{}{}{}", XML_CDATA_START, data, XML_CDATA_END),
+            }
+        }
+        NodeType::Document => {
+            for child in node.child_nodes() {
+                write!(f, "{}", child.to_string())?;
+            }
+            let document = node as &dyn Document<NodeRef = RefNode>;
+            match document.document_element() {
+                None => write!(f, ""),
+                Some(document_element) => write!(f, "{}", document_element),
+            }
+        }
+        NodeType::DocumentType => {
+            let doc_type = node as &dyn DocumentType<NodeRef = RefNode>;
+            write!(
+                f,
+                "{} {} {} {} {}",
+                XML_DOCTYPE_START,
+                doc_type.name(),
+                match doc_type.public_id() {
+                    None => "".to_string(),
+                    Some(public_id) => format!("{} {}", XML_DOCTYPE_PUBLIC, public_id),
+                },
+                match doc_type.system_id() {
+                    None => "".to_string(),
+                    Some(system_id) => format!("{} {}", XML_DOCTYPE_SYSTEM, system_id),
+                },
+                XML_DOCTYPE_END
+            )
+        }
+        _ => write!(f, ""),
     }
-}
-
-// ------------------------------------------------------------------------------------------------
-
-///
-/// Internal use only
-///
-#[doc(hidden)]
-#[derive(Clone, Debug)]
-struct Implementation {}
-
-impl DOMImplementation for Implementation {
-    type NodeRef = RefNode;
-
-    fn create_document(
-        &self,
-        namespace_uri: &str,
-        qualified_name: &str,
-        doc_type: Option<RefNode>,
-    ) -> Result<RefNode> {
-        let name = Name::new_ns(namespace_uri, qualified_name)?;
-        let node_impl = NodeImpl::new_document(name, doc_type);
-        let mut document_node = RefNode::new(node_impl);
-        let document =
-            as_document_mut(&mut document_node).expect("could not cast node to Document");
-        let element = document
-            .create_element_ns(namespace_uri, qualified_name)
-            .expect("could not create document_element");
-        let _dont_care = document
-            .append_child(element)
-            .expect("could not add document_element");
-        Ok(document_node)
-    }
-
-    fn create_document_type(
-        &self,
-        qualified_name: &str,
-        public_id: &str,
-        system_id: &str,
-    ) -> Result<RefNode> {
-        let name = Name::from_str(qualified_name)?;
-        let node_impl = NodeImpl::new_document_type(name, public_id, system_id);
-        Ok(RefNode::new(node_impl))
-    }
-
-    fn has_feature(&self, feature: &str, version: &str) -> bool {
-        (feature == XML_FEATURE_CORE || feature == XML_FEATURE_XML)
-            && (version == XML_FEATURE_V1 || version == XML_FEATURE_V2)
-    }
-}
-
-const THIS_IMPLEMENTATION: &'static dyn DOMImplementation<NodeRef = RefNode> = &Implementation {};
-
-///
-/// Return a reference to an instance of this `DOMImplementation` implementation.
-///
-/// This function gets around the DOM bootstrap issue, the `implementation` method on the
-/// [`Document`](trait.Document.html) trait requires an instance of `Document`; however, the
-/// `create_document` method on `DOMImplementation` requires an instance from `implementation`.
-///
-/// # Example
-///
-/// ```rust
-/// use xml_dom::get_implementation;
-///
-/// let implementation = get_implementation();
-/// let mut document_node = implementation
-///     .create_document("http://www.w3.org/1999/xhtml", "html", None)
-///     .unwrap();
-/// ```
-///
-pub fn get_implementation() -> &'static dyn DOMImplementation<NodeRef = RefNode> {
-    THIS_IMPLEMENTATION
 }

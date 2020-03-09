@@ -4,6 +4,8 @@ use xml_dom::*;
 #[allow(unused_must_use)]
 fn main() {
     let implementation = get_implementation();
+    println!("Using: {}", get_implementation_version());
+
     let document_node = implementation
         .create_document("zetcode.com", "users", None)
         .unwrap();

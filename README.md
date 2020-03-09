@@ -45,9 +45,10 @@ println!("document 2: {}", xml);
 
 ## Changes
 
-**Version 0.1.1**
+**Version 0.1.1** _(in progress)_
 
-* Focus on examples, fleshing out more of the common methods.
+* Focus on API, separate the traits from implementation more cleanly.
+* More examples, fleshing out more of the common methods.
 
 **Version 0.1.0**
 
