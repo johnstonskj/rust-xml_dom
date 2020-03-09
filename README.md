@@ -49,6 +49,10 @@ println!("document 2: {}", xml);
 
 * Focus on API, separate the traits from implementation more cleanly.
 * More examples, fleshing out more of the common methods.
+* Better `Display` formatting
+* Better `append_child` rule support
+* Started support for namespace resolution
+* Note, this is NOT YET ready for production usage.
 
 **Version 0.1.0**
 
