@@ -28,19 +28,24 @@ use xml_dom::*;
 use xml_dom::convert::*;
 
 let implementation = get_implementation();
-let mut document_node =
-    implementation.create_document("uri:urn:simons:thing:1", "root", None).unwrap();
+let mut document_node = implementation
+    .create_document("http://www.w3.org/1999/xhtml", "html", None)
+    .unwrap();
 
-let document = as_document(&document_node).unwrap();
-let root = document.create_element("root").unwrap();
+let document = as_document_mut(&mut document_node).unwrap();
+let root = document.document_element().unwrap();
 
-let mut root_node = document_node.append_child(root).unwrap();
+let mut root_node = document.append_child(root).unwrap();
 let root = as_element_mut(&mut root_node).unwrap();
-root.set_attribute("version", "1.0");
-root.set_attribute("something", "else");
+root.set_attribute("version", "4.01");
+root.set_attribute("lang", "en");
+
+let _head = root.append_child(document.create_element("head").unwrap());
+
+let _body = root.append_child(document.create_element("body").unwrap());
 
 let xml = document_node.to_string();
-println!("document 2: {}", xml);
+println!("HTML: {}", xml);
 ```
 
 ## Changes
@@ -64,4 +69,4 @@ println!("document 2: {}", xml);
 1. Currently does not support `DocumentFragment`, `Entity`, `EntityReference`, or `Notation`.
 1. Not intending to be schema-aware, so `Document::get_element_by_id` always returns `None`.
 1. A lot of required methods are still `unimplemented!()`.
-1. Intend to add reader features to de-serialize using crate `quick_xml`.
+1. Intend to add `reader` feature to de-serialize using crate `quick_xml`.
