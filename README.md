@@ -46,7 +46,7 @@ println!("HTML: {}", xml);
 
 ## Changes
 
-**Version 0.1.1** _(in progress)_
+**Version 0.1.1**
 
 * Focus on API, separate the traits from implementation more cleanly.
 * Better `Display` formatting
