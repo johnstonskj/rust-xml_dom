@@ -105,15 +105,15 @@ mod tests {
     use super::*;
 
     #[derive(Clone, Debug)]
-    pub struct Node {
-        pub name: String,
-        pub parent: Option<NodeRef>,
+    struct Node {
+        pub(crate) name: String,
+        pub(crate) parent: Option<NodeRef>,
     }
 
     type NodeRef = RcRefCell<Node>;
 
     impl Node {
-        pub fn new(name: &str) -> Self {
+        pub(crate) fn new(name: &str) -> Self {
             Self {
                 name: name.to_string(),
                 parent: None,
