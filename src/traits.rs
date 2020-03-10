@@ -1349,13 +1349,9 @@ pub trait Node {
     ///
     /// The node immediately preceding this node. If there is no such node, this returns `None`.
     ///
-    /// **Note:** currently unsupported.
-    ///
     fn previous_sibling(&self) -> Option<Self::NodeRef>;
     ///
     /// The node immediately following this node. If there is no such node, this returns `None`.
-    ///
-    /// **Note:** currently unsupported.
     ///
     fn next_sibling(&self) -> Option<Self::NodeRef>;
     ///
@@ -1403,7 +1399,7 @@ pub trait Node {
     fn insert_before(
         &mut self,
         new_child: Self::NodeRef,
-        ref_child: &Self::NodeRef,
+        ref_child: Option<Self::NodeRef>,
     ) -> Result<Self::NodeRef>;
     ///
     /// Replaces the child node `oldChild` with `newChild` in the list of children, and returns the
@@ -1697,7 +1693,7 @@ pub trait Text: CharacterData {
     ///   of 16-bit units in data.
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     ///
-    fn split(&self, offset: usize) -> Result<Self::NodeRef>;
+    fn split(&mut self, offset: usize) -> Result<Self::NodeRef>;
 }
 
 // ------------------------------------------------------------------------------------------------

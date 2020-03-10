@@ -3,11 +3,13 @@ use crate::dom_impl::{get_implementation, Implementation};
 use crate::error::{Error, Result};
 use crate::name::Name;
 use crate::node_impl::*;
+use crate::rc_cell::WeakRefCell;
 use crate::syntax::*;
 use crate::traits::*;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::rc::Rc;
 use std::str::FromStr;
 
 // ------------------------------------------------------------------------------------------------
@@ -74,11 +76,53 @@ impl Node for RefNode {
     }
 
     fn previous_sibling(&self) -> Option<RefNode> {
-        unimplemented!()
+        let ref_self = self.borrow();
+        match &ref_self.i_parent_node {
+            None => None,
+            Some(parent_node) => {
+                let parent_node = parent_node.clone();
+                let parent_node = parent_node.upgrade()?;
+                let ref_parent = parent_node.borrow();
+                match ref_parent
+                    .i_child_nodes
+                    .iter()
+                    .position(|child| child == self)
+                {
+                    None => None,
+                    Some(index) => {
+                        if index == 0 {
+                            None
+                        } else {
+                            let sibling = ref_parent.i_child_nodes.get(index - 1);
+                            sibling.map(|n| n.clone())
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fn next_sibling(&self) -> Option<RefNode> {
-        unimplemented!()
+        let ref_self = self.borrow();
+        match &ref_self.i_parent_node {
+            None => None,
+            Some(parent_node) => {
+                let parent_node = parent_node.clone();
+                let parent_node = parent_node.upgrade()?;
+                let ref_parent = parent_node.borrow();
+                match ref_parent
+                    .i_child_nodes
+                    .iter()
+                    .position(|child| child == self)
+                {
+                    None => None,
+                    Some(index) => {
+                        let sibling = ref_parent.i_child_nodes.get(index + 1);
+                        sibling.map(|n| n.clone())
+                    }
+                }
+            }
+        }
     }
 
     fn attributes(&self) -> HashMap<Name, RefNode, RandomState> {
@@ -94,18 +138,28 @@ impl Node for RefNode {
         }
     }
 
-    fn insert_before(&mut self, new_child: RefNode, ref_child: &RefNode) -> Result<RefNode> {
-        // TODO: see `append_child` for specifics
-        let mut mut_self = self.borrow_mut();
-        match mut_self
-            .i_child_nodes
-            .iter()
-            .position(|child| child == ref_child)
-        {
-            None => mut_self.i_child_nodes.push(new_child.clone()),
-            Some(position) => mut_self.i_child_nodes.insert(position, new_child.clone()),
+    fn insert_before(&mut self, new_child: RefNode, ref_child: Option<RefNode>) -> Result<RefNode> {
+        match ref_child {
+            None => {
+                let mut_node = as_element_mut(self)?;
+                mut_node.append_child(new_child)
+            }
+            Some(ref_child) => {
+                // TODO: see `append_child` for specifics
+                let mut mut_self = self.borrow_mut();
+                match mut_self
+                    .i_child_nodes
+                    .iter()
+                    .position(|child| child == &ref_child)
+                {
+                    None => mut_self.i_child_nodes.push(new_child.clone()),
+                    Some(position) => mut_self
+                        .i_child_nodes
+                        .insert(position + 1, new_child.clone()),
+                }
+                Ok(new_child)
+            }
         }
-        Ok(new_child)
     }
 
     fn replace_child(&mut self, _new_child: RefNode, _old_child: &RefNode) -> Result<RefNode> {
@@ -584,8 +638,35 @@ impl ProcessingInstruction for RefNode {}
 // ------------------------------------------------------------------------------------------------
 
 impl Text for RefNode {
-    fn split(&self, _offset: usize) -> Result<RefNode> {
-        unimplemented!()
+    fn split(&mut self, offset: usize) -> Result<RefNode> {
+        let new_data = {
+            let text = as_text_mut(self).unwrap();
+            let count = text.length() - (offset + 1);
+            let new_data = text.substring(offset, count)?;
+            text.delete(offset, count)?;
+            new_data
+        };
+
+        let mut_self = self.borrow_mut();
+        let mut new_node = match mut_self.i_node_type {
+            NodeType::Text => Ok(NodeImpl::new_text(&new_data)),
+            NodeType::CData => Ok(NodeImpl::new_cdata(&new_data)),
+            _ => Err(Error::HierarchyRequest),
+        }?;
+        Ok(match &mut_self.i_parent_node {
+            None => RefNode::new(new_node),
+            Some(parent) => {
+                new_node.i_parent_node = Some(parent.clone());
+                let new_node = RefNode::new(new_node);
+                let parent = parent.clone();
+                let mut parent = parent.upgrade().unwrap();
+                let parent_element = as_element_mut(&mut parent)?;
+                let self_node = as_element(self)?;
+                let _ignored =
+                    parent_element.insert_before(new_node.clone(), self_node.next_sibling())?;
+                new_node
+            }
+        })
     }
 }
 
@@ -684,5 +765,98 @@ impl Display for RefNode {
             }
             _ => Ok(()),
         }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+// Unit Tests
+// ------------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_node(name: &str) -> RefNode {
+        let name = Name::from_str(name).unwrap();
+        let node = NodeImpl::new_element(name);
+        RefNode::new(node)
+    }
+
+    #[test]
+    fn test_next_sibling() {
+        //
+        // Setup the tree
+        //
+        let mut root_node = make_node("element");
+        {
+            let root_element = as_element_mut(&mut root_node).unwrap();
+
+            for index in 1..6 {
+                let child_node = make_node(&format!("child-{}", index));
+                root_element.append_child(child_node.clone());
+            }
+        }
+
+        {
+            assert_eq!(root_node.borrow().i_child_nodes.len(), 5);
+        }
+
+        //
+        // Ask for siblings
+        //
+        let ref_root = root_node.borrow();
+        let mid_node = ref_root.i_child_nodes.get(2).unwrap();
+        let ref_mid = as_element(mid_node).unwrap();
+        assert_eq!(ref_mid.name().to_string(), "child-3".to_string());
+
+        let next_node = ref_mid.next_sibling().unwrap();
+        let ref_next = as_element(&next_node).unwrap();
+        assert_eq!(ref_next.name().to_string(), "child-4".to_string());
+
+        let last_node = ref_next.next_sibling().unwrap();
+        let ref_last = as_element(&last_node).unwrap();
+        assert_eq!(ref_last.name().to_string(), "child-5".to_string());
+
+        let no_node = ref_last.next_sibling();
+        assert!(no_node.is_none());
+    }
+
+    #[test]
+    fn test_previous_sibling() {
+        //
+        // Setup the tree
+        //
+        let mut root_node = make_node("element");
+        {
+            let root_element = as_element_mut(&mut root_node).unwrap();
+
+            for index in 1..6 {
+                let child_node = make_node(&format!("child-{}", index));
+                root_element.append_child(child_node.clone());
+            }
+        }
+
+        {
+            assert_eq!(root_node.borrow().i_child_nodes.len(), 5);
+        }
+
+        //
+        // Ask for siblings
+        //
+        let ref_root = root_node.borrow();
+        let mid_node = ref_root.i_child_nodes.get(2).unwrap();
+        let ref_mid = as_element(mid_node).unwrap();
+        assert_eq!(ref_mid.name().to_string(), "child-3".to_string());
+
+        let previous_node = ref_mid.previous_sibling().unwrap();
+        let ref_previous = as_element(&previous_node).unwrap();
+        assert_eq!(ref_previous.name().to_string(), "child-2".to_string());
+
+        let first_node = ref_previous.previous_sibling().unwrap();
+        let ref_first = as_element(&first_node).unwrap();
+        assert_eq!(ref_first.name().to_string(), "child-1".to_string());
+
+        let no_node = ref_first.previous_sibling();
+        assert!(no_node.is_none());
     }
 }
