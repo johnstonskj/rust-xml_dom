@@ -176,3 +176,35 @@ impl NodeImpl {
         doc_type
     }
 }
+
+// ------------------------------------------------------------------------------------------------
+// Unit Tests
+// ------------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::node_impl::NodeImpl;
+    use std::str::FromStr;
+
+    #[test]
+    fn test_escaping() {
+        let name = Name::from_str("test").unwrap();
+        let attribute = NodeImpl::new_attribute(name, Some("hello <\"world\"> & 'everyone' in it"));
+        assert_eq!(
+            attribute.i_value,
+            Some("hello &#60;&#34;world&#34;&#62; &#38; &#39;everyone&#39; in it".to_string())
+        )
+    }
+
+    #[test]
+    fn test_doctype_structure() {
+        let name = Name::from_str("html").unwrap();
+        let doc_type = NodeImpl::new_document_type(
+            name,
+            "-//W3C//DTD XHTML 1.0 Transitional//EN",
+            "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd",
+        );
+        assert_eq!(doc_type.i_attributes.len(), 2);
+    }
+}
