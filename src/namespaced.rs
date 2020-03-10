@@ -224,6 +224,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_must_use)]
     fn test_this_element_string_prefix() {
         let mut ref_node = make_node("element");
         let namespaced = &mut ref_node as MutRefNamespaced<'_>;
@@ -250,6 +251,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_must_use)]
     fn test_this_element_none_prefix() {
         let mut ref_node = make_node("element");
         let namespaced = &mut ref_node as MutRefNamespaced<'_>;
@@ -276,6 +278,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(unused_must_use)]
     fn test_tree_resolve() {
         //
         // Setup the tree
@@ -308,8 +311,6 @@ mod tests {
             ref_teen.append_child(ref_child.clone());
         }
 
-        let ns_teen_1 = &ref_teen_1 as RefNamespaced<'_>;
-        let ns_teen_2 = &ref_teen_2 as RefNamespaced<'_>;
         let ns_child = &ref_child as RefNamespaced<'_>;
 
         //
