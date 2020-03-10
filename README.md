@@ -49,10 +49,11 @@ println!("HTML: {}", xml);
 **Version 0.1.1** _(in progress)_
 
 * Focus on API, separate the traits from implementation more cleanly.
-* More examples, fleshing out more of the common methods.
 * Better `Display` formatting
 * Better `append_child` rule support
-* Started support for namespace resolution
+* Have support for namespace resolution
+* Have support for text escaping on setting values
+* More examples, fleshing out more of the common methods.
 * Note, this is NOT YET ready for production usage.
 
 **Version 0.1.0**

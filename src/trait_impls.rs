@@ -3,7 +3,6 @@ use crate::dom_impl::{get_implementation, Implementation};
 use crate::error::{Error, Result};
 use crate::name::Name;
 use crate::node_impl::*;
-use crate::ns::*;
 use crate::syntax::*;
 use crate::traits::*;
 use std::collections::hash_map::RandomState;
@@ -476,6 +475,7 @@ impl Element for RefNode {
             // shortcut as only elements have attributes
             Ok(())
         } else {
+            // TODO: deal with namespaces
             unimplemented!()
         }
     }
@@ -494,6 +494,17 @@ impl Element for RefNode {
         if !is_element(self) || !is_attribute(&new_attribute) {
             Err(Error::InvalidState)
         } else {
+            let name: Name = new_attribute.name();
+            if name.is_namespace_attribute() {
+                let attribute = as_attribute(&new_attribute).unwrap();
+                let namespace_uri = attribute.value().unwrap();
+
+                let as_namespaced = as_element_namespaced_mut(self).unwrap();
+                let _ignore = match &name.prefix() {
+                    None => as_namespaced.insert(None, &namespace_uri),
+                    Some(prefix) => as_namespaced.insert(Some(prefix), &namespace_uri),
+                }?;
+            }
             let mut mut_self = self.borrow_mut();
             let _safe_to_ignore = mut_self
                 .i_attributes
@@ -586,98 +597,96 @@ impl Text for RefNode {
 
 impl Display for RefNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        fmt_node(self, &mut Namespaces::default(), f)
-    }
-}
-
-fn fmt_node(node: &RefNode, _namespace_map: &mut Namespaces, f: &mut Formatter<'_>) -> FmtResult {
-    match node.node_type() {
-        NodeType::Element => {
-            let element = node as &dyn Element<NodeRef = RefNode>;
-            write!(f, "{}{}", XML_ELEMENT_START_START, element.name())?;
-            for attr in element.attributes().values() {
-                write!(f, " {}", attr.to_string())?;
+        match self.node_type() {
+            NodeType::Element => {
+                let element = self as &dyn Element<NodeRef = RefNode>;
+                write!(f, "{}{}", XML_ELEMENT_START_START, element.name())?;
+                for attr in element.attributes().values() {
+                    write!(f, " {}", attr.to_string())?;
+                }
+                write!(f, "{}", XML_ELEMENT_START_END)?;
+                for child in element.child_nodes() {
+                    write!(f, "{}", child.to_string())?;
+                }
+                write!(
+                    f,
+                    "{}{}{}",
+                    XML_ELEMENT_END_START,
+                    element.name(),
+                    XML_ELEMENT_END_END
+                )
             }
-            write!(f, "{}", XML_ELEMENT_START_END)?;
-            for child in element.child_nodes() {
-                write!(f, "{}", child.to_string())?;
+            NodeType::Attribute => {
+                let attribute = self as &dyn Attribute<NodeRef = RefNode>;
+                write!(
+                    f,
+                    "\"{}\"=\"{}\"",
+                    attribute.name(),
+                    attribute.value().unwrap()
+                )
             }
-            write!(
-                f,
-                "{}{}{}",
-                XML_ELEMENT_END_START,
-                element.name(),
-                XML_ELEMENT_END_END
-            )
-        }
-        NodeType::Attribute => {
-            let attribute = node as &dyn Attribute<NodeRef = RefNode>;
-            write!(
-                f,
-                "\"{}\"=\"{}\"",
-                attribute.name(),
-                attribute.value().unwrap()
-            )
-        }
-        NodeType::Text => {
-            let char_data = node as &dyn CharacterData<NodeRef = RefNode>;
-            match char_data.data() {
-                None => Ok(()),
-                Some(data) => write!(f, "{}", data),
-            }
-        }
-        NodeType::CData => {
-            let char_data = node as &dyn CharacterData<NodeRef = RefNode>;
-            match char_data.data() {
-                None => Ok(()),
-                Some(data) => write!(f, "{} {} {}", XML_COMMENT_START, data, XML_COMMENT_END),
-            }
-        }
-        NodeType::ProcessingInstruction => {
-            let pi = node as &dyn ProcessingInstruction<NodeRef = RefNode>;
-            match pi.data() {
-                None => write!(f, "{}{}{}", XML_PI_START, node.target(), XML_PI_END),
-                Some(data) => write!(f, "{}{} {}{}", XML_PI_START, pi.target(), data, XML_PI_END),
-            }
-        }
-        NodeType::Comment => {
-            let char_data = node as &dyn CharacterData<NodeRef = RefNode>;
-            match char_data.data() {
-                None => Ok(()),
-                Some(data) => write!(f, "{}{}{}", XML_CDATA_START, data, XML_CDATA_END),
-            }
-        }
-        NodeType::Document => {
-            let document = node as &dyn Document<NodeRef = RefNode>;
-            match document.doc_type() {
-                None => (),
-                Some(doc_type) => write!(f, "{}", doc_type)?,
-            }
-            for child in node.child_nodes() {
-                write!(f, "{}", child.to_string())?;
-            }
-            match document.document_element() {
-                None => Ok(()),
-                Some(document_element) => write!(f, "{}", document_element),
-            }
-        }
-        NodeType::DocumentType => {
-            let doc_type = node as &dyn DocumentType<NodeRef = RefNode>;
-            write!(f, "{} {}", XML_DOCTYPE_START, doc_type.name())?;
-            match &doc_type.public_id() {
-                None => (),
-                Some(id) => {
-                    write!(f, " {} \"{}\"", XML_DOCTYPE_PUBLIC, id)?;
+            NodeType::Text => {
+                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
+                match char_data.data() {
+                    None => Ok(()),
+                    Some(data) => write!(f, "{}", data),
                 }
             }
-            match &doc_type.system_id() {
-                None => (),
-                Some(id) => {
-                    write!(f, " {} \"{}\"", XML_DOCTYPE_SYSTEM, id)?;
+            NodeType::CData => {
+                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
+                match char_data.data() {
+                    None => Ok(()),
+                    Some(data) => write!(f, "{} {} {}", XML_COMMENT_START, data, XML_COMMENT_END),
                 }
             }
-            write!(f, "{}", XML_DOCTYPE_END)
+            NodeType::ProcessingInstruction => {
+                let pi = self as &dyn ProcessingInstruction<NodeRef = RefNode>;
+                match pi.data() {
+                    None => write!(f, "{}{}{}", XML_PI_START, pi.target(), XML_PI_END),
+                    Some(data) => {
+                        write!(f, "{}{} {}{}", XML_PI_START, pi.target(), data, XML_PI_END)
+                    }
+                }
+            }
+            NodeType::Comment => {
+                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
+                match char_data.data() {
+                    None => Ok(()),
+                    Some(data) => write!(f, "{}{}{}", XML_CDATA_START, data, XML_CDATA_END),
+                }
+            }
+            NodeType::Document => {
+                let document = self as &dyn Document<NodeRef = RefNode>;
+                match document.doc_type() {
+                    None => (),
+                    Some(doc_type) => write!(f, "{}", doc_type)?,
+                }
+                for child in self.child_nodes() {
+                    write!(f, "{}", child.to_string())?;
+                }
+                match document.document_element() {
+                    None => Ok(()),
+                    Some(document_element) => write!(f, "{}", document_element),
+                }
+            }
+            NodeType::DocumentType => {
+                let doc_type = self as &dyn DocumentType<NodeRef = RefNode>;
+                write!(f, "{} {}", XML_DOCTYPE_START, doc_type.name())?;
+                match &doc_type.public_id() {
+                    None => (),
+                    Some(id) => {
+                        write!(f, " {} \"{}\"", XML_DOCTYPE_PUBLIC, id)?;
+                    }
+                }
+                match &doc_type.system_id() {
+                    None => (),
+                    Some(id) => {
+                        write!(f, " {} \"{}\"", XML_DOCTYPE_SYSTEM, id)?;
+                    }
+                }
+                write!(f, "{}", XML_DOCTYPE_END)
+            }
+            _ => Ok(()),
         }
-        _ => Ok(()),
     }
 }

@@ -218,6 +218,30 @@ impl Name {
     }
 
     ///
+    /// Construct a name for an `xmlns` attribute.
+    ///
+    pub fn for_namespace(prefix: Option<&str>) -> Self {
+        let ns_attribute = XMLNS_NS_ATTRIBUTE.to_string();
+        let attribute_ns = Some(XMLNS_NS_URI.to_string());
+        match prefix {
+            None => Self::new(ns_attribute, None, attribute_ns),
+            Some(prefix) => Self::new(prefix.to_string(), Some(ns_attribute), attribute_ns),
+        }
+    }
+
+    ///
+    /// Does this appear to be an `xmlns` attribute.
+    ///
+    pub fn is_namespace_attribute(&self) -> bool {
+        let ns_attribute = XMLNS_NS_ATTRIBUTE.to_string();
+        if self.local_name == ns_attribute || self.prefix == Some(ns_attribute) {
+            true
+        } else {
+            false
+        }
+    }
+
+    ///
     /// Return this name's namespace URI.
     ///
     pub fn namespace_uri(&self) -> &Option<String> {
@@ -253,7 +277,6 @@ impl Name {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_something() {}

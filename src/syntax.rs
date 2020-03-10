@@ -57,3 +57,27 @@ pub(crate) const XML_FEATURE_XML: &str = "XML"; // DOM Level-2 "Extended Interfa
 
 pub(crate) const XML_FEATURE_V1: &str = "1.0";
 pub(crate) const XML_FEATURE_V2: &str = "2.0";
+
+// ------------------------------------------------------------------------------------------------
+// Character Entities
+// ------------------------------------------------------------------------------------------------
+
+pub(crate) const XML_ESC_AMP_CHAR: char = '&';
+pub(crate) const XML_ESC_AMP_ENT: &str = "&amp;";
+pub(crate) const XML_ESC_AMP_NUM: &str = "&#38;";
+
+pub(crate) const XML_ESC_APOS_CHAR: char = '\'';
+pub(crate) const XML_ESC_APOS_ENT: &str = "&apos;";
+pub(crate) const XML_ESC_APOS_NUM: &str = "&#39;";
+
+pub(crate) const XML_ESC_GT_CHAR: char = '>';
+pub(crate) const XML_ESC_GT_ENT: &str = "&gt;";
+pub(crate) const XML_ESC_GT_NUM: &str = "&#62;";
+
+pub(crate) const XML_ESC_LT_CHAR: char = '<';
+pub(crate) const XML_ESC_LT_ENT: &str = "&lt;";
+pub(crate) const XML_ESC_LT_NUM: &str = "&#60;";
+
+pub(crate) const XML_ESC_QUOT_CHAR: char = '"';
+pub(crate) const XML_ESC_QUOT_ENT: &str = "&amp;";
+pub(crate) const XML_ESC_QUOT_NUM: &str = "&#34;";

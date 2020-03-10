@@ -8,9 +8,10 @@ Note that all of the `as_{name}` functions work as follows.
 * If the `node_type` is not implemented it returns `Error::NotSupported`.
 
 */
-use self::super::error::{Error, Result};
-use self::super::node_impl::*;
-use self::super::traits::*;
+use crate::error::{Error, Result};
+use crate::namespaced::{MutNamespaced, Namespaced};
+use crate::node_impl::*;
+use crate::traits::*;
 
 // ------------------------------------------------------------------------------------------------
 // Public Functions
@@ -25,6 +26,9 @@ pub type MutRefAttribute<'a> = &'a mut dyn Attribute<NodeRef = RefNode>;
 pub type RefElement<'a> = &'a dyn Element<NodeRef = RefNode>;
 /// Type for mutable dynamic trait cast
 pub type MutRefElement<'a> = &'a mut dyn Element<NodeRef = RefNode>;
+/// Type for dynamic trait cast
+pub type RefNamespaced<'a> = &'a dyn Namespaced<NodeRef = RefNode>;
+pub(crate) type MutRefNamespaced<'a> = &'a mut dyn MutNamespaced<NodeRef = RefNode>;
 
 /// Type for dynamic trait cast
 pub type RefText<'a> = &'a dyn Text<NodeRef = RefNode>;
@@ -123,7 +127,7 @@ pub fn is_element(ref_node: &RefNode) -> bool {
 }
 
 ///
-/// Safely _cast_ the specified `RefNode` into a  `Element`.
+/// Safely _cast_ the specified `RefNode` into an  `Element`.
 ///
 #[inline]
 pub fn as_element(ref_node: &RefNode) -> Result<RefElement<'_>> {
@@ -142,6 +146,41 @@ pub fn as_element(ref_node: &RefNode) -> Result<RefElement<'_>> {
 pub fn as_element_mut(ref_node: &mut RefNode) -> Result<MutRefElement<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Element {
         Ok(ref_node as MutRefElement<'_>)
+    } else {
+        warn!("ref_node.node_type != Element");
+        Err(Error::InvalidState)
+    }
+}
+
+///
+/// Determines if the specified node is of type `NodeType::Element` and supports the trait
+/// `Namespaced`.
+///
+#[inline]
+pub fn is_element_namespaced(ref_node: &RefNode) -> bool {
+    ref_node.borrow().i_node_type == NodeType::Element
+}
+
+///
+/// Safely _cast_ the specified `RefNode` into a  `Namespaced` element.
+///
+#[inline]
+pub fn as_element_namespaced(ref_node: &RefNode) -> Result<RefNamespaced<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::Element {
+        Ok(ref_node as RefNamespaced<'_>)
+    } else {
+        warn!("ref_node.node_type != Element");
+        Err(Error::InvalidState)
+    }
+}
+
+///
+/// Safely _cast_ the specified `RefNode` into a mutable `Namespaced` element.
+///
+#[inline]
+pub(crate) fn as_element_namespaced_mut(ref_node: &mut RefNode) -> Result<MutRefNamespaced<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::Element {
+        Ok(ref_node as MutRefNamespaced<'_>)
     } else {
         warn!("ref_node.node_type != Element");
         Err(Error::InvalidState)

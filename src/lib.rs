@@ -132,10 +132,17 @@ and in general the programmer should never need to interact with `WeakRefNode`.
 | `unsigned short` | `Error`, `u16` | as representation of exception code  |
 | `unsigned long`  | `usize`        | list/string indexes and lengths      |
 
-## Ownership
+## Extensions
 
-The field `children` on `Document` and `NodeImpl` own the nodes of the DOM tree using `Rc`. Other
-references to children, for example the `document_element` or `attributes` use `Weak` references.
+The following extensions are provided beyond the DOM Level 2 specification.
+
+1. The [`get_implementation`](fn.get_implementation.html) function returns an instance of
+   `DOMImplementation` to allow bootstrapping the creation of documents.
+1. The [`get_implementation_version`](fn.get_implementation_version.html) function returns a
+   vendor-specific version identifier for the `DOMImplementation`.
+1. The trait [`Namespaced`](trait.Namespaced.html) extends `Element` with the ability to look
+   up namespace mappings (using the standard `xmlns` attribute).
+
 */
 
 #![warn(
@@ -168,6 +175,9 @@ pub use error::*;
 mod name;
 pub use name::*;
 
+mod namespaced;
+pub use namespaced::Namespaced;
+
 mod node_impl;
 pub use node_impl::RefNode;
 
@@ -181,8 +191,8 @@ pub use trait_impls::*;
 // Private Modules
 // ------------------------------------------------------------------------------------------------
 
-mod ns;
-
 mod rc_cell;
 
 mod syntax;
+
+mod text;

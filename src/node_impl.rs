@@ -1,7 +1,7 @@
-use self::super::name::Name;
-use self::super::rc_cell::*;
-use self::super::traits::NodeType;
-use crate::rc_cell::RcRefCell;
+use crate::name::Name;
+use crate::rc_cell::{RcRefCell, WeakRefCell};
+use crate::text;
+use crate::traits::NodeType;
 use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
@@ -42,6 +42,8 @@ pub struct NodeImpl {
     pub(crate) i_owner_document: Option<WeakRefNode>,
     pub(crate) i_attributes: HashMap<Name, RefNode>,
     pub(crate) i_child_nodes: Vec<RefNode>,
+    // For Elements
+    pub(crate) i_namespaces: HashMap<Option<String>, String>,
     // for Document
     pub(crate) i_document_element: Option<RefNode>,
     pub(crate) i_document_type: Option<RefNode>,
@@ -61,6 +63,7 @@ impl NodeImpl {
             i_owner_document: None,
             i_attributes: Default::default(),
             i_child_nodes: vec![],
+            i_namespaces: Default::default(),
             i_document_element: None,
             i_document_type: None,
         }
@@ -69,11 +72,12 @@ impl NodeImpl {
         Self {
             i_node_type: NodeType::Attribute,
             i_name: name,
-            i_value: value.map(|v| v.to_string()),
+            i_value: value.map(text::escape),
             i_parent_node: None,
             i_owner_document: None,
             i_attributes: Default::default(),
             i_child_nodes: vec![],
+            i_namespaces: Default::default(),
             i_document_element: None,
             i_document_type: None,
         }
@@ -82,11 +86,12 @@ impl NodeImpl {
         Self {
             i_node_type: NodeType::Text,
             i_name: Name::for_text(),
-            i_value: Some(data.to_string()),
+            i_value: Some(text::escape(data)),
             i_parent_node: None,
             i_owner_document: None,
             i_attributes: Default::default(),
             i_child_nodes: vec![],
+            i_namespaces: Default::default(),
             i_document_element: None,
             i_document_type: None,
         }
@@ -95,11 +100,12 @@ impl NodeImpl {
         Self {
             i_node_type: NodeType::CData,
             i_name: Name::for_cdata(),
-            i_value: Some(data.to_string()),
+            i_value: Some(text::escape(data)),
             i_parent_node: None,
             i_owner_document: None,
             i_attributes: Default::default(),
             i_child_nodes: vec![],
+            i_namespaces: Default::default(),
             i_document_element: None,
             i_document_type: None,
         }
@@ -108,11 +114,12 @@ impl NodeImpl {
         Self {
             i_node_type: NodeType::ProcessingInstruction,
             i_name: target,
-            i_value: data.map(|v| v.to_string()),
+            i_value: data.map(text::escape),
             i_parent_node: None,
             i_owner_document: None,
             i_attributes: Default::default(),
             i_child_nodes: vec![],
+            i_namespaces: Default::default(),
             i_document_element: None,
             i_document_type: None,
         }
@@ -121,11 +128,12 @@ impl NodeImpl {
         Self {
             i_node_type: NodeType::Comment,
             i_name: Name::for_cdata(),
-            i_value: Some(data.to_string()),
+            i_value: Some(text::escape(data)),
             i_parent_node: None,
             i_owner_document: None,
             i_attributes: Default::default(),
             i_child_nodes: vec![],
+            i_namespaces: Default::default(),
             i_document_element: None,
             i_document_type: None,
         }
@@ -139,6 +147,7 @@ impl NodeImpl {
             i_owner_document: None,
             i_attributes: Default::default(),
             i_child_nodes: vec![],
+            i_namespaces: Default::default(),
             i_document_element: None,
             i_document_type: doc_type,
         }
@@ -154,6 +163,7 @@ impl NodeImpl {
             i_owner_document: None,
             i_attributes: Default::default(),
             i_child_nodes: vec![],
+            i_namespaces: Default::default(),
             i_document_element: None,
             i_document_type: None,
         };
