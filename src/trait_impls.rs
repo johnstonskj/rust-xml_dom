@@ -410,12 +410,8 @@ impl DOMImplementation for Implementation {
         let mut document_node = RefNode::new(node_impl);
         let document =
             as_document_mut(&mut document_node).expect("could not cast node to Document");
-        let element = document
-            .create_element_ns(namespace_uri, qualified_name)
-            .expect("could not create document_element");
-        let _dont_care = document
-            .append_child(element)
-            .expect("could not add document_element");
+        let element = document.create_element_ns(namespace_uri, qualified_name)?;
+        let _dont_care = document.append_child(element)?;
         Ok(document_node)
     }
 

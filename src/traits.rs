@@ -561,9 +561,9 @@ pub trait Document: Node {
     ///
     /// Returns the [`Element`](trait.Element.html) whose ID is given by `elementId`.
     ///
-    /// Note: this implementation does not support this method.
+    /// **Note:** this implementation does not support this method, it will always return `None`.
     ///
-    ///# Specification
+    /// # Specification
     ///
     /// If no such element exists, returns `null`. Behavior is not defined if more than one element
     /// has this ID.
@@ -585,7 +585,9 @@ pub trait Document: Node {
     /// Returns a `NodeList` of all the [`Element`](trait.Element.html)s with a given tag name in the
     /// order in which they are encountered in a preorder traversal of the Document tree.
     ///
-    ///# Specification
+    /// **Note:** This method will panic if `document_element` is not an `Element` node.
+    ///
+    /// # Specification
     ///
     /// **Parameters**
     ///
@@ -602,7 +604,9 @@ pub trait Document: Node {
     /// namespace URI in the order in which they are encountered in a preorder traversal of the
     /// Document tree.
     ///
-    ///# Specification
+    /// **Note:** This method will panic if `document_element` is not an `Element` node.
+    ///
+    /// # Specification
     ///
     /// **Parameters**
     ///
@@ -1163,6 +1167,8 @@ pub trait DOMImplementation {
     ///
     /// Creates an XML Document object of the specified type with its document element.
     ///
+    /// **Note:** This method will panic if it cannot create the document node.
+    ///
     /// # Specification
     ///
     /// HTML-only DOM
@@ -1343,9 +1349,13 @@ pub trait Node {
     ///
     /// The node immediately preceding this node. If there is no such node, this returns `None`.
     ///
+    /// **Note:** currently unsupported.
+    ///
     fn previous_sibling(&self) -> Option<Self::NodeRef>;
     ///
     /// The node immediately following this node. If there is no such node, this returns `None`.
+    ///
+    /// **Note:** currently unsupported.
     ///
     fn next_sibling(&self) -> Option<Self::NodeRef>;
     ///
@@ -1466,6 +1476,8 @@ pub trait Node {
     ///
     /// Returns a duplicate of this node, i.e., serves as a generic copy constructor for nodes.
     ///
+    /// **Note:** currently unsupported.
+    ///
     /// # Specification
     ///
     /// The duplicate node has no parent; (`parentNode` is null.).
@@ -1513,6 +1525,8 @@ pub trait Node {
     ///
     /// Tests whether the DOM implementation implements a specific feature and that feature is
     /// supported by this node.
+    ///
+    /// **Note:** currently unsupported.
     ///
     /// # Specification
     ///
