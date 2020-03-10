@@ -46,6 +46,13 @@ println!("HTML: {}", xml);
 
 ## Changes
 
+**Version 0.1.2** (_in progress_)
+
+* Focus on feature completion:
+  * implement all core trait features
+  * implement extended trait features for currently supported traits
+  * unescaping text
+  
 **Version 0.1.1**
 
 * Focus on API, separate the traits from implementation more cleanly.
