@@ -52,7 +52,8 @@ TBD
 
 The `has_feature` method [`DOMImplementation`](struct.DOMImplementation.html) and `is_supported` on
 [`Node`](trait.Node.html) will return true when the request is for support of the Core or XML
-feature and supports both version 1.0 and version 2.0 of these features.
+feature and supports both version 1.0 and version 2.0 of Core and version 1.0 of XML. Currently some
+of the XML extended interfaces are unsupported.
 
 ```rust
 use xml_dom::{DOMImplementation, get_implementation};
@@ -61,7 +62,7 @@ let implementation = get_implementation();
 assert!(implementation.has_feature("Core", "1.0"));
 assert!(implementation.has_feature("Core", "2.0"));
 assert!(implementation.has_feature("XML", "1.0"));
-assert!(implementation.has_feature("XML", "2.0"));
+assert!(!implementation.has_feature("XML", "2.0"));
 ```
 
 # IDL to Rust Mapping

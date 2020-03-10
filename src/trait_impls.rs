@@ -431,8 +431,8 @@ impl DOMImplementation for Implementation {
     }
 
     fn has_feature(&self, feature: &str, version: &str) -> bool {
-        (feature == XML_FEATURE_CORE || feature == XML_FEATURE_XML)
-            && (version == XML_FEATURE_V1 || version == XML_FEATURE_V2)
+        ((feature == XML_FEATURE_CORE || feature == XML_FEATURE_XML) && (version == XML_FEATURE_V1)
+            || (feature == XML_FEATURE_CORE && version == XML_FEATURE_V2))
     }
 }
 
