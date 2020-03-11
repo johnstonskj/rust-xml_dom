@@ -1,5 +1,11 @@
+#![allow(dead_code)]
+
 use xml_dom::convert::*;
 use xml_dom::*;
+
+pub const DC_NS: &str = "http://purl.org/dc/elements/1.1/";
+pub const RDF_NS: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+pub const XMLNS_NS: &str = "http://www.w3.org/2000/xmlns/";
 
 // <rdf:RDF
 //   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -16,10 +22,6 @@ use xml_dom::*;
 // </rdf:RDF>
 #[allow(unused_must_use)]
 pub fn create_rdf_example() -> RefNode {
-    const DC_NS: &str = "http://purl.org/dc/elements/1.1/";
-    const RDF_NS: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
-    const XMLNS_NS: &str = "http://www.w3.org/2000/xmlns/";
-
     let implementation = get_implementation();
     let mut document_node = implementation
         .create_document(RDF_NS, "rdf:RDF", None)

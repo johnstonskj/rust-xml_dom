@@ -127,7 +127,7 @@ impl NodeImpl {
     pub(crate) fn new_comment(data: &str) -> Self {
         Self {
             i_node_type: NodeType::Comment,
-            i_name: Name::for_cdata(),
+            i_name: Name::for_comment(),
             i_value: Some(text::escape(data)),
             i_parent_node: None,
             i_owner_document: None,

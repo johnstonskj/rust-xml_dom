@@ -1,4 +1,5 @@
 use xml_dom::convert::{as_document, as_element, as_text};
+
 mod common;
 
 #[test]
