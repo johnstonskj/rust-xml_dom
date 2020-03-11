@@ -7,6 +7,13 @@ pub const DC_NS: &str = "http://purl.org/dc/elements/1.1/";
 pub const RDF_NS: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 pub const XMLNS_NS: &str = "http://www.w3.org/2000/xmlns/";
 
+pub fn create_empty_rdf_document() -> RefNode {
+    let implementation = get_implementation();
+    implementation
+        .create_document(RDF_NS, "rdf:RDF", None)
+        .unwrap()
+}
+
 // <rdf:RDF
 //   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 //   xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -21,7 +28,7 @@ pub const XMLNS_NS: &str = "http://www.w3.org/2000/xmlns/";
 //   </rdf:Description>
 // </rdf:RDF>
 #[allow(unused_must_use)]
-pub fn create_rdf_example() -> RefNode {
+pub fn create_example_rdf_document() -> RefNode {
     let implementation = get_implementation();
     let mut document_node = implementation
         .create_document(RDF_NS, "rdf:RDF", None)

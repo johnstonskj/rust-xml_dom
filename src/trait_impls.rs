@@ -165,7 +165,42 @@ impl Node for RefNode {
         unimplemented!()
     }
 
+    // * Document -- Element (maximum of one), ProcessingInstruction, Comment, DocumentType (maximum of one)
+    // * DocumentFragment -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+    // * DocumentType -- no children
+    // * EntityReference -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+    // * Element -- Element, Text, Comment, ProcessingInstruction, CDATASection, EntityReference
+    // * Attr -- Text, EntityReference
+    // * ProcessingInstruction -- no children
+    // * Comment -- no children
+    // * Text -- no children
+    // * CDATASection -- no children
+    // * Entity -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+    // * Notation -- no children
+
     fn append_child(&mut self, new_child: RefNode) -> Result<RefNode> {
+        if !is_child_allowed(self, &new_child) {
+            return Err(Error::HierarchyRequest);
+        }
+        {
+            //
+            // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
+            // document than the one that created this node.
+            let self_parent = &self.borrow().i_parent_node;
+            let child_parent = &self.borrow().i_parent_node;
+            if !match (self_parent, child_parent) {
+                (None, None) => true,
+                (Some(_), None) => true,
+                (None, Some(_)) => false,
+                (Some(self_parent), Some(child_parent)) => {
+                    let self_parent = self_parent.clone().upgrade().unwrap();
+                    let child_parent = child_parent.clone().upgrade().unwrap();
+                    &self_parent == &child_parent
+                }
+            } {
+                return Err(Error::WrongDocument);
+            }
+        }
         // TODO: Check to see if it is in the tree already, if so remove it
         // update child with references
         {
@@ -324,24 +359,24 @@ impl Document for RefNode {
 
     fn create_attribute(&self, name: &str) -> Result<RefNode> {
         let name = Name::from_str(name)?;
-        let node_impl = NodeImpl::new_attribute(name, None);
+        let node_impl = NodeImpl::new_attribute(self.clone().downgrade(), name, None);
         Ok(RefNode::new(node_impl))
     }
 
     fn create_attribute_with(&self, name: &str, value: &str) -> Result<RefNode> {
         let name = Name::from_str(name)?;
-        let node_impl = NodeImpl::new_attribute(name, Some(value));
+        let node_impl = NodeImpl::new_attribute(self.clone().downgrade(), name, Some(value));
         Ok(RefNode::new(node_impl))
     }
 
     fn create_attribute_ns(&self, namespace_uri: &str, qualified_name: &str) -> Result<RefNode> {
         let name = Name::new_ns(namespace_uri, qualified_name)?;
-        let node_impl = NodeImpl::new_attribute(name, None);
+        let node_impl = NodeImpl::new_attribute(self.clone().downgrade(), name, None);
         Ok(RefNode::new(node_impl))
     }
 
     fn create_cdata_section(&self, data: &str) -> Result<RefNode> {
-        let node_impl = NodeImpl::new_cdata(data);
+        let node_impl = NodeImpl::new_cdata(self.clone().downgrade(), data);
         Ok(RefNode::new(node_impl))
     }
 
@@ -354,30 +389,31 @@ impl Document for RefNode {
     }
 
     fn create_comment(&self, data: &str) -> RefNode {
-        let node_impl = NodeImpl::new_comment(data);
+        let node_impl = NodeImpl::new_comment(self.clone().downgrade(), data);
         RefNode::new(node_impl)
     }
 
     fn create_element(&self, tag_name: &str) -> Result<RefNode> {
         let name = Name::from_str(tag_name)?;
-        let node_impl = NodeImpl::new_element(name);
+        let node_impl = NodeImpl::new_element(self.clone().downgrade(), name);
         Ok(RefNode::new(node_impl))
     }
 
     fn create_element_ns(&self, namespace_uri: &str, qualified_name: &str) -> Result<RefNode> {
         let name = Name::new_ns(namespace_uri, qualified_name)?;
-        let node_impl = NodeImpl::new_element(name);
+        let node_impl = NodeImpl::new_element(self.clone().downgrade(), name);
         Ok(RefNode::new(node_impl))
     }
 
     fn create_processing_instruction(&self, target: &str, data: Option<&str>) -> Result<RefNode> {
         let target = Name::from_str(target)?;
-        let node_impl = NodeImpl::new_processing_instruction(target, data);
+        let node_impl =
+            NodeImpl::new_processing_instruction(self.clone().downgrade(), target, data);
         Ok(RefNode::new(node_impl))
     }
 
     fn create_text_node(&self, data: &str) -> RefNode {
-        let node_impl = NodeImpl::new_text(data);
+        let node_impl = NodeImpl::new_text(self.clone().downgrade(), data);
         RefNode::new(node_impl)
     }
 
@@ -474,7 +510,7 @@ impl DOMImplementation for Implementation {
         system_id: &str,
     ) -> Result<RefNode> {
         let name = Name::from_str(qualified_name)?;
-        let node_impl = NodeImpl::new_document_type(name, public_id, system_id);
+        let node_impl = NodeImpl::new_document_type(None, name, public_id, system_id);
         Ok(RefNode::new(node_impl))
     }
 
@@ -514,7 +550,11 @@ impl Element for RefNode {
 
     fn set_attribute(&mut self, name: &str, value: &str) -> Result<()> {
         let attr_name = Name::from_str(name)?;
-        let attr_node = NodeImpl::new_attribute(attr_name, Some(value));
+        let attr_node = {
+            let ref_self = &self.borrow_mut();
+            let document = ref_self.i_owner_document.as_ref().unwrap();
+            NodeImpl::new_attribute(document.clone(), attr_name, Some(value))
+        };
         self.set_attribute_node(RefNode::new(attr_node)).map(|_| ())
     }
 
@@ -599,7 +639,11 @@ impl Element for RefNode {
         value: &str,
     ) -> Result<()> {
         let attr_name = Name::new_ns(namespace_uri, qualified_name)?;
-        let attr_node = NodeImpl::new_attribute(attr_name, Some(value));
+        let attr_node = {
+            let ref_self = &self.borrow_mut();
+            let document = ref_self.i_owner_document.as_ref().unwrap();
+            NodeImpl::new_attribute(document.clone(), attr_name, Some(value))
+        };
         self.set_attribute_node(RefNode::new(attr_node)).map(|_| ())
     }
 
@@ -697,8 +741,14 @@ impl Text for RefNode {
 
         let mut_self = self.borrow_mut();
         let mut new_node = match mut_self.i_node_type {
-            NodeType::Text => Ok(NodeImpl::new_text(&new_data)),
-            NodeType::CData => Ok(NodeImpl::new_cdata(&new_data)),
+            NodeType::Text => {
+                let document = mut_self.i_owner_document.as_ref().unwrap();
+                Ok(NodeImpl::new_text(document.clone(), &new_data))
+            }
+            NodeType::CData => {
+                let document = mut_self.i_owner_document.as_ref().unwrap();
+                Ok(NodeImpl::new_cdata(document.clone(), &new_data))
+            }
             _ => Err(Error::HierarchyRequest),
         }?;
         Ok(match &mut_self.i_parent_node {
@@ -841,6 +891,66 @@ fn namespaced_name_match(
     }
 }
 
+fn is_child_allowed(parent: &RefNode, child: &RefNode) -> bool {
+    let self_node_type = { &parent.borrow().i_node_type };
+    let child_node_type = { &child.borrow().i_node_type };
+    match self_node_type {
+        NodeType::Element => match child_node_type {
+            NodeType::Element
+            | NodeType::Text
+            | NodeType::Comment
+            | NodeType::ProcessingInstruction
+            | NodeType::CData
+            | NodeType::EntityReference => true,
+            _ => false,
+        },
+        NodeType::Attribute => match child_node_type {
+            NodeType::Text | NodeType::EntityReference => true,
+            _ => false,
+        },
+        NodeType::Text => false,
+        NodeType::CData => false,
+        NodeType::EntityReference => match child_node_type {
+            NodeType::Element
+            | NodeType::Text
+            | NodeType::Comment
+            | NodeType::ProcessingInstruction
+            | NodeType::CData
+            | NodeType::EntityReference => true,
+            _ => false,
+        },
+        NodeType::Entity => match child_node_type {
+            NodeType::Element
+            | NodeType::Text
+            | NodeType::Comment
+            | NodeType::ProcessingInstruction
+            | NodeType::CData
+            | NodeType::EntityReference => true,
+            _ => false,
+        },
+        NodeType::ProcessingInstruction => false,
+        NodeType::Comment => false,
+        NodeType::Document => match child_node_type {
+            NodeType::Element
+            | NodeType::Comment
+            | NodeType::ProcessingInstruction
+            | NodeType::DocumentType => true,
+            _ => false,
+        },
+        NodeType::DocumentType => false,
+        NodeType::DocumentFragment => match child_node_type {
+            NodeType::Element
+            | NodeType::Text
+            | NodeType::Comment
+            | NodeType::ProcessingInstruction
+            | NodeType::CData
+            | NodeType::EntityReference => true,
+            _ => false,
+        },
+        NodeType::Notation => false,
+    }
+}
+
 // ------------------------------------------------------------------------------------------------
 // Unit Tests
 // ------------------------------------------------------------------------------------------------
@@ -849,10 +959,19 @@ fn namespaced_name_match(
 mod tests {
     use super::*;
 
-    fn make_node(name: &str) -> RefNode {
-        let name = Name::from_str(name).unwrap();
-        let node = NodeImpl::new_element(name);
-        RefNode::new(node)
+    fn make_document_node() -> RefNode {
+        get_implementation()
+            .create_document("http://example.org/", "root", None)
+            .unwrap()
+    }
+
+    fn make_node(document: &mut RefNode, name: &str) -> RefNode {
+        let document = as_document_mut(document).unwrap();
+        let element = document.create_element(name).unwrap();
+        let mut document_element = document.document_element().unwrap();
+        let document_element = as_element_mut(&mut document_element).unwrap();
+        document_element.append_child(element.clone());
+        element
     }
 
     #[test]
@@ -860,12 +979,13 @@ mod tests {
         //
         // Setup the tree
         //
-        let mut root_node = make_node("element");
+        let mut document = make_document_node();
+        let mut root_node = make_node(&mut document, "element");
         {
             let root_element = as_element_mut(&mut root_node).unwrap();
 
             for index in 1..6 {
-                let child_node = make_node(&format!("child-{}", index));
+                let child_node = make_node(&mut document, &format!("child-{}", index));
                 let _ignore = root_element.append_child(child_node.clone());
             }
         }
@@ -896,15 +1016,16 @@ mod tests {
 
     #[test]
     fn test_previous_sibling() {
+        let mut document = make_document_node();
         //
         // Setup the tree
         //
-        let mut root_node = make_node("element");
+        let mut root_node = make_node(&mut document, "element");
         {
             let root_element = as_element_mut(&mut root_node).unwrap();
 
             for index in 1..6 {
-                let child_node = make_node(&format!("child-{}", index));
+                let child_node = make_node(&mut document, &format!("child-{}", index));
                 let _ignore = root_element.append_child(child_node.clone());
             }
         }

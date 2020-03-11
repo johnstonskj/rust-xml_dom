@@ -187,26 +187,35 @@ impl MutNamespaced for RefNode {
 #[cfg(test)]
 mod tests {
     use crate::convert::{
-        as_element_namespaced, as_element_namespaced_mut, MutRefNamespaced, RefNamespaced,
+        as_document_mut, as_element_mut, as_element_namespaced, as_element_namespaced_mut,
+        MutRefNamespaced, RefNamespaced,
     };
-    use crate::node_impl::NodeImpl;
-    use crate::{Name, RefNode};
-    use std::str::FromStr;
+    use crate::{get_implementation, RefNode};
 
     const HTML: &str = "http://www.w3.org/1999/xhtml";
     const XSD: &str = "http://www.w3.org/2001/XMLSchema";
     const XSLT: &str = "http://www.w3.org/1999/XSL/Transform";
     const EX: &str = "http://example.org/xmlns/example";
 
-    fn make_node(name: &str) -> RefNode {
-        let name = Name::from_str(name).unwrap();
-        let node = NodeImpl::new_element(name);
-        RefNode::new(node)
+    fn make_document_node() -> RefNode {
+        get_implementation()
+            .create_document("http://example.org/", "root", None)
+            .unwrap()
+    }
+
+    fn make_node(document: &mut RefNode, name: &str) -> RefNode {
+        let document = as_document_mut(document).unwrap();
+        let element = document.create_element(name).unwrap();
+        let mut document_element = document.document_element().unwrap();
+        let document_element = as_element_mut(&mut document_element).unwrap();
+        document_element.append_child(element.clone());
+        element
     }
 
     #[test]
     fn test_empty_element() {
-        let ref_node = make_node("element");
+        let mut document = make_document_node();
+        let ref_node = make_node(&mut document, "element");
         let namespaced = as_element_namespaced(&ref_node).unwrap();
 
         // prefix
@@ -226,7 +235,8 @@ mod tests {
     #[test]
     #[allow(unused_must_use)]
     fn test_this_element_string_prefix() {
-        let mut ref_node = make_node("element");
+        let mut document = make_document_node();
+        let mut ref_node = make_node(&mut document, "element");
         let namespaced = &mut ref_node as MutRefNamespaced<'_>;
 
         namespaced.insert(Some("xsd"), XSD);
@@ -253,7 +263,8 @@ mod tests {
     #[test]
     #[allow(unused_must_use)]
     fn test_this_element_none_prefix() {
-        let mut ref_node = make_node("element");
+        let mut document = make_document_node();
+        let mut ref_node = make_node(&mut document, "element");
         let namespaced = &mut ref_node as MutRefNamespaced<'_>;
 
         namespaced.insert(None, XSD);
@@ -280,28 +291,29 @@ mod tests {
     #[test]
     #[allow(unused_must_use)]
     fn test_tree_resolve() {
+        let mut document = make_document_node();
         //
         // Setup the tree
         //
-        let mut ref_node = make_node("element");
+        let mut ref_node = make_node(&mut document, "element");
         let ref_root = as_element_namespaced_mut(&mut ref_node).unwrap();
         ref_root.insert(Some("xsd"), XSD);
 
-        let mut ref_teen_1 = make_node("teen1");
+        let mut ref_teen_1 = make_node(&mut document, "teen1");
         {
             let ref_teen_ns = as_element_namespaced_mut(&mut ref_teen_1).unwrap();
             ref_teen_ns.insert(None, EX);
         }
         ref_root.append_child(ref_teen_1.clone());
 
-        let mut ref_teen_2 = make_node("teen2");
+        let mut ref_teen_2 = make_node(&mut document, "teen2");
         {
             let ref_teen_ns = as_element_namespaced_mut(&mut ref_teen_2).unwrap();
             ref_teen_ns.insert(None, HTML);
         }
         ref_root.append_child(ref_teen_2.clone());
 
-        let mut ref_child = make_node("child");
+        let mut ref_child = make_node(&mut document, "child");
         {
             let ref_child_ns = as_element_namespaced_mut(&mut ref_child).unwrap();
             ref_child_ns.insert(Some("xslt"), XSLT);

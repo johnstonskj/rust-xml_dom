@@ -13,7 +13,7 @@ fn test_text_node_contents() {
         "Describes process for planting &#38; nurturing different kinds of rose bushes.",
         "2001-01-20",
     ];
-    let root_node = common::create_rdf_example();
+    let root_node = common::create_example_rdf_document();
     let document = as_document(&root_node).unwrap();
 
     let document_element_node = document.document_element().unwrap();
@@ -35,6 +35,10 @@ fn test_text_node_contents() {
 #[test]
 #[ignore]
 fn test_text_modification() {}
+
+#[test]
+#[ignore]
+fn test_cdata_split() {}
 
 #[test]
 #[ignore]
