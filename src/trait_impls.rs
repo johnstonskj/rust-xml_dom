@@ -3,13 +3,11 @@ use crate::dom_impl::{get_implementation, Implementation};
 use crate::error::{Error, Result};
 use crate::name::Name;
 use crate::node_impl::*;
-use crate::rc_cell::WeakRefCell;
 use crate::syntax::*;
 use crate::traits::*;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::rc::Rc;
 use std::str::FromStr;
 
 // ------------------------------------------------------------------------------------------------
@@ -567,13 +565,22 @@ impl Element for RefNode {
         unimplemented!()
     }
 
-    fn get_elements_by_tag_name(&self, _tag_name: &str) -> Vec<RefNode> {
-        if !is_element(self) {
-            // shortcut as only elements have attributes
-            Vec::default()
-        } else {
-            unimplemented!()
+    fn get_elements_by_tag_name(&self, tag_name: &str) -> Vec<RefNode> {
+        let mut results = Vec::default();
+        if is_element(self) {
+            let tag_name = tag_name.to_string();
+            let ref_self = self.borrow();
+            if tag_name_match(&ref_self.i_name.to_string(), &tag_name) {
+                results.push(self.clone());
+            }
+            for child_node in &ref_self.i_child_nodes {
+                match as_element(child_node) {
+                    Ok(ref_child) => results.extend(ref_child.get_elements_by_tag_name(&tag_name)),
+                    Err(_) => (),
+                }
+            }
         }
+        results
     }
 
     fn get_attribute_ns(&self, _namespace_uri: &str, _local_name: &str) -> Option<String> {
@@ -600,33 +607,74 @@ impl Element for RefNode {
         unimplemented!()
     }
 
-    fn get_attribute_node_ns(&self, _namespace_uri: &str, _local_name: &str) -> Option<RefNode> {
-        unimplemented!()
+    fn get_attribute_node_ns(&self, namespace_uri: &str, local_name: &str) -> Option<RefNode> {
+        if is_element(self) {
+            match Name::new_ns(namespace_uri, local_name) {
+                Ok(name) => {
+                    let ref_self = self.borrow();
+                    ref_self.i_attributes.get(&name).map(|n| n.clone())
+                }
+                Err(_) => None,
+            }
+        } else {
+            None
+        }
     }
 
     fn set_attribute_node_ns(&mut self, new_attribute: RefNode) -> Result<RefNode> {
         self.set_attribute_node(new_attribute)
     }
 
-    fn get_elements_by_tag_name_ns(&self, _namespace_uri: &str, _local_name: &str) -> Vec<RefNode> {
-        unimplemented!()
+    fn get_elements_by_tag_name_ns(&self, namespace_uri: &str, local_name: &str) -> Vec<RefNode> {
+        let mut results = Vec::default();
+        if is_element(self) {
+            let namespace_uri = namespace_uri.to_string();
+            let local_name = local_name.to_string();
+            let ref_self = self.borrow();
+            if namespaced_name_match(
+                ref_self.i_name.namespace_uri(),
+                &ref_self.i_name.local_name(),
+                &namespace_uri,
+                &local_name,
+            ) {
+                results.push(self.clone());
+            }
+            for child_node in &ref_self.i_child_nodes {
+                match as_element(child_node) {
+                    Ok(ref_child) => results
+                        .extend(ref_child.get_elements_by_tag_name_ns(&namespace_uri, &local_name)),
+                    Err(_) => (),
+                }
+            }
+        }
+        results
     }
 
-    fn has_attribute(&self, _name: &str) -> bool {
-        if !is_element(self) {
-            // shortcut as only elements have attributes
-            false
+    fn has_attribute(&self, name: &str) -> bool {
+        if is_element(self) {
+            match Name::from_str(name) {
+                Ok(name) => {
+                    let ref_self = self.borrow();
+                    ref_self.i_attributes.contains_key(&name)
+                }
+                Err(_) => false,
+            }
         } else {
-            unimplemented!()
+            false
         }
     }
 
-    fn has_attribute_ns(&self, _namespace_uri: &str, _local_name: &str) -> bool {
-        if !is_element(self) {
-            // shortcut as only elements have attributes
-            false
+    fn has_attribute_ns(&self, namespace_uri: &str, local_name: &str) -> bool {
+        if is_element(self) {
+            match Name::new_ns(namespace_uri, local_name) {
+                Ok(name) => {
+                    let ref_self = self.borrow();
+                    ref_self.i_attributes.contains_key(&name)
+                }
+                Err(_) => false,
+            }
         } else {
-            unimplemented!()
+            false
         }
     }
 }
@@ -695,12 +743,7 @@ impl Display for RefNode {
             }
             NodeType::Attribute => {
                 let attribute = self as &dyn Attribute<NodeRef = RefNode>;
-                write!(
-                    f,
-                    "\"{}\"=\"{}\"",
-                    attribute.name(),
-                    attribute.value().unwrap()
-                )
+                write!(f, "{}=\"{}\"", attribute.name(), attribute.value().unwrap())
             }
             NodeType::Text => {
                 let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
@@ -769,6 +812,36 @@ impl Display for RefNode {
 }
 
 // ------------------------------------------------------------------------------------------------
+// Private Functions
+// ------------------------------------------------------------------------------------------------
+
+const WILD_CARD: &str = "*";
+
+fn tag_name_match(test: &String, against: &String) -> bool {
+    let wild = &WILD_CARD.to_string();
+    (test == against) || test == wild || against == wild
+}
+
+fn namespaced_name_match(
+    test_ns: &Option<String>,
+    test_local: &String,
+    against_ns: &String,
+    against_local: &String,
+) -> bool {
+    let wild = &WILD_CARD.to_string();
+    match test_ns {
+        None => {
+            against_ns == wild
+                && ((test_local == against_local) || test_local == wild || against_local == wild)
+        }
+        Some(test_ns) => {
+            ((test_ns == against_ns) || test_ns == wild || against_ns == wild)
+                && ((test_local == against_local) || test_local == wild || against_local == wild)
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
 // Unit Tests
 // ------------------------------------------------------------------------------------------------
 
@@ -793,7 +866,7 @@ mod tests {
 
             for index in 1..6 {
                 let child_node = make_node(&format!("child-{}", index));
-                root_element.append_child(child_node.clone());
+                let _ignore = root_element.append_child(child_node.clone());
             }
         }
 
@@ -832,7 +905,7 @@ mod tests {
 
             for index in 1..6 {
                 let child_node = make_node(&format!("child-{}", index));
-                root_element.append_child(child_node.clone());
+                let _ignore = root_element.append_child(child_node.clone());
             }
         }
 

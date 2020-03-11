@@ -24,6 +24,7 @@ fn main() {
     println!("{}", xml);
 }
 
+#[allow(unused_must_use)]
 fn create_user<'a>(
     doc: RefDocument,
     id: &str,
@@ -41,6 +42,7 @@ fn create_user<'a>(
     user
 }
 
+#[allow(unused_must_use)]
 fn create_user_element(doc: RefDocument, name: &str, value: &str) -> RefNode {
     let mut node = doc
         .create_element(name)

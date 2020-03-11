@@ -80,22 +80,26 @@ impl FromStr for Name {
     type Err = Error;
 
     fn from_str(value: &str) -> StdResult<Self, Self::Err> {
-        let parts = value
-            .split(XML_NS_SEPARATOR)
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>();
-        match parts.len() {
-            1 => Ok(Name::new(
-                Name::check_part(parts.get(0).unwrap())?,
-                None,
-                None,
-            )),
-            2 => Ok(Name::new(
-                Name::check_part(parts.get(0).unwrap())?,
-                Some(Name::check_part(parts.get(1).unwrap())?),
-                None,
-            )),
-            _ => Err(Error::Syntax),
+        if value.is_empty() {
+            Err(Error::Syntax)
+        } else {
+            let parts = value
+                .split(XML_NS_SEPARATOR)
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>();
+            match parts.len() {
+                1 => Ok(Name::new(
+                    Name::check_part(parts.get(0).unwrap())?,
+                    None,
+                    None,
+                )),
+                2 => Ok(Name::new(
+                    Name::check_part(parts.get(1).unwrap())?,
+                    Some(Name::check_part(parts.get(0).unwrap())?),
+                    None,
+                )),
+                _ => Err(Error::Syntax),
+            }
         }
     }
 }
@@ -126,7 +130,11 @@ impl Name {
     ///
     pub fn new_ns(namespace_uri: &str, qualified_name: &str) -> Result<Self> {
         let mut parsed = Name::from_str(qualified_name)?;
-        parsed.namespace_uri = Some(Self::check_namespace_uri(namespace_uri, &parsed.prefix)?);
+        parsed.namespace_uri = Some(Self::check_namespace_uri(
+            namespace_uri,
+            &parsed.prefix,
+            &parsed.local_name,
+        )?);
         Ok(parsed)
     }
 
@@ -144,34 +152,47 @@ impl Name {
     }
 
     fn check_part(part: &str) -> Result<String> {
-        // below ranges are always valid for XML 1.0 documents
-        // from https://en.wikipedia.org/wiki/XML#Valid_characters
-        if part.chars().all(|c| {
-            c == '\u{0009}'
-                || c == '\u{000A}'
-                || c == '\u{000D}'
-                || (c >= '\u{0020}' && c <= '\u{D7FF}')
-                || (c >= '\u{10000}' && c <= '\u{10FFF}')
-        }) {
-            Ok(part.to_string())
+        if part.is_empty() {
+            Err(Error::Syntax)
         } else {
-            Err(Error::InvalidCharacter)
+            // below ranges are always valid for XML 1.0 documents
+            // from https://en.wikipedia.org/wiki/XML#Valid_characters
+            if part.chars().all(|c| {
+                c == '\u{0009}'
+                    || c == '\u{000A}'
+                    || c == '\u{000D}'
+                    || (c >= '\u{0020}' && c <= '\u{D7FF}')
+                    || (c >= '\u{10000}' && c <= '\u{10FFF}')
+            }) {
+                Ok(part.to_string())
+            } else {
+                Err(Error::InvalidCharacter)
+            }
         }
     }
 
-    fn check_namespace_uri(namespace_uri: &str, prefix: &Option<String>) -> Result<String> {
+    fn check_namespace_uri(
+        namespace_uri: &str,
+        prefix: &Option<String>,
+        local: &String,
+    ) -> Result<String> {
         if namespace_uri.is_empty() {
-            Err(Error::Namespace)
-        } else if let Some(prefix) = prefix {
-            if (prefix == XML_NS_ATTRIBUTE && namespace_uri != XML_NS_URI)
-                || (prefix == XMLNS_NS_ATTRIBUTE && namespace_uri != XMLNS_NS_URI)
+            Err(Error::Syntax)
+        } else {
+            if let Some(prefix) = prefix {
+                if (prefix == XML_NS_ATTRIBUTE && namespace_uri != XML_NS_URI)
+                    || (prefix == XMLNS_NS_ATTRIBUTE && namespace_uri != XMLNS_NS_URI)
+                {
+                    return Err(Error::Namespace);
+                }
+            }
+            if (local == XML_NS_ATTRIBUTE && namespace_uri != XML_NS_URI)
+                || (local == XMLNS_NS_ATTRIBUTE && namespace_uri != XMLNS_NS_URI)
             {
                 Err(Error::Namespace)
             } else {
                 Ok(namespace_uri.to_string())
             }
-        } else {
-            Ok(namespace_uri.to_string())
         }
     }
 
@@ -277,7 +298,60 @@ impl Name {
 
 #[cfg(test)]
 mod tests {
+    use crate::error::Error;
+    use crate::Name;
+    use std::str::FromStr;
 
     #[test]
-    fn test_something() {}
+    fn test_parse_local() {
+        let name = Name::from_str("hello").unwrap();
+        assert_eq!(name.local_name, "hello".to_string());
+        assert!(name.prefix().is_none());
+        assert!(name.namespace_uri().is_none());
+    }
+
+    #[test]
+    fn test_parse_qualified() {
+        let name = Name::from_str("x:hello").unwrap();
+        assert_eq!(name.local_name, "hello".to_string());
+        assert_eq!(name.prefix(), &Some("x".to_string()));
+        assert!(name.namespace_uri().is_none());
+    }
+
+    #[test]
+    fn test_parse_namespaced() {
+        let name = Name::new_ns("http://example.org/schema/x", "x:hello").unwrap();
+        assert_eq!(name.local_name, "hello".to_string());
+        assert_eq!(name.prefix(), &Some("x".to_string()));
+        assert_eq!(
+            name.namespace_uri(),
+            &Some("http://example.org/schema/x".to_string())
+        );
+    }
+
+    #[test]
+    fn test_error_on_empty() {
+        let name = Name::from_str("");
+        assert_eq!(name.err().unwrap(), Error::Syntax);
+
+        let name = Name::from_str(":name");
+        assert_eq!(name.err().unwrap(), Error::Syntax);
+
+        let name = Name::from_str("prefix:");
+        assert_eq!(name.err().unwrap(), Error::Syntax);
+
+        let name = Name::new_ns("", "prefix:name");
+        assert_eq!(name.err().unwrap(), Error::Syntax);
+    }
+
+    #[test]
+    fn test_xmlns_error() {
+        const RDF_NS: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+
+        let name = Name::new_ns(RDF_NS, "xmlns");
+        assert_eq!(name.err().unwrap(), Error::Namespace);
+
+        let name = Name::new_ns(RDF_NS, "xmlns:rdf");
+        assert_eq!(name.err().unwrap(), Error::Namespace);
+    }
 }
