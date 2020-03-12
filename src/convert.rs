@@ -31,6 +31,11 @@ pub type RefNamespaced<'a> = &'a dyn Namespaced<NodeRef = RefNode>;
 pub(crate) type MutRefNamespaced<'a> = &'a mut dyn MutNamespaced<NodeRef = RefNode>;
 
 /// Type for dynamic trait cast
+pub type RefCharacterData<'a> = &'a dyn CharacterData<NodeRef = RefNode>;
+/// Type for mutable dynamic trait cast
+pub type MutRefCharacterData<'a> = &'a mut dyn CharacterData<NodeRef = RefNode>;
+
+/// Type for dynamic trait cast
 pub type RefText<'a> = &'a dyn Text<NodeRef = RefNode>;
 /// Type for mutable dynamic trait cast
 pub type MutRefText<'a> = &'a mut dyn Text<NodeRef = RefNode>;
@@ -195,6 +200,39 @@ pub fn is_character_data(ref_node: &RefNode) -> bool {
     match ref_node.borrow().i_node_type {
         NodeType::CData | NodeType::Comment | NodeType::Text => true,
         _ => false,
+    }
+}
+
+///
+/// Safely _cast_ the specified `RefNode` into a  `Text`.
+///
+#[inline]
+pub fn as_character_data(ref_node: &RefNode) -> Result<RefCharacterData<'_>> {
+    match ref_node.borrow().i_node_type {
+        NodeType::CData | NodeType::Comment | NodeType::Text => {
+            Ok(ref_node as RefCharacterData<'_>)
+        }
+        _ => {
+            warn!("ref_node.node_type != CharacterData");
+            Err(Error::InvalidState)
+        }
+    }
+}
+
+///
+/// Safely _cast_ the specified `RefNode` into a mutable `Text`.
+///
+#[inline]
+pub fn as_character_data_mut(ref_node: &mut RefNode) -> Result<MutRefCharacterData<'_>> {
+    let node_type = { &ref_node.borrow().i_node_type.clone() };
+    match node_type {
+        NodeType::CData | NodeType::Comment | NodeType::Text => {
+            Ok(ref_node as MutRefCharacterData<'_>)
+        }
+        _ => {
+            warn!("ref_node.node_type != CharacterData");
+            Err(Error::InvalidState)
+        }
     }
 }
 

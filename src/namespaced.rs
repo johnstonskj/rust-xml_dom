@@ -208,7 +208,8 @@ mod tests {
         let element = document.create_element(name).unwrap();
         let mut document_element = document.document_element().unwrap();
         let document_element = as_element_mut(&mut document_element).unwrap();
-        document_element.append_child(element.clone());
+        let result = document_element.append_child(element.clone());
+        assert!(result.is_ok());
         element
     }
 

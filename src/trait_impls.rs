@@ -151,9 +151,7 @@ impl Node for RefNode {
                     .position(|child| child == &ref_child)
                 {
                     None => mut_self.i_child_nodes.push(new_child.clone()),
-                    Some(position) => mut_self
-                        .i_child_nodes
-                        .insert(position + 1, new_child.clone()),
+                    Some(position) => mut_self.i_child_nodes.insert(position, new_child.clone()),
                 }
                 Ok(new_child)
             }
@@ -259,79 +257,77 @@ impl CDataSection for RefNode {}
 
 impl CharacterData for RefNode {
     fn substring(&self, offset: usize, count: usize) -> Result<String> {
+        if offset + count == offset {
+            return Ok(String::new());
+        }
         let ref_self = self.borrow();
         match &ref_self.i_value {
             None => Err(Error::IndexSize),
-            Some(data) => Ok(data[offset..offset + count].to_string()),
+            Some(data) => {
+                if offset >= data.len() {
+                    Err(Error::IndexSize)
+                } else {
+                    if offset + count >= data.len() {
+                        Ok(data[offset..].to_string())
+                    } else {
+                        Ok(data[offset..offset + count].to_string())
+                    }
+                }
+            }
         }
     }
 
     fn append(&mut self, new_data: &str) -> Result<()> {
-        if !new_data.is_empty() {
-            let mut mut_self = self.borrow_mut();
-            match &mut_self.i_value {
-                None => mut_self.i_value = Some(new_data.to_string()),
-                Some(old_data) => mut_self.i_value = Some(format!("{}{}", old_data, new_data)),
-            }
+        if new_data.is_empty() {
+            return Ok(());
         }
-        Ok(())
+        let mut mut_self = self.borrow_mut();
+        Ok(match &mut_self.i_value {
+            None => mut_self.i_value = Some(new_data.to_string()),
+            Some(old_data) => mut_self.i_value = Some(format!("{}{}", old_data, new_data)),
+        })
     }
 
     fn insert(&mut self, offset: usize, new_data: &str) -> Result<()> {
-        if !new_data.is_empty() {
-            let mut mut_self = self.borrow_mut();
-            match &mut_self.i_value {
-                None => {
-                    if offset != 0 {
-                        Err(Error::IndexSize)
-                    } else {
-                        mut_self.i_value = Some(new_data.to_string());
-                        Ok(())
-                    }
-                }
-                Some(old_data) => {
-                    if offset >= old_data.len() {
-                        Err(Error::IndexSize)
-                    } else {
-                        mut_self.i_value = Some(format!("{}{}", old_data, new_data));
-                        Ok(())
-                    }
-                }
-            }
-        } else {
-            Ok(())
+        if new_data.is_empty() {
+            return Ok(());
         }
+        self.replace(offset, 0, new_data)
     }
 
     fn delete(&mut self, offset: usize, count: usize) -> Result<()> {
+        if offset + count == offset {
+            return Ok(());
+        }
         const NOTHING: &str = "";
         self.replace(offset, count, NOTHING)
     }
 
     fn replace(&mut self, offset: usize, count: usize, replace_data: &str) -> Result<()> {
-        if count > 0 {
-            let mut mut_self = self.borrow_mut();
-            match &mut_self.i_value {
-                None => {
-                    if offset != 0 {
-                        Err(Error::IndexSize)
-                    } else {
-                        Ok(())
-                    }
-                }
-                Some(old_data) => {
-                    if offset >= old_data.len() {
-                        Err(Error::IndexSize)
-                    } else {
-                        let mut new_data = old_data.clone();
-                        new_data.replace_range(offset..offset + count, replace_data);
-                        mut_self.i_value = Some(new_data);
-                        Ok(())
-                    }
+        let mut mut_self = self.borrow_mut();
+        match &mut_self.i_value {
+            None => {
+                if offset + count != 0 {
+                    Err(Error::IndexSize)
+                } else {
+                    mut_self.i_value = Some(replace_data.to_string());
+                    Ok(())
                 }
             }
-        } else {
-            Ok(())
+            Some(old_data) => {
+                if offset >= old_data.len() {
+                    Err(Error::IndexSize)
+                } else {
+                    let mut new_data = old_data.clone();
+                    if offset + count >= old_data.len() {
+                        new_data.replace_range(offset.., replace_data);
+                    } else {
+                        new_data.replace_range(offset..offset + count, replace_data);
+                    }
+                    mut_self.i_value = Some(new_data);
+                    Ok(())
+                }
+            }
         }
     }
 }
@@ -732,26 +728,38 @@ impl ProcessingInstruction for RefNode {}
 impl Text for RefNode {
     fn split(&mut self, offset: usize) -> Result<RefNode> {
         let new_data = {
-            let text = as_text_mut(self).unwrap();
-            let count = text.length() - (offset + 1);
-            let new_data = text.substring(offset, count)?;
-            text.delete(offset, count)?;
-            new_data
+            let text = as_character_data_mut(self)?;
+            let length = text.length();
+            if offset >= length {
+                String::new()
+            } else {
+                let count = length - offset;
+                let new_data = text.substring(offset, count)?;
+                text.delete(offset, count)?;
+                new_data
+            }
         };
 
-        let mut_self = self.borrow_mut();
-        let mut new_node = match mut_self.i_node_type {
-            NodeType::Text => {
-                let document = mut_self.i_owner_document.as_ref().unwrap();
-                Ok(NodeImpl::new_text(document.clone(), &new_data))
-            }
-            NodeType::CData => {
-                let document = mut_self.i_owner_document.as_ref().unwrap();
-                Ok(NodeImpl::new_cdata(document.clone(), &new_data))
-            }
-            _ => Err(Error::HierarchyRequest),
-        }?;
-        Ok(match &mut_self.i_parent_node {
+        let mut new_node = {
+            //
+            // Create a new node and adjust contents
+            //
+            let mut_self = self.borrow_mut();
+            match mut_self.i_node_type {
+                NodeType::Text => {
+                    let document = mut_self.i_owner_document.as_ref().unwrap();
+                    Ok(NodeImpl::new_text(document.clone(), &new_data))
+                }
+                NodeType::CData => {
+                    let document = mut_self.i_owner_document.as_ref().unwrap();
+                    Ok(NodeImpl::new_cdata(document.clone(), &new_data))
+                }
+                _ => Err(Error::HierarchyRequest),
+            }?
+        };
+
+        let ref_self = self.borrow();
+        Ok(match &ref_self.i_parent_node {
             None => RefNode::new(new_node),
             Some(parent) => {
                 new_node.i_parent_node = Some(parent.clone());
@@ -759,7 +767,7 @@ impl Text for RefNode {
                 let parent = parent.clone();
                 let mut parent = parent.upgrade().unwrap();
                 let parent_element = as_element_mut(&mut parent)?;
-                let self_node = as_element(self)?;
+                let self_node = as_character_data(self)?;
                 let _ignored =
                     parent_element.insert_before(new_node.clone(), self_node.next_sibling())?;
                 new_node
@@ -970,7 +978,8 @@ mod tests {
         let element = document.create_element(name).unwrap();
         let mut document_element = document.document_element().unwrap();
         let document_element = as_element_mut(&mut document_element).unwrap();
-        document_element.append_child(element.clone());
+        let result = document_element.append_child(element.clone());
+        assert!(result.is_ok());
         element
     }
 
