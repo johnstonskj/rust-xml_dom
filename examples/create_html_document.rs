@@ -27,7 +27,7 @@ fn main() {
     let xml = document_node.to_string();
     println!("document 2: {}", xml);
     assert!(xml.starts_with("<!DOCTYPE html "));
-    assert!(xml.contains("<html \"lang\"=\"en\">"));
+    assert!(xml.contains("<html lang=\"en\">"));
     assert!(xml.contains("<head></head>"));
     assert!(xml.contains("<body></body>"));
     assert!(xml.ends_with("</html>"));
