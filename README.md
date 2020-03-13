@@ -46,13 +46,15 @@ println!("HTML: {}", xml);
 
 ## Changes
 
-**Version 0.1.2** (_in progress_)
+**Version 0.1.2**
 
 * Focus on feature completion:
   * implement all core trait features
   * implement extended trait features for currently supported traits
   * unescaping text
-  
+  * refactor `NodeImpl` for extended traits
+* Unit tests, lot's of unit tests
+
 **Version 0.1.1**
 
 * Focus on API, separate the traits from implementation more cleanly.
