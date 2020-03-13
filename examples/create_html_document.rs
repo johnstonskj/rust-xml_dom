@@ -7,8 +7,8 @@ fn main() {
     let document_type = implementation
         .create_document_type(
             "html",
-            "-//W3C//DTD XHTML 1.0 Transitional//EN",
-            "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd",
+            Some("-//W3C//DTD XHTML 1.0 Transitional//EN"),
+            Some("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"),
         )
         .unwrap();
     let mut document_node = implementation

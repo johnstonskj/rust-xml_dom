@@ -188,33 +188,9 @@ impl NodeImpl {
     pub(crate) fn new_document_type(
         parent: Option<WeakRefNode>,
         name: Name,
-        public_id: &str,
-        system_id: &str,
+        public_id: Option<&str>,
+        system_id: Option<&str>,
     ) -> Self {
-        let public_id = Self {
-            i_node_type: NodeType::Attribute,
-            i_name: Name::for_public_id(),
-            i_value: Some(public_id.to_string()),
-            i_parent_node: None,
-            i_owner_document: None,
-            i_attributes: Default::default(),
-            i_child_nodes: vec![],
-            i_namespaces: Default::default(),
-            i_document_element: None,
-            i_document_type: None,
-        };
-        let system_id = Self {
-            i_node_type: NodeType::Attribute,
-            i_name: Name::for_system_id(),
-            i_value: Some(system_id.to_string()),
-            i_parent_node: None,
-            i_owner_document: None,
-            i_attributes: Default::default(),
-            i_child_nodes: vec![],
-            i_namespaces: Default::default(),
-            i_document_element: None,
-            i_document_type: None,
-        };
         let mut doc_type = Self {
             i_node_type: NodeType::DocumentType,
             i_name: name,
@@ -227,12 +203,40 @@ impl NodeImpl {
             i_document_element: None,
             i_document_type: None,
         };
-        let _unused = doc_type
-            .i_attributes
-            .insert(public_id.i_name.clone(), RefNode::new(public_id));
-        let _unused = doc_type
-            .i_attributes
-            .insert(system_id.i_name.clone(), RefNode::new(system_id));
+        if let Some(public_id) = public_id {
+            let public_id = Self {
+                i_node_type: NodeType::Attribute,
+                i_name: Name::for_public_id(),
+                i_value: Some(public_id.to_string()),
+                i_parent_node: None,
+                i_owner_document: None,
+                i_attributes: Default::default(),
+                i_child_nodes: vec![],
+                i_namespaces: Default::default(),
+                i_document_element: None,
+                i_document_type: None,
+            };
+            let _unused = doc_type
+                .i_attributes
+                .insert(public_id.i_name.clone(), RefNode::new(public_id));
+        }
+        if let Some(system_id) = system_id {
+            let system_id = Self {
+                i_node_type: NodeType::Attribute,
+                i_name: Name::for_system_id(),
+                i_value: Some(system_id.to_string()),
+                i_parent_node: None,
+                i_owner_document: None,
+                i_attributes: Default::default(),
+                i_child_nodes: vec![],
+                i_namespaces: Default::default(),
+                i_document_element: None,
+                i_document_type: None,
+            };
+            let _unused = doc_type
+                .i_attributes
+                .insert(system_id.i_name.clone(), RefNode::new(system_id));
+        }
         doc_type
     }
 }
@@ -266,8 +270,8 @@ mod tests {
         let doc_type = NodeImpl::new_document_type(
             None,
             name,
-            "-//W3C//DTD XHTML 1.0 Transitional//EN",
-            "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd",
+            Some("-//W3C//DTD XHTML 1.0 Transitional//EN"),
+            Some("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"),
         );
         assert_eq!(doc_type.i_attributes.len(), 2);
     }

@@ -23,8 +23,8 @@ fn test_create_document_type() {
     let document_type_node = implementation
         .create_document_type(
             "html",
-            "-//W3C//DTD XHTML 1.0 Transitional//EN",
-            "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd",
+            Some("-//W3C//DTD XHTML 1.0 Transitional//EN"),
+            Some("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"),
         )
         .unwrap();
     let document_type = as_document_type(&document_type_node).unwrap();

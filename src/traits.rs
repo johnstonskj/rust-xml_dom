@@ -678,12 +678,47 @@ pub trait DocumentFragment: Node {}
 /// The DOM Level 2 doesn't support editing `DocumentType` nodes.
 ///
 pub trait DocumentType: Node {
+    ///
+    /// A `NamedNodeMap` containing the general entities, both external and internal, declared in
+    /// the DTD. Parameter entities are not contained. Duplicates are discarded. For example in:
+    ///
+    /// ```xml
+    /// <!DOCTYPE ex SYSTEM "ex.dtd" [
+    ///   <!ENTITY foo "foo">
+    ///   <!ENTITY bar "bar">
+    ///   <!ENTITY bar "bar2">
+    ///   <!ENTITY % baz "baz">
+    /// ]>
+    /// <ex/>
+    /// ```
+    ///
+    /// the interface provides access to `foo` and the first declaration of `bar` but not the
+    /// second declaration of `bar` or `baz`. Every node in this map also implements the `Entity`
+    /// interface.
+    ///
+    /// The DOM Level 2 does not support editing entities, therefore `entities` cannot be altered
+    /// in any way.
+    ///
     fn entities(&self) -> HashMap<Name, Self::NodeRef>;
+    ///
+    /// A `NamedNodeMap` containing the notations declared in the DTD. Duplicates are discarded.
+    /// Every node in this map also implements the `Notation` interface.
+    ///
+    /// The DOM Level 2 does not support editing notations, therefore `notations` cannot be altered
+    /// in any way.
+    ///
     fn notations(&self) -> HashMap<Name, Self::NodeRef>;
     /// The public identifier of the external subset.
     fn public_id(&self) -> Option<String>;
     /// The system identifier of the external subset.
     fn system_id(&self) -> Option<String>;
+    ///
+    /// The internal subset as a string.
+    ///
+    /// **Note:** The actual content returned depends on how much information is available to the
+    /// implementation. This may vary depending on various parameters, including the XML processor
+    /// used to build the document.
+    ///
     fn internal_subset(&self) -> Option<String>;
 }
 
@@ -1232,8 +1267,8 @@ pub trait DOMImplementation {
     fn create_document_type(
         &self,
         qualified_name: &str,
-        public_id: &str,
-        system_id: &str,
+        public_id: Option<&str>,
+        system_id: Option<&str>,
     ) -> Result<Self::NodeRef>;
     ///
     /// Test if the DOM implementation implements a specific feature.

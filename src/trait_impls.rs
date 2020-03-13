@@ -514,8 +514,8 @@ impl DOMImplementation for Implementation {
     fn create_document_type(
         &self,
         qualified_name: &str,
-        public_id: &str,
-        system_id: &str,
+        public_id: Option<&str>,
+        system_id: Option<&str>,
     ) -> Result<RefNode> {
         let name = Name::from_str(qualified_name)?;
         let node_impl = NodeImpl::new_document_type(None, name, public_id, system_id);

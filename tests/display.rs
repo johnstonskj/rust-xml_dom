@@ -126,8 +126,8 @@ fn test_display_document() {
     let document_type = implementation
         .create_document_type(
             "html",
-            "-//W3C//DTD XHTML 1.0 Transitional//EN",
-            "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd",
+            Some("-//W3C//DTD XHTML 1.0 Transitional//EN"),
+            Some("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"),
         )
         .unwrap();
     let test_node = implementation
@@ -144,8 +144,8 @@ fn test_display_document_type() {
     let test_node = implementation
         .create_document_type(
             "html",
-            "-//W3C//DTD XHTML 1.0 Transitional//EN",
-            "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd",
+            Some("-//W3C//DTD XHTML 1.0 Transitional//EN"),
+            Some("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"),
         )
         .unwrap();
 
