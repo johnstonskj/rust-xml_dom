@@ -232,17 +232,24 @@ impl Name {
     }
 
     ///
-    /// Return the reserved name for `DocumentType` `public_id` attributes
+    /// Return the reserved name for `DocumentType` `public_id` attribute
     ///
     pub fn for_public_id() -> Self {
         Self::new(XML_DOCTYPE_PUBLIC.to_string(), None, None)
     }
 
     ///
-    /// Return the reserved name for `DocumentType` `system_id` attributes
+    /// Return the reserved name for `DocumentType` `system_id` attribute
     ///
     pub fn for_system_id() -> Self {
         Self::new(XML_DOCTYPE_SYSTEM.to_string(), None, None)
+    }
+
+    ///
+    /// Return the reserved name for `Entity` `notation_name` attribute
+    ///
+    pub(crate) fn for_null() -> Self {
+        Self::new("null".to_string(), None, None)
     }
 
     ///

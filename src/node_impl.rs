@@ -207,6 +207,55 @@ impl NodeImpl {
             },
         }
     }
+    pub(crate) fn new_entity_reference(owner_document: WeakRefNode, name: Name) -> Self {
+        Self {
+            i_node_type: NodeType::EntityReference,
+            i_name: name,
+            i_value: None,
+            i_parent_node: None,
+            i_owner_document: Some(owner_document),
+            i_child_nodes: vec![],
+            i_extension: Extension::None,
+        }
+    }
+    pub(crate) fn new_entity(
+        owner_document: Option<WeakRefNode>,
+        notation_name: Name,
+        public_id: Option<&str>,
+        system_id: Option<&str>,
+    ) -> Self {
+        Self {
+            i_node_type: NodeType::Entity,
+            i_name: notation_name,
+            i_value: None,
+            i_parent_node: None,
+            i_owner_document: owner_document,
+            i_child_nodes: vec![],
+            i_extension: Extension::Entity {
+                i_public_id: public_id.map(String::from),
+                i_system_id: system_id.map(String::from),
+            },
+        }
+    }
+    pub(crate) fn new_notation(
+        owner_document: Option<WeakRefNode>,
+        notation_name: Name,
+        public_id: Option<&str>,
+        system_id: Option<&str>,
+    ) -> Self {
+        Self {
+            i_node_type: NodeType::Notation,
+            i_name: notation_name,
+            i_value: None,
+            i_parent_node: None,
+            i_owner_document: owner_document,
+            i_child_nodes: vec![],
+            i_extension: Extension::Notation {
+                i_public_id: public_id.map(String::from),
+                i_system_id: system_id.map(String::from),
+            },
+        }
+    }
 }
 
 // ------------------------------------------------------------------------------------------------

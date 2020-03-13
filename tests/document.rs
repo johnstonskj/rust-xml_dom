@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use xml_dom::convert::{
     as_attribute, as_cdata_section, as_comment, as_document, as_document_fragment, as_element,
-    as_processing_instruction, as_text,
+    as_entity_reference, as_processing_instruction, as_text,
 };
 use xml_dom::Name;
 
@@ -88,9 +88,16 @@ fn test_create_document_fragment() {
 }
 
 #[test]
-#[ignore]
 fn test_create_entity_reference() {
-    unimplemented!()
+    let document_node = common::create_empty_rdf_document();
+    let document = as_document(&document_node).unwrap();
+    let node = document.create_entity_reference("test").unwrap();
+    let entity_reference = as_entity_reference(&node).unwrap();
+    assert!(entity_reference.parent_node().is_none());
+    assert!(entity_reference.owner_document().is_some());
+    let expected_name = Name::from_str("test").unwrap();
+    assert_eq!(entity_reference.name(), expected_name);
+    assert!(!entity_reference.has_child_nodes());
 }
 
 #[test]

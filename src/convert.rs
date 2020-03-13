@@ -308,52 +308,68 @@ pub fn as_cdata_section_mut(ref_node: &mut RefNode) -> Result<MutRefCDataSection
 /// Determines if the specified node is of type `NodeType::EntityReference`.
 ///
 #[inline]
-pub fn is_entity_reference(_ref_node: &RefNode) -> bool {
-    panic!("node type EntityReference unsupported");
+pub fn is_entity_reference(ref_node: &RefNode) -> bool {
+    ref_node.borrow().i_node_type == NodeType::EntityReference
 }
 
 ///
 /// Safely _cast_ the specified `RefNode` into a  `EntityReference`.
 ///
 #[inline]
-pub fn as_entity_reference(_ref_node: &RefNode) -> Result<RefEntityReference<'_>> {
-    warn!("node type EntityReference unsupported");
-    Err(Error::NotSupported)
+pub fn as_entity_reference(ref_node: &RefNode) -> Result<RefEntityReference<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::EntityReference {
+        Ok(ref_node as RefEntityReference<'_>)
+    } else {
+        warn!("ref_node.node_type != EntityReference");
+        Err(Error::InvalidState)
+    }
 }
 
 ///
 /// Safely _cast_ the specified `RefNode` into a mutable `EntityReference`.
 ///
 #[inline]
-pub fn as_entity_reference_mut(_ref_node: &mut RefNode) -> Result<MutRefEntityReference<'_>> {
-    warn!("node type EntityReference unsupported");
-    Err(Error::NotSupported)
+pub fn as_entity_reference_mut(ref_node: &mut RefNode) -> Result<MutRefEntityReference<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::EntityReference {
+        Ok(ref_node as MutRefEntityReference<'_>)
+    } else {
+        warn!("ref_node.node_type != EntityReference");
+        Err(Error::InvalidState)
+    }
 }
 
 ///
 /// Determines if the specified node is of type `NodeType::Entity`.
 ///
 #[inline]
-pub fn is_entity(_ref_node: &RefNode) -> bool {
-    panic!("node type Entity unsupported");
+pub fn is_entity(ref_node: &RefNode) -> bool {
+    ref_node.borrow().i_node_type == NodeType::Entity
 }
 
 ///
 /// Safely _cast_ the specified `RefNode` into a  `Entity`.
 ///
 #[inline]
-pub fn as_entity(_ref_node: &RefNode) -> Result<RefEntity<'_>> {
-    warn!("node type Entity unsupported");
-    Err(Error::NotSupported)
+pub fn as_entity(ref_node: &RefNode) -> Result<RefEntity<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::Entity {
+        Ok(ref_node as RefEntity<'_>)
+    } else {
+        warn!("ref_node.node_type != Entity");
+        Err(Error::InvalidState)
+    }
 }
 
 ///
 /// Safely _cast_ the specified `RefNode` into a mutable `Entity`.
 ///
 #[inline]
-pub fn as_entity_mut(_ref_node: &mut RefNode) -> Result<MutRefEntity<'_>> {
-    warn!("node type Entity unsupported");
-    Err(Error::NotSupported)
+pub fn as_entity_mut(ref_node: &mut RefNode) -> Result<MutRefEntity<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::Entity {
+        Ok(ref_node as MutRefEntity<'_>)
+    } else {
+        warn!("ref_node.node_type != Entity");
+        Err(Error::InvalidState)
+    }
 }
 
 ///
@@ -532,24 +548,32 @@ pub fn as_document_fragment_mut(ref_node: &mut RefNode) -> Result<MutRefDocument
 /// Determines if the specified node is of type `NodeType::Notation`.
 ///
 #[inline]
-pub fn is_notation(_ref_node: &RefNode) -> bool {
-    panic!("node type Notation unsupported");
+pub fn is_notation(ref_node: &RefNode) -> bool {
+    ref_node.borrow().i_node_type == NodeType::Notation
 }
 
 ///
 /// Safely _cast_ the specified `RefNode` into a `Notation`.
 ///
 #[inline]
-pub fn as_notation(_ref_node: &RefNode) -> Result<RefNotation<'_>> {
-    warn!("node type Notation unsupported");
-    Err(Error::NotSupported)
+pub fn as_notation(ref_node: &RefNode) -> Result<RefNotation<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::Notation {
+        Ok(ref_node as RefNotation<'_>)
+    } else {
+        warn!("ref_node.node_type != Notation");
+        Err(Error::InvalidState)
+    }
 }
 
 ///
 /// Safely _cast_ the specified `RefNode` into a mutable `Notation`.
 ///
 #[inline]
-pub fn as_notation_mut(_ref_node: &mut RefNode) -> Result<MutRefNotation<'_>> {
-    warn!("node type Notation unsupported");
-    Err(Error::NotSupported)
+pub fn as_notation_mut(ref_node: &mut RefNode) -> Result<MutRefNotation<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::Notation {
+        Ok(ref_node as MutRefNotation<'_>)
+    } else {
+        warn!("ref_node.node_type != Notation");
+        Err(Error::InvalidState)
+    }
 }

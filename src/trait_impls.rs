@@ -18,244 +18,6 @@ use std::str::FromStr;
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Node for RefNode {
-    type NodeRef = RefNode;
-
-    fn name(&self) -> Name {
-        let ref_self = self.borrow();
-        ref_self.i_name.clone()
-    }
-
-    fn node_value(&self) -> Option<String> {
-        let ref_self = self.borrow();
-        ref_self.i_value.clone()
-    }
-
-    fn set_node_value(&mut self, value: &str) -> Result<()> {
-        let mut mut_self = self.borrow_mut();
-        mut_self.i_value = Some(value.to_string());
-        Ok(())
-    }
-
-    fn unset_node_value(&mut self) -> Result<()> {
-        let mut mut_self = self.borrow_mut();
-        mut_self.i_value = None;
-        Ok(())
-    }
-
-    fn node_type(&self) -> NodeType {
-        let ref_self = self.borrow();
-        ref_self.i_node_type.clone()
-    }
-
-    fn parent_node(&self) -> Option<RefNode> {
-        let ref_self = self.borrow();
-        match &ref_self.i_parent_node {
-            None => None,
-            Some(node) => node.clone().upgrade(),
-        }
-    }
-
-    fn child_nodes(&self) -> Vec<RefNode> {
-        let ref_self = self.borrow();
-        ref_self.i_child_nodes.clone()
-    }
-
-    fn first_child(&self) -> Option<RefNode> {
-        let ref_self = self.borrow();
-        match ref_self.i_child_nodes.first() {
-            None => None,
-            Some(node) => Some(node.clone()),
-        }
-    }
-
-    fn last_child(&self) -> Option<RefNode> {
-        let ref_self = self.borrow();
-        match ref_self.i_child_nodes.first() {
-            None => None,
-            Some(node) => Some(node.clone()),
-        }
-    }
-
-    fn previous_sibling(&self) -> Option<RefNode> {
-        let ref_self = self.borrow();
-        match &ref_self.i_parent_node {
-            None => {
-                warn!("{}", MSG_NO_PARENT_NODE);
-                None
-            }
-            Some(parent_node) => {
-                let parent_node = parent_node.clone();
-                let parent_node = parent_node.upgrade()?;
-                let ref_parent = parent_node.borrow();
-                match ref_parent
-                    .i_child_nodes
-                    .iter()
-                    .position(|child| child == self)
-                {
-                    None => None,
-                    Some(index) => {
-                        if index == 0 {
-                            None
-                        } else {
-                            let sibling = ref_parent.i_child_nodes.get(index - 1);
-                            sibling.map(|n| n.clone())
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fn next_sibling(&self) -> Option<RefNode> {
-        let ref_self = self.borrow();
-        match &ref_self.i_parent_node {
-            None => {
-                warn!("{}", MSG_NO_PARENT_NODE);
-                None
-            }
-            Some(parent_node) => {
-                let parent_node = parent_node.clone();
-                let parent_node = parent_node.upgrade()?;
-                let ref_parent = parent_node.borrow();
-                match ref_parent
-                    .i_child_nodes
-                    .iter()
-                    .position(|child| child == self)
-                {
-                    None => None,
-                    Some(index) => {
-                        let sibling = ref_parent.i_child_nodes.get(index + 1);
-                        sibling.map(|n| n.clone())
-                    }
-                }
-            }
-        }
-    }
-
-    fn attributes(&self) -> HashMap<Name, RefNode, RandomState> {
-        let ref_self = self.borrow();
-        if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
-            i_attributes.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            HashMap::default()
-        }
-    }
-
-    fn owner_document(&self) -> Option<RefNode> {
-        let ref_self = self.borrow();
-        match &ref_self.i_owner_document {
-            None => None,
-            Some(node) => node.clone().upgrade(),
-        }
-    }
-
-    fn insert_before(&mut self, new_child: RefNode, ref_child: Option<RefNode>) -> Result<RefNode> {
-        match ref_child {
-            None => {
-                let mut_node = as_element_mut(self)?;
-                mut_node.append_child(new_child)
-            }
-            Some(ref_child) => {
-                // TODO: see `append_child` for specifics
-                let mut mut_self = self.borrow_mut();
-                match mut_self
-                    .i_child_nodes
-                    .iter()
-                    .position(|child| child == &ref_child)
-                {
-                    None => mut_self.i_child_nodes.push(new_child.clone()),
-                    Some(position) => mut_self.i_child_nodes.insert(position, new_child.clone()),
-                }
-                Ok(new_child)
-            }
-        }
-    }
-
-    fn replace_child(&mut self, _new_child: RefNode, _old_child: &RefNode) -> Result<RefNode> {
-        // TODO: see `append_child` for specifics
-        unimplemented!()
-    }
-
-    // * Document -- Element (maximum of one), ProcessingInstruction, Comment, DocumentType (maximum of one)
-    // * DocumentFragment -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
-    // * DocumentType -- no children
-    // * EntityReference -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
-    // * Element -- Element, Text, Comment, ProcessingInstruction, CDATASection, EntityReference
-    // * Attr -- Text, EntityReference
-    // * ProcessingInstruction -- no children
-    // * Comment -- no children
-    // * Text -- no children
-    // * CDATASection -- no children
-    // * Entity -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
-    // * Notation -- no children
-
-    fn append_child(&mut self, new_child: RefNode) -> Result<RefNode> {
-        if !is_child_allowed(self, &new_child) {
-            return Err(Error::HierarchyRequest);
-        }
-        {
-            //
-            // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
-            // document than the one that created this node.
-            let self_parent = &self.borrow().i_parent_node;
-            let child_parent = &self.borrow().i_parent_node;
-            if !match (self_parent, child_parent) {
-                (None, None) => true,
-                (Some(_), None) => true,
-                (None, Some(_)) => false,
-                (Some(self_parent), Some(child_parent)) => {
-                    let self_parent = self_parent.clone().upgrade().unwrap();
-                    let child_parent = child_parent.clone().upgrade().unwrap();
-                    &self_parent == &child_parent
-                }
-            } {
-                return Err(Error::WrongDocument);
-            }
-        }
-        // TODO: Check to see if it is in the tree already, if so remove it
-        // update child with references
-        {
-            let ref_self = self.borrow();
-            let mut mut_child = new_child.borrow_mut();
-            mut_child.i_parent_node = Some(self.to_owned().downgrade());
-            mut_child.i_owner_document = ref_self.i_owner_document.clone();
-        }
-        let mut mut_self = self.borrow_mut();
-
-        // TODO: generalize, for each parent type, is child allowed
-
-        mut_self.i_child_nodes.push(new_child.clone());
-
-        // TODO: deal with document fragment as special case
-
-        Ok(new_child)
-    }
-
-    fn has_child_nodes(&self) -> bool {
-        !self.child_nodes().is_empty()
-    }
-
-    fn clone_node(&self, _deep: bool) -> Option<RefNode> {
-        unimplemented!()
-    }
-
-    fn normalize(&mut self) {
-        unimplemented!()
-    }
-
-    fn is_supported(&self, feature: &str, version: &str) -> bool {
-        get_implementation().has_feature(feature, version)
-    }
-
-    fn has_attributes(&self) -> bool {
-        !self.attributes().is_empty()
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-
 impl Attribute for RefNode {}
 
 // ------------------------------------------------------------------------------------------------
@@ -412,8 +174,10 @@ impl Document for RefNode {
         Ok(RefNode::new(node_impl))
     }
 
-    fn create_entity_reference(&self, _name: &str) -> Result<RefNode> {
-        unimplemented!()
+    fn create_entity_reference(&self, name: &str) -> Result<RefNode> {
+        let name = Name::from_str(name)?;
+        let node_impl = NodeImpl::new_entity_reference(self.clone().downgrade(), name);
+        Ok(RefNode::new(node_impl))
     }
 
     fn create_comment(&self, data: &str) -> RefNode {
@@ -508,11 +272,23 @@ impl DocumentFragment for RefNode {}
 
 impl DocumentType for RefNode {
     fn entities(&self) -> HashMap<Name, Self::NodeRef, RandomState> {
-        unimplemented!()
+        let ref_self = self.borrow();
+        if let Extension::DocumentType { i_entities, .. } = &ref_self.i_extension {
+            i_entities.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            HashMap::default()
+        }
     }
 
     fn notations(&self) -> HashMap<Name, Self::NodeRef, RandomState> {
-        unimplemented!()
+        let ref_self = self.borrow();
+        if let Extension::DocumentType { i_notations, .. } = &ref_self.i_extension {
+            i_notations.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            HashMap::default()
+        }
     }
 
     fn public_id(&self) -> Option<String> {
@@ -536,7 +312,16 @@ impl DocumentType for RefNode {
     }
 
     fn internal_subset(&self) -> Option<String> {
-        unimplemented!()
+        let ref_self = self.borrow();
+        if let Extension::DocumentType {
+            i_internal_subset, ..
+        } = &ref_self.i_extension
+        {
+            i_internal_subset.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
+        }
     }
 }
 
@@ -838,6 +623,300 @@ impl Element for RefNode {
         } else {
             warn!("{}", MSG_INVALID_NODE_TYPE);
             false
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+
+impl Entity for RefNode {
+    fn public_id(&self) -> Option<String> {
+        let ref_self = self.borrow();
+        if let Extension::Entity { i_public_id, .. } = &ref_self.i_extension {
+            i_public_id.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
+        }
+    }
+
+    fn system_id(&self) -> Option<String> {
+        let ref_self = self.borrow();
+        if let Extension::Entity { i_system_id, .. } = &ref_self.i_extension {
+            i_system_id.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
+        }
+    }
+
+    fn notation_name(&self) -> Option<String> {
+        unimplemented!()
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+
+impl EntityReference for RefNode {}
+
+// ------------------------------------------------------------------------------------------------
+
+impl Node for RefNode {
+    type NodeRef = RefNode;
+
+    fn name(&self) -> Name {
+        let ref_self = self.borrow();
+        ref_self.i_name.clone()
+    }
+
+    fn node_value(&self) -> Option<String> {
+        let ref_self = self.borrow();
+        ref_self.i_value.clone()
+    }
+
+    fn set_node_value(&mut self, value: &str) -> Result<()> {
+        let mut mut_self = self.borrow_mut();
+        mut_self.i_value = Some(value.to_string());
+        Ok(())
+    }
+
+    fn unset_node_value(&mut self) -> Result<()> {
+        let mut mut_self = self.borrow_mut();
+        mut_self.i_value = None;
+        Ok(())
+    }
+
+    fn node_type(&self) -> NodeType {
+        let ref_self = self.borrow();
+        ref_self.i_node_type.clone()
+    }
+
+    fn parent_node(&self) -> Option<RefNode> {
+        let ref_self = self.borrow();
+        match &ref_self.i_parent_node {
+            None => None,
+            Some(node) => node.clone().upgrade(),
+        }
+    }
+
+    fn child_nodes(&self) -> Vec<RefNode> {
+        let ref_self = self.borrow();
+        ref_self.i_child_nodes.clone()
+    }
+
+    fn first_child(&self) -> Option<RefNode> {
+        let ref_self = self.borrow();
+        match ref_self.i_child_nodes.first() {
+            None => None,
+            Some(node) => Some(node.clone()),
+        }
+    }
+
+    fn last_child(&self) -> Option<RefNode> {
+        let ref_self = self.borrow();
+        match ref_self.i_child_nodes.first() {
+            None => None,
+            Some(node) => Some(node.clone()),
+        }
+    }
+
+    fn previous_sibling(&self) -> Option<RefNode> {
+        let ref_self = self.borrow();
+        match &ref_self.i_parent_node {
+            None => {
+                warn!("{}", MSG_NO_PARENT_NODE);
+                None
+            }
+            Some(parent_node) => {
+                let parent_node = parent_node.clone();
+                let parent_node = parent_node.upgrade()?;
+                let ref_parent = parent_node.borrow();
+                match ref_parent
+                    .i_child_nodes
+                    .iter()
+                    .position(|child| child == self)
+                {
+                    None => None,
+                    Some(index) => {
+                        if index == 0 {
+                            None
+                        } else {
+                            let sibling = ref_parent.i_child_nodes.get(index - 1);
+                            sibling.map(|n| n.clone())
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn next_sibling(&self) -> Option<RefNode> {
+        let ref_self = self.borrow();
+        match &ref_self.i_parent_node {
+            None => {
+                warn!("{}", MSG_NO_PARENT_NODE);
+                None
+            }
+            Some(parent_node) => {
+                let parent_node = parent_node.clone();
+                let parent_node = parent_node.upgrade()?;
+                let ref_parent = parent_node.borrow();
+                match ref_parent
+                    .i_child_nodes
+                    .iter()
+                    .position(|child| child == self)
+                {
+                    None => None,
+                    Some(index) => {
+                        let sibling = ref_parent.i_child_nodes.get(index + 1);
+                        sibling.map(|n| n.clone())
+                    }
+                }
+            }
+        }
+    }
+
+    fn attributes(&self) -> HashMap<Name, RefNode, RandomState> {
+        let ref_self = self.borrow();
+        if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
+            i_attributes.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            HashMap::default()
+        }
+    }
+
+    fn owner_document(&self) -> Option<RefNode> {
+        let ref_self = self.borrow();
+        match &ref_self.i_owner_document {
+            None => None,
+            Some(node) => node.clone().upgrade(),
+        }
+    }
+
+    fn insert_before(&mut self, new_child: RefNode, ref_child: Option<RefNode>) -> Result<RefNode> {
+        match ref_child {
+            None => {
+                let mut_node = as_element_mut(self)?;
+                mut_node.append_child(new_child)
+            }
+            Some(ref_child) => {
+                // TODO: see `append_child` for specifics
+                let mut mut_self = self.borrow_mut();
+                match mut_self
+                    .i_child_nodes
+                    .iter()
+                    .position(|child| child == &ref_child)
+                {
+                    None => mut_self.i_child_nodes.push(new_child.clone()),
+                    Some(position) => mut_self.i_child_nodes.insert(position, new_child.clone()),
+                }
+                Ok(new_child)
+            }
+        }
+    }
+
+    fn replace_child(&mut self, _new_child: RefNode, _old_child: &RefNode) -> Result<RefNode> {
+        // TODO: see `append_child` for specifics
+        unimplemented!()
+    }
+
+    // * Document -- Element (maximum of one), ProcessingInstruction, Comment, DocumentType (maximum of one)
+    // * DocumentFragment -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+    // * DocumentType -- no children
+    // * EntityReference -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+    // * Element -- Element, Text, Comment, ProcessingInstruction, CDATASection, EntityReference
+    // * Attr -- Text, EntityReference
+    // * ProcessingInstruction -- no children
+    // * Comment -- no children
+    // * Text -- no children
+    // * CDATASection -- no children
+    // * Entity -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+    // * Notation -- no children
+
+    fn append_child(&mut self, new_child: RefNode) -> Result<RefNode> {
+        if !is_child_allowed(self, &new_child) {
+            return Err(Error::HierarchyRequest);
+        }
+        {
+            //
+            // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
+            // document than the one that created this node.
+            let self_parent = &self.borrow().i_parent_node;
+            let child_parent = &self.borrow().i_parent_node;
+            if !match (self_parent, child_parent) {
+                (None, None) => true,
+                (Some(_), None) => true,
+                (None, Some(_)) => false,
+                (Some(self_parent), Some(child_parent)) => {
+                    let self_parent = self_parent.clone().upgrade().unwrap();
+                    let child_parent = child_parent.clone().upgrade().unwrap();
+                    &self_parent == &child_parent
+                }
+            } {
+                return Err(Error::WrongDocument);
+            }
+        }
+        // TODO: Check to see if it is in the tree already, if so remove it
+        // update child with references
+        {
+            let ref_self = self.borrow();
+            let mut mut_child = new_child.borrow_mut();
+            mut_child.i_parent_node = Some(self.to_owned().downgrade());
+            mut_child.i_owner_document = ref_self.i_owner_document.clone();
+        }
+        let mut mut_self = self.borrow_mut();
+
+        // TODO: generalize, for each parent type, is child allowed
+
+        mut_self.i_child_nodes.push(new_child.clone());
+
+        // TODO: deal with document fragment as special case
+
+        Ok(new_child)
+    }
+
+    fn has_child_nodes(&self) -> bool {
+        !self.child_nodes().is_empty()
+    }
+
+    fn clone_node(&self, _deep: bool) -> Option<RefNode> {
+        unimplemented!()
+    }
+
+    fn normalize(&mut self) {
+        unimplemented!()
+    }
+
+    fn is_supported(&self, feature: &str, version: &str) -> bool {
+        get_implementation().has_feature(feature, version)
+    }
+
+    fn has_attributes(&self) -> bool {
+        !self.attributes().is_empty()
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+
+impl Notation for RefNode {
+    fn public_id(&self) -> Option<String> {
+        let ref_self = self.borrow();
+        if let Extension::Notation { i_public_id, .. } = &ref_self.i_extension {
+            i_public_id.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
+        }
+    }
+
+    fn system_id(&self) -> Option<String> {
+        let ref_self = self.borrow();
+        if let Extension::Notation { i_system_id, .. } = &ref_self.i_extension {
+            i_system_id.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
         }
     }
 }
