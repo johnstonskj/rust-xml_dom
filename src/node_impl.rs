@@ -55,6 +55,7 @@ pub(crate) enum Extension {
     Entity {
         i_public_id: Option<String>,
         i_system_id: Option<String>,
+        i_notation_name: Option<String>,
     },
     Notation {
         i_public_id: Option<String>,
@@ -236,6 +237,27 @@ impl NodeImpl {
             i_extension: Extension::Entity {
                 i_public_id: public_id.map(String::from),
                 i_system_id: system_id.map(String::from),
+                i_notation_name: None,
+            },
+        }
+    }
+    #[allow(dead_code)]
+    pub(crate) fn new_internal_entity(
+        owner_document: Option<WeakRefNode>,
+        notation_name: Name,
+        value: &str,
+    ) -> Self {
+        Self {
+            i_node_type: NodeType::Entity,
+            i_name: notation_name,
+            i_value: Some(value.to_string()),
+            i_parent_node: None,
+            i_owner_document: owner_document,
+            i_child_nodes: vec![],
+            i_extension: Extension::Entity {
+                i_public_id: None,
+                i_system_id: None,
+                i_notation_name: None,
             },
         }
     }

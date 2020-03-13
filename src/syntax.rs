@@ -25,6 +25,17 @@ pub(crate) const XML_ELEMENT_START_END: &str = ">";
 pub(crate) const XML_ELEMENT_END_START: &str = "</";
 pub(crate) const XML_ELEMENT_END_END: &str = ">";
 
+pub(crate) const XML_ENTITY_START: &str = "<!ENTITY";
+pub(crate) const XML_ENTITY_END: &str = ">";
+pub(crate) const XML_ENTITY_NOTATION: &str = "NDATA";
+
+pub(crate) const XML_ENTITYREF_START: &str = "&";
+pub(crate) const XML_NUMBERED_ENTITYREF_START: &str = "&#";
+pub(crate) const XML_ENTITYREF_END: &str = ";";
+
+pub(crate) const XML_NOTATION_START: &str = "<!NOTATION";
+pub(crate) const XML_NOTATION_END: &str = ">";
+
 pub(crate) const XML_EMPTY: &str = "";
 
 // ------------------------------------------------------------------------------------------------

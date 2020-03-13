@@ -682,7 +682,16 @@ impl Entity for RefNode {
     }
 
     fn notation_name(&self) -> Option<String> {
-        unimplemented!()
+        let ref_self = self.borrow();
+        if let Extension::Entity {
+            i_notation_name, ..
+        } = &ref_self.i_extension
+        {
+            i_notation_name.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
+        }
     }
 }
 
@@ -1022,7 +1031,7 @@ impl Display for RefNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self.node_type() {
             NodeType::Element => {
-                let element = self as &dyn Element<NodeRef = RefNode>;
+                let element = as_element(self).unwrap();
                 write!(f, "{}{}", XML_ELEMENT_START_START, element.name())?;
                 for attr in element.attributes().values() {
                     write!(f, " {}", attr.to_string())?;
@@ -1040,7 +1049,7 @@ impl Display for RefNode {
                 )
             }
             NodeType::Attribute => {
-                let attribute = self as &dyn Attribute<NodeRef = RefNode>;
+                let attribute = as_attribute(self).unwrap();
                 write!(
                     f,
                     "{}=\"{}\"",
@@ -1049,21 +1058,21 @@ impl Display for RefNode {
                 )
             }
             NodeType::Text => {
-                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
+                let char_data = as_character_data(self).unwrap();
                 match char_data.data() {
                     None => Ok(()),
                     Some(data) => write!(f, "{}", data),
                 }
             }
             NodeType::CData => {
-                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
+                let char_data = as_character_data(self).unwrap();
                 match char_data.data() {
                     None => Ok(()),
                     Some(data) => write!(f, "{} {} {}", XML_CDATA_START, data, XML_CDATA_END),
                 }
             }
             NodeType::ProcessingInstruction => {
-                let pi = self as &dyn ProcessingInstruction<NodeRef = RefNode>;
+                let pi = as_processing_instruction(self).unwrap();
                 match pi.data() {
                     None => write!(f, "{}{}{}", XML_PI_START, pi.target(), XML_PI_END),
                     Some(data) => {
@@ -1072,14 +1081,14 @@ impl Display for RefNode {
                 }
             }
             NodeType::Comment => {
-                let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
+                let char_data = as_character_data(self).unwrap();
                 match char_data.data() {
                     None => Ok(()),
                     Some(data) => write!(f, "{}{}{}", XML_COMMENT_START, data, XML_COMMENT_END),
                 }
             }
             NodeType::Document => {
-                let document = self as &dyn Document<NodeRef = RefNode>;
+                let document = as_document(self).unwrap();
                 match document.doc_type() {
                     None => (),
                     Some(doc_type) => write!(f, "{}", doc_type)?,
@@ -1093,23 +1102,82 @@ impl Display for RefNode {
                 }
             }
             NodeType::DocumentType => {
-                let doc_type = self as &dyn DocumentType<NodeRef = RefNode>;
+                let doc_type = as_document_type(self).unwrap();
                 write!(f, "{} {}", XML_DOCTYPE_START, doc_type.name())?;
-                match &doc_type.public_id() {
-                    None => (),
-                    Some(id) => {
-                        write!(f, " {} \"{}\"", XML_DOCTYPE_PUBLIC, id)?;
-                    }
+                if let Some(id) = &doc_type.public_id() {
+                    write!(f, " {} \"{}\"", XML_DOCTYPE_PUBLIC, id)?;
                 }
-                match &doc_type.system_id() {
-                    None => (),
-                    Some(id) => {
-                        write!(f, " {} \"{}\"", XML_DOCTYPE_SYSTEM, id)?;
+                if let Some(id) = &doc_type.system_id() {
+                    write!(f, " {} \"{}\"", XML_DOCTYPE_SYSTEM, id)?;
+                }
+                if (doc_type.entities().len() + doc_type.notations().len() > 0)
+                    || doc_type.internal_subset().is_some()
+                {
+                    write!(f, "{}", XML_DOCTYPE_ENTITY_START)?;
+                    for (_, entity) in doc_type.entities() {
+                        write!(f, "{}", entity)?;
                     }
+                    for (_, notation) in doc_type.notations() {
+                        write!(f, "{}", notation)?;
+                    }
+                    if let Some(internal_subset) = doc_type.internal_subset() {
+                        write!(f, "{}", internal_subset)?;
+                    }
+                    write!(f, "{}", XML_DOCTYPE_ENTITY_END)?;
                 }
                 write!(f, "{}", XML_DOCTYPE_END)
             }
-            _ => Ok(()),
+            NodeType::DocumentFragment => {
+                let fragment = as_document_fragment(self).unwrap();
+                write!(f, "{}{} ", XML_CDATA_START, fragment.name())?;
+                for child in self.child_nodes() {
+                    write!(f, "{}", child.to_string())?;
+                }
+                write!(f, "{}", XML_CDATA_END)
+            }
+            NodeType::Entity => {
+                let notation = as_entity(self).unwrap();
+                write!(f, "{} {}", XML_ENTITY_START, notation.name())?;
+                if notation.public_id().is_none() && notation.system_id().is_none() {
+                    write!(f, " \"{}\"", notation.node_value().unwrap_or(String::new()))?;
+                } else {
+                    if let Some(public_id) = notation.public_id() {
+                        write!(f, " {} \"{}\"", XML_DOCTYPE_PUBLIC, public_id)?;
+                        if let Some(system_id) = notation.system_id() {
+                            write!(f, " \"{}\"", system_id)?;
+                        }
+                    } else if let Some(system_id) = notation.system_id() {
+                        write!(f, " {} \"{}\"", XML_DOCTYPE_SYSTEM, system_id)?;
+                    }
+                }
+                if let Some(notation_name) = notation.notation_name() {
+                    write!(f, " {}", notation_name)?;
+                }
+                write!(f, "{}", XML_ENTITY_END)
+            }
+            NodeType::EntityReference => {
+                let entity_ref = as_entity_reference(self).unwrap();
+                write!(
+                    f,
+                    "{}{}{}",
+                    XML_ENTITYREF_START,
+                    entity_ref.name(),
+                    XML_ENTITYREF_END
+                )
+            }
+            NodeType::Notation => {
+                let notation = as_notation(self).unwrap();
+                write!(f, "{} {}", XML_NOTATION_START, notation.name())?;
+                if let Some(public_id) = notation.public_id() {
+                    write!(f, " {} \"{}\"", XML_DOCTYPE_PUBLIC, public_id)?;
+                    if let Some(system_id) = notation.system_id() {
+                        write!(f, " \"{}\"", system_id)?;
+                    }
+                } else if let Some(system_id) = notation.system_id() {
+                    write!(f, " {} \"{}\"", XML_DOCTYPE_SYSTEM, system_id)?;
+                }
+                write!(f, "{}", XML_NOTATION_END)
+            }
         }
     }
 }
@@ -1306,5 +1374,124 @@ mod tests {
 
         let no_node = ref_first.previous_sibling();
         assert!(no_node.is_none());
+    }
+
+    #[test]
+    fn test_display_entity() {
+        let test_node =
+            NodeImpl::new_internal_entity(None, Name::from_str("name").unwrap(), "My Name");
+        let test_node = RefNode::new(test_node);
+
+        let result = format!("{}", test_node);
+        assert_eq!(result, "<!ENTITY name \"My Name\">");
+
+        // ------------------------------------------------------------
+
+        let test_node = NodeImpl::new_entity(
+            None,
+            Name::from_str("name").unwrap(),
+            Some("file-name.xml"),
+            None,
+        );
+        let test_node = RefNode::new(test_node);
+
+        let result = format!("{}", test_node);
+        assert_eq!(result, "<!ENTITY name PUBLIC \"file-name.xml\">");
+
+        // ------------------------------------------------------------
+
+        let test_node = NodeImpl::new_entity(
+            None,
+            Name::from_str("name").unwrap(),
+            None,
+            Some("file-name.xml"),
+        );
+        let test_node = RefNode::new(test_node);
+
+        let result = format!("{}", test_node);
+        assert_eq!(result, "<!ENTITY name SYSTEM \"file-name.xml\">");
+
+        // ------------------------------------------------------------
+
+        let test_node = NodeImpl::new_entity(
+            None,
+            Name::from_str("name").unwrap(),
+            Some("foo-bar"),
+            Some("file-name.xml"),
+        );
+        let test_node = RefNode::new(test_node);
+
+        let result = format!("{}", test_node);
+        assert_eq!(
+            result,
+            "<!ENTITY name PUBLIC \"foo-bar\" \"file-name.xml\">"
+        );
+
+        // ------------------------------------------------------------
+
+        let mut test_node = NodeImpl::new_entity(
+            None,
+            Name::from_str("name").unwrap(),
+            Some("foo-bar"),
+            Some("file-name.xml"),
+        );
+        {
+            if let Extension::Entity {
+                i_notation_name, ..
+            } = &mut test_node.i_extension
+            {
+                *i_notation_name = Some("GIF".to_string());
+            }
+        }
+        let test_node = RefNode::new(test_node.clone());
+
+        let result = format!("{}", test_node);
+        assert_eq!(
+            result,
+            "<!ENTITY name PUBLIC \"foo-bar\" \"file-name.xml\" GIF>"
+        );
+    }
+
+    #[test]
+    fn test_display_notation() {
+        let test_node = NodeImpl::new_notation(
+            None,
+            Name::from_str("name").unwrap(),
+            Some("file-name.xml"),
+            None,
+        );
+        let test_node = RefNode::new(test_node);
+
+        let result = format!("{}", test_node);
+        assert_eq!(result, "<!NOTATION name PUBLIC \"file-name.xml\">");
+
+        // ------------------------------------------------------------
+
+        let test_node = NodeImpl::new_notation(
+            None,
+            Name::from_str("name").unwrap(),
+            None,
+            Some("file-name.xml"),
+        );
+        let test_node = RefNode::new(test_node);
+
+        let result = format!("{}", test_node);
+        assert_eq!(result, "<!NOTATION name SYSTEM \"file-name.xml\">");
+
+        // ------------------------------------------------------------
+
+        let test_node = NodeImpl::new_notation(
+            None,
+            Name::from_str("name").unwrap(),
+            Some("foo-bar"),
+            Some("file-name.xml"),
+        );
+        let test_node = RefNode::new(test_node);
+
+        let result = format!("{}", test_node);
+        assert_eq!(
+            result,
+            "<!NOTATION name PUBLIC \"foo-bar\" \"file-name.xml\">"
+        );
     }
 }

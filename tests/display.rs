@@ -80,15 +80,14 @@ fn test_display_cdata() {
 }
 
 #[test]
-#[ignore]
 fn test_display_entity_reference() {
-    unimplemented!()
-}
+    let document_node = common::create_empty_rdf_document();
+    let document = as_document(&document_node).unwrap();
 
-#[test]
-#[ignore]
-fn test_display_entity() {
-    unimplemented!()
+    let test_node = document.create_entity_reference("amp").unwrap();
+
+    let result = format!("{}", test_node);
+    assert_eq!(result, "&amp;");
 }
 
 #[test]
@@ -156,11 +155,5 @@ fn test_display_document_type() {
 #[test]
 #[ignore]
 fn test_display_document_fragment() {
-    unimplemented!()
-}
-
-#[test]
-#[ignore]
-fn test_display_notation() {
     unimplemented!()
 }
