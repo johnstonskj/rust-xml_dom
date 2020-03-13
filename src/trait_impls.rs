@@ -455,6 +455,14 @@ impl Document for RefNode {
 // ------------------------------------------------------------------------------------------------
 
 impl DocumentType for RefNode {
+    fn entities(&self) -> HashMap<Name, Self::NodeRef, RandomState> {
+        unimplemented!()
+    }
+
+    fn notations(&self) -> HashMap<Name, Self::NodeRef, RandomState> {
+        unimplemented!()
+    }
+
     fn public_id(&self) -> Option<String> {
         let ref_self = self.borrow();
         match ref_self.i_attributes.get(&Name::for_public_id()) {
@@ -475,6 +483,10 @@ impl DocumentType for RefNode {
                 ref_node.i_value.clone()
             }
         }
+    }
+
+    fn internal_subset(&self) -> Option<String> {
+        unimplemented!()
     }
 }
 

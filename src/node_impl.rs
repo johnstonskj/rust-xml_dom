@@ -29,8 +29,37 @@ pub(crate) type WeakRefNode = WeakRefCell<NodeImpl>;
 
 // ------------------------------------------------------------------------------------------------
 
+pub(crate) enum Extension {
+    None,
+    Document {
+        i_document_element: Option<RefNode>,
+        i_document_type: Option<RefNode>,
+    },
+    DocumentType {
+        i_entities: HashMap<Name, RefNode>,
+        i_notations: HashMap<Name, RefNode>,
+        i_public_id: Option<String>,
+        i_system_id: Option<String>,
+        i_internal_subset: Option<String>,
+    },
+    Element {
+        i_attributes: HashMap<Name, RefNode>,
+        i_namespaces: HashMap<Option<String>, String>,
+    },
+    Entity {
+        i_public_id: Option<String>,
+        i_system_id: Option<String>,
+    },
+    Notation {
+        i_public_id: Option<String>,
+        i_system_id: Option<String>,
+    },
+}
+
 ///
 /// Internal container for DOM tree node data and state.
+///
+/// Note that while the fields are crate-only visible the struct itself MUST be public.
 ///
 #[doc(hidden)]
 #[derive(Clone, Debug)]

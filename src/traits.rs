@@ -678,10 +678,13 @@ pub trait DocumentFragment: Node {}
 /// The DOM Level 2 doesn't support editing `DocumentType` nodes.
 ///
 pub trait DocumentType: Node {
+    fn entities(&self) -> HashMap<Name, Self::NodeRef>;
+    fn notations(&self) -> HashMap<Name, Self::NodeRef>;
     /// The public identifier of the external subset.
     fn public_id(&self) -> Option<String>;
     /// The system identifier of the external subset.
     fn system_id(&self) -> Option<String>;
+    fn internal_subset(&self) -> Option<String>;
 }
 
 // ------------------------------------------------------------------------------------------------
