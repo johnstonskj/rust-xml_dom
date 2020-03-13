@@ -383,34 +383,15 @@ impl DOMImplementation for Implementation {
 
 impl Element for RefNode {
     fn get_attribute(&self, name: &str) -> Option<String> {
-        if !is_element(self) {
-            warn!("{}", MSG_INVALID_NODE_TYPE);
-            None
-        } else {
-            match Name::from_str(name) {
-                Ok(attr_name) => {
-                    let ref_self = self.borrow();
-                    if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
-                        match i_attributes.get(&attr_name) {
-                            None => None,
-                            Some(attr_node) => {
-                                let attribute = attr_node.borrow();
-                                match &attribute.i_value {
-                                    None => None,
-                                    Some(value) => Some(value.clone()),
-                                }
-                            }
-                        }
-                    } else {
-                        warn!("{}", MSG_INVALID_EXTENSION);
-                        None
-                    }
-                }
+        match self.get_attribute_node(name) {
+            None => None,
+            Some(attribute_node) => match as_attribute(&attribute_node) {
+                Ok(attribute) => attribute.value(),
                 Err(_) => {
-                    warn!("{}: '{}'", MSG_INVALID_NAME, name);
+                    warn!("{}", MSG_INVALID_NODE_TYPE);
                     None
                 }
-            }
+            },
         }
     }
 
@@ -424,31 +405,42 @@ impl Element for RefNode {
         self.set_attribute_node(RefNode::new(attr_node)).map(|_| ())
     }
 
-    fn remove_attribute(&mut self, _name: &str) -> Result<()> {
-        if !is_element(self) {
-            warn!("{}", MSG_INVALID_NODE_TYPE);
-            Ok(())
-        } else {
-            // TODO: deal with namespaces
-            unimplemented!()
+    fn remove_attribute(&mut self, name: &str) -> Result<()> {
+        match self.get_attribute_node(name) {
+            None => Ok(()),
+            Some(attribute_node) => self.remove_attribute_node(attribute_node).map(|_| ()),
         }
     }
 
-    fn get_attribute_node(&self, _name: &str) -> Option<RefNode> {
-        if !is_element(self) {
+    fn get_attribute_node(&self, name: &str) -> Option<RefNode> {
+        if is_element(self) {
+            match Name::from_str(name) {
+                Ok(name) => {
+                    let ref_self = self.borrow();
+                    if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
+                        let node_name = name.to_string();
+                        i_attributes
+                            .iter()
+                            .find(|(name, _)| name.to_string() == node_name)
+                            .map(|(_, node)| node.clone())
+                    } else {
+                        warn!("{}", MSG_INVALID_EXTENSION);
+                        None
+                    }
+                }
+                Err(_) => {
+                    warn!("{}: '{}'", MSG_INVALID_NAME, name);
+                    None
+                }
+            }
+        } else {
             warn!("{}", MSG_INVALID_NODE_TYPE);
             None
-        } else {
-            unimplemented!()
         }
     }
 
     fn set_attribute_node(&mut self, new_attribute: RefNode) -> Result<RefNode> {
-        // ENSURE: You can ONLY add attributes to an element
-        if !is_element(self) || !is_attribute(&new_attribute) {
-            warn!("{}", MSG_INVALID_NODE_TYPE);
-            Err(Error::InvalidState)
-        } else {
+        if is_element(self) && is_attribute(&new_attribute) {
             let name: Name = new_attribute.name();
             if name.is_namespace_attribute() {
                 let attribute = as_attribute(&new_attribute).unwrap();
@@ -469,11 +461,26 @@ impl Element for RefNode {
                 warn!("{}", MSG_INVALID_EXTENSION);
                 Err(Error::Syntax)
             }
+        } else {
+            warn!("{}", MSG_INVALID_NODE_TYPE);
+            Err(Error::InvalidState)
         }
     }
 
-    fn remove_attribute_node(&mut self, _old_attribute: RefNode) -> Result<RefNode> {
-        unimplemented!()
+    fn remove_attribute_node(&mut self, old_attribute: RefNode) -> Result<RefNode> {
+        if is_element(self) {
+            let mut mut_self = self.borrow_mut();
+            if let Extension::Element { i_attributes, .. } = &mut mut_self.i_extension {
+                let _safe_to_ignore = i_attributes.remove(&old_attribute.name());
+                Ok(old_attribute)
+            } else {
+                warn!("{}", MSG_INVALID_EXTENSION);
+                Err(Error::Syntax)
+            }
+        } else {
+            warn!("{}", MSG_INVALID_NODE_TYPE);
+            Err(Error::InvalidState)
+        }
     }
 
     fn get_elements_by_tag_name(&self, tag_name: &str) -> Vec<RefNode> {
@@ -497,12 +504,16 @@ impl Element for RefNode {
         results
     }
 
-    fn get_attribute_ns(&self, _namespace_uri: &str, _local_name: &str) -> Option<String> {
-        if !is_element(self) {
-            warn!("{}", MSG_INVALID_NODE_TYPE);
-            None
-        } else {
-            unimplemented!()
+    fn get_attribute_ns(&self, namespace_uri: &str, local_name: &str) -> Option<String> {
+        match self.get_attribute_node_ns(namespace_uri, local_name) {
+            None => None,
+            Some(attribute_node) => match as_attribute(&attribute_node) {
+                Ok(attribute) => attribute.value(),
+                Err(_) => {
+                    warn!("{}", MSG_INVALID_NODE_TYPE);
+                    None
+                }
+            },
         }
     }
 
@@ -521,17 +532,28 @@ impl Element for RefNode {
         self.set_attribute_node(RefNode::new(attr_node)).map(|_| ())
     }
 
-    fn remove_attribute_ns(&mut self, _namespace_uri: &str, _local_name: &str) -> Result<()> {
-        unimplemented!()
+    fn remove_attribute_ns(&mut self, namespace_uri: &str, local_name: &str) -> Result<()> {
+        match self.get_attribute_node_ns(namespace_uri, local_name) {
+            None => Ok(()),
+            Some(attribute_node) => self.remove_attribute_node(attribute_node).map(|_| ()),
+        }
     }
 
     fn get_attribute_node_ns(&self, namespace_uri: &str, local_name: &str) -> Option<RefNode> {
         if is_element(self) {
             match Name::new_ns(namespace_uri, local_name) {
-                Ok(name) => {
+                Ok(_) => {
                     let ref_self = self.borrow();
                     if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
-                        i_attributes.get(&name).map(|n| n.clone())
+                        let namespace_uri = &Some(namespace_uri.to_string());
+                        let local_name = &local_name.to_string();
+                        i_attributes
+                            .iter()
+                            .find(|(name, _)| {
+                                name.namespace_uri() == namespace_uri
+                                    && name.local_name() == local_name
+                            })
+                            .map(|(_, node)| node.clone())
                     } else {
                         warn!("{}", MSG_INVALID_EXTENSION);
                         None
@@ -586,19 +608,22 @@ impl Element for RefNode {
                 Ok(name) => {
                     let ref_self = self.borrow();
                     if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
-                        i_attributes.contains_key(&name)
+                        i_attributes
+                            .keys()
+                            .find(|n| n.to_string() == name.to_string())
+                            .is_some()
                     } else {
-                        warn!("{}", MSG_INVALID_EXTENSION);
+                        println!("{}", MSG_INVALID_EXTENSION);
                         false
                     }
                 }
                 Err(_) => {
-                    warn!("{}: '{}'", MSG_INVALID_NAME, name);
+                    println!("{}: '{}'", MSG_INVALID_NAME, name);
                     false
                 }
             }
         } else {
-            warn!("{}", MSG_INVALID_NODE_TYPE);
+            println!("{}", MSG_INVALID_NODE_TYPE);
             false
         }
     }
@@ -609,7 +634,13 @@ impl Element for RefNode {
                 Ok(name) => {
                     let ref_self = self.borrow();
                     if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
-                        i_attributes.contains_key(&name)
+                        i_attributes
+                            .keys()
+                            .find(|n| {
+                                n.namespace_uri() == name.namespace_uri()
+                                    && n.local_name() == name.local_name()
+                            })
+                            .is_some()
                     } else {
                         warn!("{}", MSG_INVALID_EXTENSION);
                         false
@@ -821,7 +852,7 @@ impl Node for RefNode {
         unimplemented!()
     }
 
-    fn remove_child(&mut self, old_child: Self::NodeRef) -> Result<Self::NodeRef> {
+    fn remove_child(&mut self, _old_child: Self::NodeRef) -> Result<Self::NodeRef> {
         unimplemented!()
     }
 
@@ -977,7 +1008,7 @@ impl Text for RefNode {
                 let mut parent = parent.upgrade().unwrap();
                 let parent_element = as_element_mut(&mut parent)?;
                 let self_node = as_character_data(self)?;
-                let _ignored =
+                let _safe_to_ignore =
                     parent_element.insert_before(new_node.clone(), self_node.next_sibling())?;
                 new_node
             }
