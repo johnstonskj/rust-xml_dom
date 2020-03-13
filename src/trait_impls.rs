@@ -408,7 +408,8 @@ impl Document for RefNode {
     }
 
     fn create_document_fragment(&self) -> Result<RefNode> {
-        unimplemented!()
+        let node_impl = NodeImpl::new_document_fragment(self.clone().downgrade());
+        Ok(RefNode::new(node_impl))
     }
 
     fn create_entity_reference(&self, _name: &str) -> Result<RefNode> {
@@ -498,6 +499,10 @@ impl Document for RefNode {
         }
     }
 }
+
+// ------------------------------------------------------------------------------------------------
+
+impl DocumentFragment for RefNode {}
 
 // ------------------------------------------------------------------------------------------------
 

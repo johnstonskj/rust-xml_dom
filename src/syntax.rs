@@ -46,6 +46,7 @@ pub(crate) const XML_NS_SEPARATOR: &str = ":";
 pub(crate) const XML_NAME_CDATA: &str = "#cdata-section";
 pub(crate) const XML_NAME_COMMENT: &str = "#comment";
 pub(crate) const XML_NAME_DOCUMENT: &str = "#document";
+pub(crate) const XML_NAME_DOCUMENT_FRAGMENT: &str = "#document-fragment";
 pub(crate) const XML_NAME_TEXT: &str = "#text";
 
 // ------------------------------------------------------------------------------------------------

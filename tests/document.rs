@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use xml_dom::convert::{
-    as_attribute, as_cdata_section, as_comment, as_document, as_element, as_processing_instruction,
-    as_text,
+    as_attribute, as_cdata_section, as_comment, as_document, as_document_fragment, as_element,
+    as_processing_instruction, as_text,
 };
 use xml_dom::Name;
 
@@ -76,9 +76,15 @@ fn test_create_cdata_section() {
 }
 
 #[test]
-#[ignore]
 fn test_create_document_fragment() {
-    unimplemented!()
+    let document_node = common::create_empty_rdf_document();
+    let document = as_document(&document_node).unwrap();
+    let node = document.create_document_fragment().unwrap();
+    let document_fragment = as_document_fragment(&node).unwrap();
+    assert!(document_fragment.parent_node().is_none());
+    assert!(document_fragment.owner_document().is_some());
+    assert_eq!(document_fragment.name(), Name::for_document_fragment());
+    assert!(!document_fragment.has_child_nodes());
 }
 
 #[test]

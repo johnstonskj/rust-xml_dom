@@ -83,13 +83,13 @@ pub struct NodeImpl {
 // ------------------------------------------------------------------------------------------------
 
 impl NodeImpl {
-    pub(crate) fn new_element(parent: WeakRefNode, name: Name) -> Self {
+    pub(crate) fn new_element(owner_document: WeakRefNode, name: Name) -> Self {
         Self {
             i_node_type: NodeType::Element,
             i_name: name,
             i_value: None,
             i_parent_node: None,
-            i_owner_document: Some(parent),
+            i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
             i_extension: Extension::Element {
                 i_attributes: Default::default(),
@@ -97,41 +97,45 @@ impl NodeImpl {
             },
         }
     }
-    pub(crate) fn new_attribute(parent: WeakRefNode, name: Name, value: Option<&str>) -> Self {
+    pub(crate) fn new_attribute(
+        owner_document: WeakRefNode,
+        name: Name,
+        value: Option<&str>,
+    ) -> Self {
         Self {
             i_node_type: NodeType::Attribute,
             i_name: name,
             i_value: value.map(text::escape),
             i_parent_node: None,
-            i_owner_document: Some(parent),
+            i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
             i_extension: Extension::None,
         }
     }
-    pub(crate) fn new_text(parent: WeakRefNode, data: &str) -> Self {
+    pub(crate) fn new_text(owner_document: WeakRefNode, data: &str) -> Self {
         Self {
             i_node_type: NodeType::Text,
             i_name: Name::for_text(),
             i_value: Some(text::escape(data)),
             i_parent_node: None,
-            i_owner_document: Some(parent),
+            i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
             i_extension: Extension::None,
         }
     }
-    pub(crate) fn new_cdata(parent: WeakRefNode, data: &str) -> Self {
+    pub(crate) fn new_cdata(owner_document: WeakRefNode, data: &str) -> Self {
         Self {
             i_node_type: NodeType::CData,
             i_name: Name::for_cdata(),
             i_value: Some(text::escape(data)),
             i_parent_node: None,
-            i_owner_document: Some(parent),
+            i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
             i_extension: Extension::None,
         }
     }
     pub(crate) fn new_processing_instruction(
-        parent: WeakRefNode,
+        owner_document: WeakRefNode,
         target: Name,
         data: Option<&str>,
     ) -> Self {
@@ -140,18 +144,18 @@ impl NodeImpl {
             i_name: target,
             i_value: data.map(String::from),
             i_parent_node: None,
-            i_owner_document: Some(parent),
+            i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
             i_extension: Extension::None,
         }
     }
-    pub(crate) fn new_comment(parent: WeakRefNode, data: &str) -> Self {
+    pub(crate) fn new_comment(owner_document: WeakRefNode, data: &str) -> Self {
         Self {
             i_node_type: NodeType::Comment,
             i_name: Name::for_comment(),
             i_value: Some(text::escape(data)),
             i_parent_node: None,
-            i_owner_document: Some(parent),
+            i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
             i_extension: Extension::None,
         }
@@ -170,8 +174,19 @@ impl NodeImpl {
             },
         }
     }
+    pub(crate) fn new_document_fragment(owner_document: WeakRefNode) -> Self {
+        Self {
+            i_node_type: NodeType::DocumentFragment,
+            i_name: Name::for_document_fragment(),
+            i_value: None,
+            i_parent_node: None,
+            i_owner_document: Some(owner_document),
+            i_child_nodes: vec![],
+            i_extension: Extension::None,
+        }
+    }
     pub(crate) fn new_document_type(
-        parent: Option<WeakRefNode>,
+        owner_document: Option<WeakRefNode>,
         name: Name,
         public_id: Option<&str>,
         system_id: Option<&str>,
@@ -180,8 +195,8 @@ impl NodeImpl {
             i_node_type: NodeType::DocumentType,
             i_name: name,
             i_value: None,
-            i_parent_node: parent,
-            i_owner_document: None,
+            i_parent_node: owner_document.clone(),
+            i_owner_document: owner_document,
             i_child_nodes: vec![],
             i_extension: Extension::DocumentType {
                 i_entities: Default::default(),

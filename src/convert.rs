@@ -487,7 +487,7 @@ pub fn as_document_type(ref_node: &RefNode) -> Result<RefDocumentType<'_>> {
 #[inline]
 pub fn as_document_type_mut(ref_node: &mut RefNode) -> Result<RefDocumentType<'_>> {
     if ref_node.borrow().i_node_type == NodeType::DocumentType {
-        Ok(ref_node as RefDocumentType<'_>)
+        Ok(ref_node as MutRefDocumentType<'_>)
     } else {
         warn!("ref_node.node_type != DocumentType");
         Err(Error::InvalidState)
@@ -498,26 +498,34 @@ pub fn as_document_type_mut(ref_node: &mut RefNode) -> Result<RefDocumentType<'_
 /// Determines if the specified node is of type `NodeType::DocumentFragment`.
 ///
 #[inline]
-pub fn is_document_fragment(_ref_node: &RefNode) -> bool {
-    panic!("node type DocumentFragment unsupported");
+pub fn is_document_fragment(ref_node: &RefNode) -> bool {
+    ref_node.borrow().i_node_type == NodeType::DocumentFragment
 }
 
 ///
 /// Safely _cast_ the specified `RefNode` into a  `DocumentFragment`.
 ///
 #[inline]
-pub fn as_document_fragment(_ref_node: &RefNode) -> Result<RefDocumentFragment<'_>> {
-    warn!("node type DocumentFragment unsupported");
-    Err(Error::NotSupported)
+pub fn as_document_fragment(ref_node: &RefNode) -> Result<RefDocumentFragment<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::DocumentFragment {
+        Ok(ref_node as RefDocumentFragment<'_>)
+    } else {
+        warn!("ref_node.node_type != DocumentFragment");
+        Err(Error::InvalidState)
+    }
 }
 
 ///
 /// Safely _cast_ the specified `RefNode` into a mutable `DocumentFragment`.
 ///
 #[inline]
-pub fn as_document_fragment_mut(_ref_node: &mut RefNode) -> Result<MutRefDocumentFragment<'_>> {
-    warn!("node type DocumentFragment unsupported");
-    Err(Error::NotSupported)
+pub fn as_document_fragment_mut(ref_node: &mut RefNode) -> Result<MutRefDocumentFragment<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::DocumentFragment {
+        Ok(ref_node as MutRefDocumentFragment<'_>)
+    } else {
+        warn!("ref_node.node_type != DocumentFragment");
+        Err(Error::InvalidState)
+    }
 }
 
 ///

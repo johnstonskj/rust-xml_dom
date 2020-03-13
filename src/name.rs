@@ -218,6 +218,13 @@ impl Name {
     }
 
     ///
+    /// Return the reserved name for `Document` nodes
+    ///
+    pub fn for_document_fragment() -> Self {
+        Self::new(XML_NAME_DOCUMENT_FRAGMENT.to_string(), None, None)
+    }
+
+    ///
     /// Return the reserved name for `Text` nodes
     ///
     pub fn for_text() -> Self {
