@@ -46,6 +46,11 @@ println!("HTML: {}", xml);
 
 ## Changes
 
+**Version 0.1.3** (_in progress_)
+
+* More Element unit tests for attributes
+* Implement rules for `child_nodes` mutation.
+
 **Version 0.1.2**
 
 * Focus on feature completion:
