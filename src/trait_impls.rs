@@ -821,6 +821,10 @@ impl Node for RefNode {
         unimplemented!()
     }
 
+    fn remove_child(&mut self, old_child: Self::NodeRef) -> Result<Self::NodeRef> {
+        unimplemented!()
+    }
+
     // * Document -- Element (maximum of one), ProcessingInstruction, Comment, DocumentType (maximum of one)
     // * DocumentFragment -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
     // * DocumentType -- no children

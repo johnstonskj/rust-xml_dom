@@ -1473,6 +1473,25 @@ pub trait Node {
         old_child: &Self::NodeRef,
     ) -> Result<Self::NodeRef>;
     ///
+    /// Removes the child node indicated by oldChild from the list of children, and returns it.
+    ///
+    /// # Specification
+    ///
+    /// **Parameters**
+    ///
+    /// * `oldChild` of type `Node`: The node being removed.
+    ///
+    /// **Return Value**
+    ///
+    /// * `Node`: The node removed.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
+    /// * `NOT_FOUND_ERR`: Raised if oldChild is not a child of this node.
+    ///
+    fn remove_child(&mut self, old_child: Self::NodeRef) -> Result<Self::NodeRef>;
+    ///
     /// Adds the node `newChild` to the end of the list of children of this node.
     ///
     /// # Specification
