@@ -118,7 +118,7 @@ impl NodeImpl {
         Self {
             i_node_type: NodeType::ProcessingInstruction,
             i_name: target,
-            i_value: data.map(text::escape),
+            i_value: data.map(String::from),
             i_parent_node: None,
             i_owner_document: Some(parent),
             i_attributes: Default::default(),

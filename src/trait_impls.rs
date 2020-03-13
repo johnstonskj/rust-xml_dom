@@ -801,7 +801,12 @@ impl Display for RefNode {
             }
             NodeType::Attribute => {
                 let attribute = self as &dyn Attribute<NodeRef = RefNode>;
-                write!(f, "{}=\"{}\"", attribute.name(), attribute.value().unwrap())
+                write!(
+                    f,
+                    "{}=\"{}\"",
+                    attribute.name(),
+                    attribute.value().unwrap_or(String::new())
+                )
             }
             NodeType::Text => {
                 let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
@@ -814,7 +819,7 @@ impl Display for RefNode {
                 let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
                 match char_data.data() {
                     None => Ok(()),
-                    Some(data) => write!(f, "{} {} {}", XML_COMMENT_START, data, XML_COMMENT_END),
+                    Some(data) => write!(f, "{} {} {}", XML_CDATA_START, data, XML_CDATA_END),
                 }
             }
             NodeType::ProcessingInstruction => {
@@ -830,7 +835,7 @@ impl Display for RefNode {
                 let char_data = self as &dyn CharacterData<NodeRef = RefNode>;
                 match char_data.data() {
                     None => Ok(()),
-                    Some(data) => write!(f, "{}{}{}", XML_CDATA_START, data, XML_CDATA_END),
+                    Some(data) => write!(f, "{}{}{}", XML_COMMENT_START, data, XML_COMMENT_END),
                 }
             }
             NodeType::Document => {
