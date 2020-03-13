@@ -41,41 +41,45 @@ pub trait Namespaced: Element {
     /// Returns `true` if this, and only this, element has a URI mapping for the provided `prefix`,
     /// `false` otherwise.
     ///
-    fn contains(&self, prefix: Option<&str>) -> bool;
+    fn contains_mapping(&self, prefix: Option<&str>) -> bool;
     ///
     /// Returns the namespace URI associated with the provided `prefix`, `None` if the prefix is not
     /// mapped to a URI for this, and only this, element.
     ///  
-    fn get(&self, prefix: Option<&str>) -> Option<String>;
+    fn get_namespace(&self, prefix: Option<&str>) -> Option<String>;
     ///
     /// Returns the namespace URI associated with the provided `prefix` for this element by looking
     /// up the DOM tree through `parent_node` links. Returns `None` if the prefix is not mapped to a
     /// URI on this, or any parent, element.
     ///  
-    fn resolve(&self, prefix: Option<&str>) -> Option<String>;
+    fn resolve_namespace(&self, prefix: Option<&str>) -> Option<String>;
 
     ///
     /// Returns `true` if this, and only this, element has a URI mapping for the provided
     /// `namespace_uri`, `false` otherwise.
     ///
-    fn contains_namespace(&self, namespace_uri: &str) -> bool;
+    fn contains_mapped_namespace(&self, namespace_uri: &str) -> bool;
     ///
     /// Returns the prefix associated with the provided `namespace_uri`, `None` if the namespace
     /// URI is not mapped with a prefix for this, and only this, element.
     ///  
-    fn get_prefix_for(&self, namespace_uri: &str) -> Option<Option<String>>;
+    fn get_prefix(&self, namespace_uri: &str) -> Option<Option<String>>;
     ///
     /// Returns the prefix associated with the provided `namespace_uri` for this element by looking
     /// up the DOM tree through `parent_node` links. Returns `None` if the namespace is not mapped
     /// with a prefix for this, or any parent, element.
     ///  
-    fn resolve_prefix_for(&self, namespace_uri: &str) -> Option<Option<String>>;
+    fn resolve_prefix(&self, namespace_uri: &str) -> Option<Option<String>>;
 }
 
 #[doc(hidden)]
 pub(crate) trait MutNamespaced: Namespaced {
-    fn insert(&mut self, prefix: Option<&str>, namespace_uri: &str) -> Result<Option<String>>;
-    fn remove(&mut self, prefix: Option<&str>) -> Result<Option<String>>;
+    fn insert_mapping(
+        &mut self,
+        prefix: Option<&str>,
+        namespace_uri: &str,
+    ) -> Result<Option<String>>;
+    fn remove_mapping(&mut self, prefix: Option<&str>) -> Result<Option<String>>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -83,7 +87,7 @@ pub(crate) trait MutNamespaced: Namespaced {
 // ------------------------------------------------------------------------------------------------
 
 impl Namespaced for RefNode {
-    fn contains(&self, prefix: Option<&str>) -> bool {
+    fn contains_mapping(&self, prefix: Option<&str>) -> bool {
         let ref_self = self.borrow();
         if ref_self.i_node_type == NodeType::Element {
             let current_scope = &ref_self.i_namespaces;
@@ -93,7 +97,7 @@ impl Namespaced for RefNode {
         }
     }
 
-    fn get(&self, prefix: Option<&str>) -> Option<String> {
+    fn get_namespace(&self, prefix: Option<&str>) -> Option<String> {
         let ref_self = self.borrow();
         if ref_self.i_node_type == NodeType::Element {
             let current_scope = &ref_self.i_namespaces;
@@ -104,8 +108,8 @@ impl Namespaced for RefNode {
         }
     }
 
-    fn resolve(&self, prefix: Option<&str>) -> Option<String> {
-        match self.get(prefix) {
+    fn resolve_namespace(&self, prefix: Option<&str>) -> Option<String> {
+        match self.get_namespace(prefix) {
             None => {
                 let ref_self = self.borrow();
                 match &ref_self.i_parent_node {
@@ -113,7 +117,7 @@ impl Namespaced for RefNode {
                     Some(parent) => {
                         let parent = parent.clone();
                         let parent_node = parent.upgrade().expect("could not upgrade parent_node");
-                        parent_node.resolve(prefix)
+                        parent_node.resolve_namespace(prefix)
                     }
                 }
             }
@@ -121,11 +125,11 @@ impl Namespaced for RefNode {
         }
     }
 
-    fn contains_namespace(&self, namespace_uri: &str) -> bool {
-        self.get_prefix_for(namespace_uri).is_some()
+    fn contains_mapped_namespace(&self, namespace_uri: &str) -> bool {
+        self.get_prefix(namespace_uri).is_some()
     }
 
-    fn get_prefix_for(&self, namespace_uri: &str) -> Option<Option<String>> {
+    fn get_prefix(&self, namespace_uri: &str) -> Option<Option<String>> {
         let ref_self = self.borrow();
         if ref_self.i_node_type == NodeType::Element {
             let current_scope = &ref_self.i_namespaces;
@@ -140,8 +144,8 @@ impl Namespaced for RefNode {
         }
     }
 
-    fn resolve_prefix_for(&self, namespace_uri: &str) -> Option<Option<String>> {
-        match self.get_prefix_for(namespace_uri) {
+    fn resolve_prefix(&self, namespace_uri: &str) -> Option<Option<String>> {
+        match self.get_prefix(namespace_uri) {
             None => {
                 let ref_self = self.borrow();
                 match &ref_self.i_parent_node {
@@ -149,7 +153,7 @@ impl Namespaced for RefNode {
                     Some(parent) => {
                         let parent = parent.clone();
                         let parent_node = parent.upgrade().expect("could not upgrade parent_node");
-                        parent_node.resolve_prefix_for(namespace_uri)
+                        parent_node.resolve_prefix(namespace_uri)
                     }
                 }
             }
@@ -159,7 +163,11 @@ impl Namespaced for RefNode {
 }
 
 impl MutNamespaced for RefNode {
-    fn insert(&mut self, prefix: Option<&str>, namespace_uri: &str) -> Result<Option<String>> {
+    fn insert_mapping(
+        &mut self,
+        prefix: Option<&str>,
+        namespace_uri: &str,
+    ) -> Result<Option<String>> {
         let mut mut_self = self.borrow_mut();
         if mut_self.i_node_type == NodeType::Element {
             let current_scope = &mut mut_self.i_namespaces;
@@ -169,7 +177,7 @@ impl MutNamespaced for RefNode {
         }
     }
 
-    fn remove(&mut self, prefix: Option<&str>) -> Result<Option<String>> {
+    fn remove_mapping(&mut self, prefix: Option<&str>) -> Result<Option<String>> {
         let mut mut_self = self.borrow_mut();
         if mut_self.i_node_type == NodeType::Element {
             let current_scope = &mut mut_self.i_namespaces;
@@ -220,17 +228,17 @@ mod tests {
         let namespaced = as_element_namespaced(&ref_node).unwrap();
 
         // prefix
-        assert!(!namespaced.contains(None));
-        assert!(!namespaced.contains(Some("s")));
-        assert!(namespaced.get(None).is_none());
-        assert!(namespaced.get(Some("s")).is_none());
-        assert!(namespaced.resolve(None).is_none());
-        assert!(namespaced.resolve(Some("s")).is_none());
+        assert!(!namespaced.contains_mapping(None));
+        assert!(!namespaced.contains_mapping(Some("s")));
+        assert!(namespaced.get_namespace(None).is_none());
+        assert!(namespaced.get_namespace(Some("s")).is_none());
+        assert!(namespaced.resolve_namespace(None).is_none());
+        assert!(namespaced.resolve_namespace(Some("s")).is_none());
 
         // namespace
-        assert!(!namespaced.contains_namespace(HTML));
-        assert!(namespaced.get_prefix_for(HTML).is_none());
-        assert!(namespaced.resolve_prefix_for(HTML).is_none());
+        assert!(!namespaced.contains_mapped_namespace(HTML));
+        assert!(namespaced.get_prefix(HTML).is_none());
+        assert!(namespaced.resolve_prefix(HTML).is_none());
     }
 
     #[test]
@@ -240,25 +248,25 @@ mod tests {
         let mut ref_node = make_node(&mut document, "element");
         let namespaced = &mut ref_node as MutRefNamespaced<'_>;
 
-        namespaced.insert(Some("xsd"), XSD);
+        namespaced.insert_mapping(Some("xsd"), XSD);
 
         // prefix
         let ns_result = Some(XSD.to_string());
 
-        assert_eq!(namespaced.contains(None), false);
-        assert_eq!(namespaced.contains(Some("xsd")), true);
-        assert_eq!(namespaced.get(None), None);
-        assert_eq!(namespaced.get(Some("xsd")), ns_result);
-        assert_eq!(namespaced.resolve(None), None);
-        assert_eq!(namespaced.resolve(Some("xsd")), ns_result);
+        assert_eq!(namespaced.contains_mapping(None), false);
+        assert_eq!(namespaced.contains_mapping(Some("xsd")), true);
+        assert_eq!(namespaced.get_namespace(None), None);
+        assert_eq!(namespaced.get_namespace(Some("xsd")), ns_result);
+        assert_eq!(namespaced.resolve_namespace(None), None);
+        assert_eq!(namespaced.resolve_namespace(Some("xsd")), ns_result);
 
         // namespace
         let prefix_result = Some(Some("xsd".to_string()));
 
-        assert_eq!(namespaced.contains_namespace(HTML), false);
-        assert_eq!(namespaced.contains_namespace(XSD), true);
-        assert_eq!(namespaced.get_prefix_for(XSD), prefix_result);
-        assert_eq!(namespaced.resolve_prefix_for(XSD), prefix_result);
+        assert_eq!(namespaced.contains_mapped_namespace(HTML), false);
+        assert_eq!(namespaced.contains_mapped_namespace(XSD), true);
+        assert_eq!(namespaced.get_prefix(XSD), prefix_result);
+        assert_eq!(namespaced.resolve_prefix(XSD), prefix_result);
     }
 
     #[test]
@@ -268,25 +276,25 @@ mod tests {
         let mut ref_node = make_node(&mut document, "element");
         let namespaced = &mut ref_node as MutRefNamespaced<'_>;
 
-        namespaced.insert(None, XSD);
+        namespaced.insert_mapping(None, XSD);
 
         // prefix
         let ns_result = Some(XSD.to_string());
 
-        assert_eq!(namespaced.contains(None), true);
-        assert_eq!(namespaced.contains(Some("xsd")), false);
-        assert_eq!(namespaced.get(None), ns_result);
-        assert_eq!(namespaced.get(Some("xsd")), None);
-        assert_eq!(namespaced.resolve(None), ns_result);
-        assert_eq!(namespaced.resolve(Some("xsd")), None);
+        assert_eq!(namespaced.contains_mapping(None), true);
+        assert_eq!(namespaced.contains_mapping(Some("xsd")), false);
+        assert_eq!(namespaced.get_namespace(None), ns_result);
+        assert_eq!(namespaced.get_namespace(Some("xsd")), None);
+        assert_eq!(namespaced.resolve_namespace(None), ns_result);
+        assert_eq!(namespaced.resolve_namespace(Some("xsd")), None);
 
         // namespace
         let prefix_result = Some(None);
 
-        assert_eq!(namespaced.contains_namespace(HTML), false);
-        assert_eq!(namespaced.contains_namespace(XSD), true);
-        assert_eq!(namespaced.get_prefix_for(XSD), prefix_result);
-        assert_eq!(namespaced.resolve_prefix_for(XSD), prefix_result);
+        assert_eq!(namespaced.contains_mapped_namespace(HTML), false);
+        assert_eq!(namespaced.contains_mapped_namespace(XSD), true);
+        assert_eq!(namespaced.get_prefix(XSD), prefix_result);
+        assert_eq!(namespaced.resolve_prefix(XSD), prefix_result);
     }
 
     #[test]
@@ -298,26 +306,26 @@ mod tests {
         //
         let mut ref_node = make_node(&mut document, "element");
         let ref_root = as_element_namespaced_mut(&mut ref_node).unwrap();
-        ref_root.insert(Some("xsd"), XSD);
+        ref_root.insert_mapping(Some("xsd"), XSD);
 
         let mut ref_teen_1 = make_node(&mut document, "teen1");
         {
             let ref_teen_ns = as_element_namespaced_mut(&mut ref_teen_1).unwrap();
-            ref_teen_ns.insert(None, EX);
+            ref_teen_ns.insert_mapping(None, EX);
         }
         ref_root.append_child(ref_teen_1.clone());
 
         let mut ref_teen_2 = make_node(&mut document, "teen2");
         {
             let ref_teen_ns = as_element_namespaced_mut(&mut ref_teen_2).unwrap();
-            ref_teen_ns.insert(None, HTML);
+            ref_teen_ns.insert_mapping(None, HTML);
         }
         ref_root.append_child(ref_teen_2.clone());
 
         let mut ref_child = make_node(&mut document, "child");
         {
             let ref_child_ns = as_element_namespaced_mut(&mut ref_child).unwrap();
-            ref_child_ns.insert(Some("xslt"), XSLT);
+            ref_child_ns.insert_mapping(Some("xslt"), XSLT);
         }
         {
             let ref_teen = as_element_namespaced_mut(&mut ref_teen_2).unwrap();
@@ -329,28 +337,31 @@ mod tests {
         //
         // Get
         //
-        assert_eq!(ref_root.get(Some("xsd")), Some(XSD.to_string()));
-        assert_eq!(ref_root.get(Some("xslt")), None);
-        assert_eq!(ns_child.get(Some("xsd")), None);
-        assert_eq!(ns_child.get(Some("xslt")), Some(XSLT.to_string()));
+        assert_eq!(ref_root.get_namespace(Some("xsd")), Some(XSD.to_string()));
+        assert_eq!(ref_root.get_namespace(Some("xslt")), None);
+        assert_eq!(ns_child.get_namespace(Some("xsd")), None);
+        assert_eq!(ns_child.get_namespace(Some("xslt")), Some(XSLT.to_string()));
 
         //
         // Resolve
         //
-        assert_eq!(ns_child.resolve(Some("xsd")), Some(XSD.to_string()));
-        assert_eq!(ns_child.resolve(None), Some(HTML.to_string()));
-        assert_eq!(ns_child.resolve(Some("xslt")), Some(XSLT.to_string()));
+        assert_eq!(
+            ns_child.resolve_namespace(Some("xsd")),
+            Some(XSD.to_string())
+        );
+        assert_eq!(ns_child.resolve_namespace(None), Some(HTML.to_string()));
+        assert_eq!(
+            ns_child.resolve_namespace(Some("xslt")),
+            Some(XSLT.to_string())
+        );
 
         //
         // Resolve by namespace
         //
+        assert_eq!(ns_child.resolve_prefix(XSD), Some(Some("xsd".to_string())));
+        assert_eq!(ns_child.resolve_prefix(HTML), Some(None));
         assert_eq!(
-            ns_child.resolve_prefix_for(XSD),
-            Some(Some("xsd".to_string()))
-        );
-        assert_eq!(ns_child.resolve_prefix_for(HTML), Some(None));
-        assert_eq!(
-            ns_child.resolve_prefix_for(XSLT),
+            ns_child.resolve_prefix(XSLT),
             Some(Some("xslt".to_string()))
         );
     }

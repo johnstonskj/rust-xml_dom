@@ -585,8 +585,8 @@ impl Element for RefNode {
 
                 let as_namespaced = as_element_namespaced_mut(self).unwrap();
                 let _ignore = match &name.prefix() {
-                    None => as_namespaced.insert(None, &namespace_uri),
-                    Some(prefix) => as_namespaced.insert(Some(prefix), &namespace_uri),
+                    None => as_namespaced.insert_mapping(None, &namespace_uri),
+                    Some(prefix) => as_namespaced.insert_mapping(Some(prefix), &namespace_uri),
                 }?;
             }
             let mut mut_self = self.borrow_mut();
