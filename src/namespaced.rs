@@ -80,6 +80,7 @@ pub(crate) trait MutNamespaced: Namespaced {
         namespace_uri: &str,
     ) -> Result<Option<String>>;
     fn remove_mapping(&mut self, prefix: Option<&str>) -> Result<Option<String>>;
+    fn normalize_mappings(&mut self) -> Result<()>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -185,6 +186,11 @@ impl MutNamespaced for RefNode {
         } else {
             Err(Error::InvalidState)
         }
+    }
+
+    fn normalize_mappings(&mut self) -> Result<()> {
+        // TODO: ensure this element has a mapping for it's own namespace and for any namespaced attributes
+        unimplemented!()
     }
 }
 
