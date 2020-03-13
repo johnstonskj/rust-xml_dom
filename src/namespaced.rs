@@ -246,7 +246,6 @@ mod tests {
     }
 
     fn make_node(document: &mut RefNode, name: &str) -> RefNode {
-        println!("{:#?}", document);
         let document = as_document_mut(document).unwrap();
         let element = document.create_element(name).unwrap();
         let mut document_element = document.document_element().unwrap();

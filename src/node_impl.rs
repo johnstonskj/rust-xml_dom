@@ -34,6 +34,7 @@ pub(crate) type WeakRefNode = WeakRefCell<NodeImpl>;
 ///
 #[doc(hidden)]
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 pub(crate) enum Extension {
     None,
     Document {
@@ -218,6 +219,7 @@ impl NodeImpl {
             i_extension: Extension::None,
         }
     }
+    #[allow(dead_code)]
     pub(crate) fn new_entity(
         owner_document: Option<WeakRefNode>,
         notation_name: Name,
@@ -237,6 +239,7 @@ impl NodeImpl {
             },
         }
     }
+    #[allow(dead_code)]
     pub(crate) fn new_notation(
         owner_document: Option<WeakRefNode>,
         notation_name: Name,
