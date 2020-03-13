@@ -1,4 +1,7 @@
-use crate::{Element, Error, NodeType, RefNode, Result};
+use crate::node_impl::Extension;
+use crate::{
+    Element, Error, NodeType, RefNode, Result, MSG_INVALID_EXTENSION, MSG_INVALID_NODE_TYPE,
+};
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -91,9 +94,14 @@ impl Namespaced for RefNode {
     fn contains_mapping(&self, prefix: Option<&str>) -> bool {
         let ref_self = self.borrow();
         if ref_self.i_node_type == NodeType::Element {
-            let current_scope = &ref_self.i_namespaces;
-            current_scope.contains_key(&prefix.map(String::from))
+            if let Extension::Element { i_namespaces, .. } = &ref_self.i_extension {
+                i_namespaces.contains_key(&prefix.map(String::from))
+            } else {
+                warn!("{}", MSG_INVALID_EXTENSION);
+                false
+            }
         } else {
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             false
         }
     }
@@ -101,10 +109,15 @@ impl Namespaced for RefNode {
     fn get_namespace(&self, prefix: Option<&str>) -> Option<String> {
         let ref_self = self.borrow();
         if ref_self.i_node_type == NodeType::Element {
-            let current_scope = &ref_self.i_namespaces;
-            let value = current_scope.get(&prefix.map(String::from));
-            value.map(String::to_string)
+            if let Extension::Element { i_namespaces, .. } = &ref_self.i_extension {
+                let value = i_namespaces.get(&prefix.map(String::from));
+                value.map(String::to_string)
+            } else {
+                warn!("{}", MSG_INVALID_EXTENSION);
+                None
+            }
         } else {
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             None
         }
     }
@@ -133,14 +146,19 @@ impl Namespaced for RefNode {
     fn get_prefix(&self, namespace_uri: &str) -> Option<Option<String>> {
         let ref_self = self.borrow();
         if ref_self.i_node_type == NodeType::Element {
-            let current_scope = &ref_self.i_namespaces;
-            let ns = namespace_uri.to_string();
-            let value = current_scope.iter().find(|(_, v)| **v == ns);
-            match value {
-                None => None,
-                Some((k, _)) => Some(k.as_ref().map(String::from)),
+            if let Extension::Element { i_namespaces, .. } = &ref_self.i_extension {
+                let ns = namespace_uri.to_string();
+                let value = i_namespaces.iter().find(|(_, v)| **v == ns);
+                match value {
+                    None => None,
+                    Some((k, _)) => Some(k.as_ref().map(String::from)),
+                }
+            } else {
+                warn!("{}", MSG_INVALID_EXTENSION);
+                None
             }
         } else {
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             None
         }
     }
@@ -171,9 +189,14 @@ impl MutNamespaced for RefNode {
     ) -> Result<Option<String>> {
         let mut mut_self = self.borrow_mut();
         if mut_self.i_node_type == NodeType::Element {
-            let current_scope = &mut mut_self.i_namespaces;
-            Ok(current_scope.insert(prefix.map(String::from), namespace_uri.to_string()))
+            if let Extension::Element { i_namespaces, .. } = &mut mut_self.i_extension {
+                Ok(i_namespaces.insert(prefix.map(String::from), namespace_uri.to_string()))
+            } else {
+                warn!("{}", MSG_INVALID_EXTENSION);
+                Err(Error::InvalidState)
+            }
         } else {
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             Err(Error::InvalidState)
         }
     }
@@ -181,9 +204,14 @@ impl MutNamespaced for RefNode {
     fn remove_mapping(&mut self, prefix: Option<&str>) -> Result<Option<String>> {
         let mut mut_self = self.borrow_mut();
         if mut_self.i_node_type == NodeType::Element {
-            let current_scope = &mut mut_self.i_namespaces;
-            Ok(current_scope.remove(&prefix.map(String::from)))
+            if let Extension::Element { i_namespaces, .. } = &mut mut_self.i_extension {
+                Ok(i_namespaces.remove(&prefix.map(String::from)))
+            } else {
+                warn!("{}", MSG_INVALID_EXTENSION);
+                Err(Error::InvalidState)
+            }
         } else {
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             Err(Error::InvalidState)
         }
     }
@@ -218,6 +246,7 @@ mod tests {
     }
 
     fn make_node(document: &mut RefNode, name: &str) -> RefNode {
+        println!("{:#?}", document);
         let document = as_document_mut(document).unwrap();
         let element = document.create_element(name).unwrap();
         let mut document_element = document.document_element().unwrap();

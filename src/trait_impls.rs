@@ -5,6 +5,10 @@ use crate::name::Name;
 use crate::node_impl::*;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::{
+    MSG_INDEX_ERROR, MSG_INVALID_EXTENSION, MSG_INVALID_NAME, MSG_INVALID_NODE_TYPE,
+    MSG_NO_PARENT_NODE,
+};
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -76,7 +80,10 @@ impl Node for RefNode {
     fn previous_sibling(&self) -> Option<RefNode> {
         let ref_self = self.borrow();
         match &ref_self.i_parent_node {
-            None => None,
+            None => {
+                warn!("{}", MSG_NO_PARENT_NODE);
+                None
+            }
             Some(parent_node) => {
                 let parent_node = parent_node.clone();
                 let parent_node = parent_node.upgrade()?;
@@ -103,7 +110,10 @@ impl Node for RefNode {
     fn next_sibling(&self) -> Option<RefNode> {
         let ref_self = self.borrow();
         match &ref_self.i_parent_node {
-            None => None,
+            None => {
+                warn!("{}", MSG_NO_PARENT_NODE);
+                None
+            }
             Some(parent_node) => {
                 let parent_node = parent_node.clone();
                 let parent_node = parent_node.upgrade()?;
@@ -125,7 +135,12 @@ impl Node for RefNode {
 
     fn attributes(&self) -> HashMap<Name, RefNode, RandomState> {
         let ref_self = self.borrow();
-        ref_self.i_attributes.clone()
+        if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
+            i_attributes.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            HashMap::default()
+        }
     }
 
     fn owner_document(&self) -> Option<RefNode> {
@@ -202,22 +217,16 @@ impl Node for RefNode {
         // TODO: Check to see if it is in the tree already, if so remove it
         // update child with references
         {
+            let ref_self = self.borrow();
             let mut mut_child = new_child.borrow_mut();
             mut_child.i_parent_node = Some(self.to_owned().downgrade());
-
-            let ref_self = self.borrow();
-            mut_child.i_document_element = ref_self.i_document_element.clone();
+            mut_child.i_owner_document = ref_self.i_owner_document.clone();
         }
         let mut mut_self = self.borrow_mut();
 
         // TODO: generalize, for each parent type, is child allowed
-        let child_node_type = new_child.node_type();
-        if mut_self.i_node_type == NodeType::Document && child_node_type == NodeType::Element {
-            // a document may only have one child element
-            mut_self.i_document_element = Some(new_child.clone());
-        } else {
-            mut_self.i_child_nodes.push(new_child.clone());
-        }
+
+        mut_self.i_child_nodes.push(new_child.clone());
 
         // TODO: deal with document fragment as special case
 
@@ -262,9 +271,13 @@ impl CharacterData for RefNode {
         }
         let ref_self = self.borrow();
         match &ref_self.i_value {
-            None => Err(Error::IndexSize),
+            None => {
+                warn!("{}", MSG_INDEX_ERROR);
+                Err(Error::IndexSize)
+            }
             Some(data) => {
                 if offset >= data.len() {
+                    warn!("{}", MSG_INDEX_ERROR);
                     Err(Error::IndexSize)
                 } else {
                     if offset + count >= data.len() {
@@ -308,6 +321,7 @@ impl CharacterData for RefNode {
         match &mut_self.i_value {
             None => {
                 if offset + count != 0 {
+                    warn!("{}", MSG_INDEX_ERROR);
                     Err(Error::IndexSize)
                 } else {
                     mut_self.i_value = Some(replace_data.to_string());
@@ -316,6 +330,7 @@ impl CharacterData for RefNode {
             }
             Some(old_data) => {
                 if offset >= old_data.len() {
+                    warn!("{}", MSG_INDEX_ERROR);
                     Err(Error::IndexSize)
                 } else {
                     let mut new_data = old_data.clone();
@@ -341,12 +356,28 @@ impl Comment for RefNode {}
 impl Document for RefNode {
     fn doc_type(&self) -> Option<RefNode> {
         let ref_self = self.borrow();
-        ref_self.i_document_type.clone()
+        if let Extension::Document {
+            i_document_type, ..
+        } = &ref_self.i_extension
+        {
+            i_document_type.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
+        }
     }
 
     fn document_element(&self) -> Option<RefNode> {
         let ref_self = self.borrow();
-        ref_self.i_document_element.clone()
+        if let Extension::Document {
+            i_document_element, ..
+        } = &ref_self.i_extension
+        {
+            i_document_element.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
+        }
     }
 
     fn implementation(&self) -> &dyn DOMImplementation<NodeRef = RefNode> {
@@ -428,12 +459,20 @@ impl Document for RefNode {
         // Delegate this call to the document element
         //
         let ref_self = self.borrow();
-        match &ref_self.i_document_element {
-            None => Vec::default(),
-            Some(root_node) => {
-                let root_element = as_element(root_node).expect("invalid node type");
-                root_element.get_elements_by_tag_name(tag_name)
+        if let Extension::Document {
+            i_document_element, ..
+        } = &ref_self.i_extension
+        {
+            match i_document_element {
+                None => Vec::default(),
+                Some(root_node) => {
+                    let root_element = as_element(root_node).expect("invalid node type");
+                    root_element.get_elements_by_tag_name(tag_name)
+                }
             }
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            Vec::default()
         }
     }
 
@@ -442,12 +481,20 @@ impl Document for RefNode {
         // Delegate this call to the document element
         //
         let ref_self = self.borrow();
-        match &ref_self.i_document_element {
-            None => Vec::default(),
-            Some(root_node) => {
-                let root_element = as_element(root_node).expect("invalid node type");
-                root_element.get_elements_by_tag_name_ns(namespace_uri, local_name)
+        if let Extension::Document {
+            i_document_element, ..
+        } = &ref_self.i_extension
+        {
+            match i_document_element {
+                None => Vec::default(),
+                Some(root_node) => {
+                    let root_element = as_element(root_node).expect("invalid node type");
+                    root_element.get_elements_by_tag_name_ns(namespace_uri, local_name)
+                }
             }
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            Vec::default()
         }
     }
 }
@@ -465,23 +512,21 @@ impl DocumentType for RefNode {
 
     fn public_id(&self) -> Option<String> {
         let ref_self = self.borrow();
-        match ref_self.i_attributes.get(&Name::for_public_id()) {
-            None => None,
-            Some(ref_node) => {
-                let ref_node = ref_node.borrow();
-                ref_node.i_value.clone()
-            }
+        if let Extension::DocumentType { i_public_id, .. } = &ref_self.i_extension {
+            i_public_id.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
         }
     }
 
     fn system_id(&self) -> Option<String> {
         let ref_self = self.borrow();
-        match ref_self.i_attributes.get(&Name::for_system_id()) {
-            None => None,
-            Some(ref_node) => {
-                let ref_node = ref_node.borrow();
-                ref_node.i_value.clone()
-            }
+        if let Extension::DocumentType { i_system_id, .. } = &ref_self.i_extension {
+            i_system_id.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
         }
     }
 
@@ -504,10 +549,26 @@ impl DOMImplementation for Implementation {
         let name = Name::new_ns(namespace_uri, qualified_name)?;
         let node_impl = NodeImpl::new_document(name, doc_type);
         let mut document_node = RefNode::new(node_impl);
-        let document =
-            as_document_mut(&mut document_node).expect("could not cast node to Document");
-        let element = document.create_element_ns(namespace_uri, qualified_name)?;
-        let _dont_care = document.append_child(element)?;
+
+        let element = {
+            let document =
+                as_document_mut(&mut document_node).expect("could not cast node to Document");
+            document.create_element_ns(namespace_uri, qualified_name)?
+        };
+
+        {
+            let mut mut_document = document_node.borrow_mut();
+            if let Extension::Document {
+                i_document_element, ..
+            } = &mut mut_document.i_extension
+            {
+                *i_document_element = Some(element);
+            } else {
+                warn!("{}", MSG_INVALID_EXTENSION);
+                return Err(Error::InvalidState);
+            }
+        }
+
         Ok(document_node)
     }
 
@@ -533,25 +594,32 @@ impl DOMImplementation for Implementation {
 impl Element for RefNode {
     fn get_attribute(&self, name: &str) -> Option<String> {
         if !is_element(self) {
-            // shortcut as only elements have attributes
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             None
         } else {
             match Name::from_str(name) {
                 Ok(attr_name) => {
-                    let self_copy = self.clone();
-                    let self_copy = self_copy.borrow();
-                    match self_copy.i_attributes.get(&attr_name) {
-                        None => None,
-                        Some(attr_node) => {
-                            let attribute = attr_node.borrow();
-                            match &attribute.i_value {
-                                None => None,
-                                Some(value) => Some(value.clone()),
+                    let ref_self = self.borrow();
+                    if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
+                        match i_attributes.get(&attr_name) {
+                            None => None,
+                            Some(attr_node) => {
+                                let attribute = attr_node.borrow();
+                                match &attribute.i_value {
+                                    None => None,
+                                    Some(value) => Some(value.clone()),
+                                }
                             }
                         }
+                    } else {
+                        warn!("{}", MSG_INVALID_EXTENSION);
+                        None
                     }
                 }
-                Err(_) => None,
+                Err(_) => {
+                    warn!("{}: '{}'", MSG_INVALID_NAME, name);
+                    None
+                }
             }
         }
     }
@@ -568,7 +636,7 @@ impl Element for RefNode {
 
     fn remove_attribute(&mut self, _name: &str) -> Result<()> {
         if !is_element(self) {
-            // shortcut as only elements have attributes
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             Ok(())
         } else {
             // TODO: deal with namespaces
@@ -578,7 +646,7 @@ impl Element for RefNode {
 
     fn get_attribute_node(&self, _name: &str) -> Option<RefNode> {
         if !is_element(self) {
-            // shortcut as only elements have attributes
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             None
         } else {
             unimplemented!()
@@ -588,6 +656,7 @@ impl Element for RefNode {
     fn set_attribute_node(&mut self, new_attribute: RefNode) -> Result<RefNode> {
         // ENSURE: You can ONLY add attributes to an element
         if !is_element(self) || !is_attribute(&new_attribute) {
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             Err(Error::InvalidState)
         } else {
             let name: Name = new_attribute.name();
@@ -602,10 +671,14 @@ impl Element for RefNode {
                 }?;
             }
             let mut mut_self = self.borrow_mut();
-            let _safe_to_ignore = mut_self
-                .i_attributes
-                .insert(new_attribute.name(), new_attribute.clone());
-            Ok(new_attribute)
+            if let Extension::Element { i_attributes, .. } = &mut mut_self.i_extension {
+                let _safe_to_ignore =
+                    i_attributes.insert(new_attribute.name(), new_attribute.clone());
+                Ok(new_attribute)
+            } else {
+                warn!("{}", MSG_INVALID_EXTENSION);
+                Err(Error::Syntax)
+            }
         }
     }
 
@@ -624,7 +697,10 @@ impl Element for RefNode {
             for child_node in &ref_self.i_child_nodes {
                 match as_element(child_node) {
                     Ok(ref_child) => results.extend(ref_child.get_elements_by_tag_name(&tag_name)),
-                    Err(_) => (),
+                    Err(_) => {
+                        warn!("{}", MSG_INVALID_NODE_TYPE);
+                        ()
+                    }
                 }
             }
         }
@@ -633,7 +709,7 @@ impl Element for RefNode {
 
     fn get_attribute_ns(&self, _namespace_uri: &str, _local_name: &str) -> Option<String> {
         if !is_element(self) {
-            // shortcut as only elements have attributes
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             None
         } else {
             unimplemented!()
@@ -664,11 +740,20 @@ impl Element for RefNode {
             match Name::new_ns(namespace_uri, local_name) {
                 Ok(name) => {
                     let ref_self = self.borrow();
-                    ref_self.i_attributes.get(&name).map(|n| n.clone())
+                    if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
+                        i_attributes.get(&name).map(|n| n.clone())
+                    } else {
+                        warn!("{}", MSG_INVALID_EXTENSION);
+                        None
+                    }
                 }
-                Err(_) => None,
+                Err(_) => {
+                    warn!("{}: '{}'", MSG_INVALID_NAME, local_name);
+                    None
+                }
             }
         } else {
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             None
         }
     }
@@ -695,7 +780,10 @@ impl Element for RefNode {
                 match as_element(child_node) {
                     Ok(ref_child) => results
                         .extend(ref_child.get_elements_by_tag_name_ns(&namespace_uri, &local_name)),
-                    Err(_) => (),
+                    Err(_) => {
+                        warn!("{}", MSG_INVALID_NODE_TYPE);
+                        ()
+                    }
                 }
             }
         }
@@ -707,11 +795,20 @@ impl Element for RefNode {
             match Name::from_str(name) {
                 Ok(name) => {
                     let ref_self = self.borrow();
-                    ref_self.i_attributes.contains_key(&name)
+                    if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
+                        i_attributes.contains_key(&name)
+                    } else {
+                        warn!("{}", MSG_INVALID_EXTENSION);
+                        false
+                    }
                 }
-                Err(_) => false,
+                Err(_) => {
+                    warn!("{}: '{}'", MSG_INVALID_NAME, name);
+                    false
+                }
             }
         } else {
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             false
         }
     }
@@ -721,11 +818,20 @@ impl Element for RefNode {
             match Name::new_ns(namespace_uri, local_name) {
                 Ok(name) => {
                     let ref_self = self.borrow();
-                    ref_self.i_attributes.contains_key(&name)
+                    if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
+                        i_attributes.contains_key(&name)
+                    } else {
+                        warn!("{}", MSG_INVALID_EXTENSION);
+                        false
+                    }
                 }
-                Err(_) => false,
+                Err(_) => {
+                    warn!("{}: '{}'", MSG_INVALID_NAME, local_name);
+                    false
+                }
             }
         } else {
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             false
         }
     }
@@ -766,7 +872,10 @@ impl Text for RefNode {
                     let document = mut_self.i_owner_document.as_ref().unwrap();
                     Ok(NodeImpl::new_cdata(document.clone(), &new_data))
                 }
-                _ => Err(Error::HierarchyRequest),
+                _ => {
+                    warn!("{}", MSG_INVALID_NODE_TYPE);
+                    Err(Error::Syntax)
+                }
             }?
         };
 

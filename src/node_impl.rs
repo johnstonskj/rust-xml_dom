@@ -29,6 +29,11 @@ pub(crate) type WeakRefNode = WeakRefCell<NodeImpl>;
 
 // ------------------------------------------------------------------------------------------------
 
+///
+/// Internal container for DOM tree node data and state.
+///
+#[doc(hidden)]
+#[derive(Clone, Debug)]
 pub(crate) enum Extension {
     None,
     Document {
@@ -69,13 +74,8 @@ pub struct NodeImpl {
     pub(crate) i_value: Option<String>,
     pub(crate) i_parent_node: Option<WeakRefNode>,
     pub(crate) i_owner_document: Option<WeakRefNode>,
-    pub(crate) i_attributes: HashMap<Name, RefNode>,
     pub(crate) i_child_nodes: Vec<RefNode>,
-    // For Elements
-    pub(crate) i_namespaces: HashMap<Option<String>, String>,
-    // for Document
-    pub(crate) i_document_element: Option<RefNode>,
-    pub(crate) i_document_type: Option<RefNode>,
+    pub(crate) i_extension: Extension,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -90,11 +90,11 @@ impl NodeImpl {
             i_value: None,
             i_parent_node: None,
             i_owner_document: Some(parent),
-            i_attributes: Default::default(),
             i_child_nodes: vec![],
-            i_namespaces: Default::default(),
-            i_document_element: None,
-            i_document_type: None,
+            i_extension: Extension::Element {
+                i_attributes: Default::default(),
+                i_namespaces: Default::default(),
+            },
         }
     }
     pub(crate) fn new_attribute(parent: WeakRefNode, name: Name, value: Option<&str>) -> Self {
@@ -104,11 +104,8 @@ impl NodeImpl {
             i_value: value.map(text::escape),
             i_parent_node: None,
             i_owner_document: Some(parent),
-            i_attributes: Default::default(),
             i_child_nodes: vec![],
-            i_namespaces: Default::default(),
-            i_document_element: None,
-            i_document_type: None,
+            i_extension: Extension::None,
         }
     }
     pub(crate) fn new_text(parent: WeakRefNode, data: &str) -> Self {
@@ -118,11 +115,8 @@ impl NodeImpl {
             i_value: Some(text::escape(data)),
             i_parent_node: None,
             i_owner_document: Some(parent),
-            i_attributes: Default::default(),
             i_child_nodes: vec![],
-            i_namespaces: Default::default(),
-            i_document_element: None,
-            i_document_type: None,
+            i_extension: Extension::None,
         }
     }
     pub(crate) fn new_cdata(parent: WeakRefNode, data: &str) -> Self {
@@ -132,11 +126,8 @@ impl NodeImpl {
             i_value: Some(text::escape(data)),
             i_parent_node: None,
             i_owner_document: Some(parent),
-            i_attributes: Default::default(),
             i_child_nodes: vec![],
-            i_namespaces: Default::default(),
-            i_document_element: None,
-            i_document_type: None,
+            i_extension: Extension::None,
         }
     }
     pub(crate) fn new_processing_instruction(
@@ -150,11 +141,8 @@ impl NodeImpl {
             i_value: data.map(String::from),
             i_parent_node: None,
             i_owner_document: Some(parent),
-            i_attributes: Default::default(),
             i_child_nodes: vec![],
-            i_namespaces: Default::default(),
-            i_document_element: None,
-            i_document_type: None,
+            i_extension: Extension::None,
         }
     }
     pub(crate) fn new_comment(parent: WeakRefNode, data: &str) -> Self {
@@ -164,11 +152,8 @@ impl NodeImpl {
             i_value: Some(text::escape(data)),
             i_parent_node: None,
             i_owner_document: Some(parent),
-            i_attributes: Default::default(),
             i_child_nodes: vec![],
-            i_namespaces: Default::default(),
-            i_document_element: None,
-            i_document_type: None,
+            i_extension: Extension::None,
         }
     }
     pub(crate) fn new_document(name: Name, doc_type: Option<RefNode>) -> Self {
@@ -178,11 +163,11 @@ impl NodeImpl {
             i_value: None,
             i_parent_node: None,
             i_owner_document: None,
-            i_attributes: Default::default(),
             i_child_nodes: vec![],
-            i_namespaces: Default::default(),
-            i_document_element: None,
-            i_document_type: doc_type,
+            i_extension: Extension::Document {
+                i_document_element: None,
+                i_document_type: doc_type,
+            },
         }
     }
     pub(crate) fn new_document_type(
@@ -191,53 +176,21 @@ impl NodeImpl {
         public_id: Option<&str>,
         system_id: Option<&str>,
     ) -> Self {
-        let mut doc_type = Self {
+        Self {
             i_node_type: NodeType::DocumentType,
             i_name: name,
             i_value: None,
             i_parent_node: parent,
             i_owner_document: None,
-            i_attributes: Default::default(),
             i_child_nodes: vec![],
-            i_namespaces: Default::default(),
-            i_document_element: None,
-            i_document_type: None,
-        };
-        if let Some(public_id) = public_id {
-            let public_id = Self {
-                i_node_type: NodeType::Attribute,
-                i_name: Name::for_public_id(),
-                i_value: Some(public_id.to_string()),
-                i_parent_node: None,
-                i_owner_document: None,
-                i_attributes: Default::default(),
-                i_child_nodes: vec![],
-                i_namespaces: Default::default(),
-                i_document_element: None,
-                i_document_type: None,
-            };
-            let _unused = doc_type
-                .i_attributes
-                .insert(public_id.i_name.clone(), RefNode::new(public_id));
+            i_extension: Extension::DocumentType {
+                i_entities: Default::default(),
+                i_notations: Default::default(),
+                i_public_id: public_id.map(String::from),
+                i_system_id: system_id.map(String::from),
+                i_internal_subset: None,
+            },
         }
-        if let Some(system_id) = system_id {
-            let system_id = Self {
-                i_node_type: NodeType::Attribute,
-                i_name: Name::for_system_id(),
-                i_value: Some(system_id.to_string()),
-                i_parent_node: None,
-                i_owner_document: None,
-                i_attributes: Default::default(),
-                i_child_nodes: vec![],
-                i_namespaces: Default::default(),
-                i_document_element: None,
-                i_document_type: None,
-            };
-            let _unused = doc_type
-                .i_attributes
-                .insert(system_id.i_name.clone(), RefNode::new(system_id));
-        }
-        doc_type
     }
 }
 
@@ -262,17 +215,5 @@ mod tests {
             attribute.i_value,
             Some("hello &#60;&#34;world&#34;&#62; &#38; &#39;everyone&#39; in it".to_string())
         )
-    }
-
-    #[test]
-    fn test_doctype_structure() {
-        let name = Name::from_str("html").unwrap();
-        let doc_type = NodeImpl::new_document_type(
-            None,
-            name,
-            Some("-//W3C//DTD XHTML 1.0 Transitional//EN"),
-            Some("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"),
-        );
-        assert_eq!(doc_type.i_attributes.len(), 2);
     }
 }
