@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::fmt::{Display, Formatter, Result};
+use std::fmt::{Binary, Display, Error, Formatter, Result};
 use std::ops::{BitAnd, BitOr};
 
 // ------------------------------------------------------------------------------------------------
@@ -56,6 +56,18 @@ impl Display for ProcessingOptions {
         )?;
 
         write!(f, "}}")
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+
+impl Binary for ProcessingOptions {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        if f.alternate() {
+            write!(f, "{:b}", self.0)
+        } else {
+            write!(f, "{:#b}", self.0)
+        }
     }
 }
 
