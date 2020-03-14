@@ -1252,10 +1252,7 @@ fn is_child_allowed(parent: &RefNode, child: &RefNode) -> bool {
         NodeType::ProcessingInstruction => false,
         NodeType::Comment => false,
         NodeType::Document => match child_node_type {
-            NodeType::Element
-            | NodeType::Comment
-            | NodeType::ProcessingInstruction
-            | NodeType::DocumentType => true,
+            NodeType::Comment | NodeType::ProcessingInstruction => true,
             _ => false,
         },
         NodeType::DocumentType => false,
