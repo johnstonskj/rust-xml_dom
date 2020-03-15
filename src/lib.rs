@@ -47,8 +47,12 @@ println!("document 2: {}", xml);
   Version 1.0, W3C Recommendation 13 November, 2000. Specifically §1, _Document Object Model Core_.
 * [Extensible Markup Language (XML) 1.0 (Fifth Edition)](https://www.w3.org/TR/REC-xml/), W3C
   Recommendation 26 November 2008. Especially §3.3.3 _Attribute-Value Normalization_.
+* [Namespaces in XML 1.1 (Second Edition)](https://www.w3.org/TR/xml-names11/), W3C Recommendation
+  16 August 2006.
 * [xml:id Version 1.0](https://www.w3.org/TR/xml-id), W3C Recommendation 9 September 2005.
   Especially §7.1 _Conformance to xml:id_.
+* [XML Base (Second Edition)](https://www.w3.org/TR/xmlbase/), W3C Recommendation 28 January 2009.
+* [The "xml" Namespace](https://www.w3.org/XML/1998/namespace), W3C 26 October 2009.
 
 ## Conformance
 
