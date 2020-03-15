@@ -36,19 +36,31 @@ pub(crate) const XML_ENTITYREF_END: &str = ";";
 pub(crate) const XML_NOTATION_START: &str = "<!NOTATION";
 pub(crate) const XML_NOTATION_END: &str = ">";
 
+pub(crate) const XML_NS_SEPARATOR: &str = ":";
+
 pub(crate) const XML_EMPTY: &str = "";
+
+// ------------------------------------------------------------------------------------------------
+// The XML language namespace Support
+// ------------------------------------------------------------------------------------------------
+
+pub(crate) const XML_NS_URI: &str = "http://www.w3.org/XML/1998/namespace";
+pub(crate) const XML_NS_ATTRIBUTE: &str = "xml";
+
+pub(crate) const XML_NS_ATTR_BASE: &str = "base";
+pub(crate) const XML_NS_ATTR_ID: &str = "id";
+pub(crate) const XML_NS_ATTR_LANG: &str = "lang";
+pub(crate) const XML_NS_ATTR_SPACE: &str = "space";
+
+pub(crate) const XML_NS_ATTR_SPACE_DEFAULT: &str = "default";
+pub(crate) const XML_NS_ATTR_SPACE_PRESERVE: &str = "preserve";
 
 // ------------------------------------------------------------------------------------------------
 // Namespace Support
 // ------------------------------------------------------------------------------------------------
 
-pub(crate) const XML_NS_ATTRIBUTE: &str = "xml";
-pub(crate) const XML_NS_URI: &str = "http://www.w3.org/XML/1998/namespace";
-
-pub(crate) const XMLNS_NS_ATTRIBUTE: &str = "xmlns";
 pub(crate) const XMLNS_NS_URI: &str = "http://www.w3.org/2000/xmlns/";
-
-pub(crate) const XML_NS_SEPARATOR: &str = ":";
+pub(crate) const XMLNS_NS_ATTRIBUTE: &str = "xmlns";
 
 // ------------------------------------------------------------------------------------------------
 // DOM Node Names

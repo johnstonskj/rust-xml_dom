@@ -253,6 +253,18 @@ impl Name {
     }
 
     ///
+    /// Does this appear to be an `xmlns` attribute.
+    ///
+    pub fn is_namespace_attribute(&self) -> bool {
+        let ns_attribute = XMLNS_NS_ATTRIBUTE.to_string();
+        if self.local_name == ns_attribute || self.prefix == Some(ns_attribute) {
+            true
+        } else {
+            false
+        }
+    }
+
+    ///
     /// Construct a name for an `xmlns` attribute.
     ///
     pub fn for_namespace(prefix: Option<&str>) -> Self {
@@ -265,14 +277,13 @@ impl Name {
     }
 
     ///
-    /// Does this appear to be an `xmlns` attribute.
-    ///
-    pub fn is_namespace_attribute(&self) -> bool {
-        let ns_attribute = XMLNS_NS_ATTRIBUTE.to_string();
-        if self.local_name == ns_attribute || self.prefix == Some(ns_attribute) {
-            true
-        } else {
-            false
+    /// Construct a name for an `xml:id` attribute.
+    /// ///
+    pub fn for_xml_id() -> Self {
+        Self {
+            namespace_uri: Some(XML_NS_URI.to_string()),
+            prefix: Some(XML_NS_ATTRIBUTE.to_string()),
+            local_name: XML_NS_ATTR_ID.to_string(),
         }
     }
 
