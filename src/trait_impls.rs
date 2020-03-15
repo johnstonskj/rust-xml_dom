@@ -1,15 +1,15 @@
 use crate::convert::*;
 use crate::dom_impl::{get_implementation, Implementation};
 use crate::error::{Error, Result};
+use crate::error::{
+    MSG_INDEX_ERROR, MSG_INVALID_EXTENSION, MSG_INVALID_NAME, MSG_INVALID_NODE_TYPE,
+    MSG_NO_PARENT_NODE,
+};
 use crate::name::Name;
 use crate::node_impl::*;
 use crate::options::ProcessingOptions;
 use crate::syntax::*;
 use crate::traits::*;
-use crate::{
-    MSG_INDEX_ERROR, MSG_INVALID_EXTENSION, MSG_INVALID_NAME, MSG_INVALID_NODE_TYPE,
-    MSG_NO_PARENT_NODE,
-};
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};

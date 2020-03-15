@@ -20,9 +20,10 @@ use std::ops::{BitAnd, BitOr};
 /// use xml_dom::*;
 /// use xml_dom::convert::*;
 ///
-/// let implementation = get_implementation();
 /// let mut options = ProcessingOptions::new();
 /// options.set_assume_ids();
+///
+/// let implementation = get_implementation();
 /// let mut document_node = implementation
 ///     .create_document_with_options(
 ///         "http://www.w3.org/1999/xhtml",
@@ -148,12 +149,27 @@ impl ProcessingOptions {
     pub fn has_add_namespaces(&self) -> bool {
         self.0 & (ProcessingOptionFlags::AddNamespaces as u8) != 0
     }
+    ///
+    /// TBD.
+    ///
+    /// **Note:** if an attribute with the qualified name `xml:id`, and the namespace is set to the
+    /// XML namespace `http://www.w3.org/XML/1998/namespace` then the value is known to be an ID.
+    ///
+    /// See xml:id Version 1.0, §4 [Processing xml:id Attributes](https://www.w3.org/TR/xml-id/#processing)
+    /// for more details.
+    ///
     pub fn set_assume_ids(&mut self) {
         self.0 = self.0 | (ProcessingOptionFlags::AssumeIDs as u8)
     }
+    ///
+    /// TBD
+    ///
     pub fn set_parse_entities(&mut self) {
         self.0 = self.0 | (ProcessingOptionFlags::ParseEntities as u8)
     }
+    ///
+    /// TBD
+    ///
     pub fn set_add_namespaces(&mut self) {
         self.0 = self.0 | (ProcessingOptionFlags::AddNamespaces as u8)
     }

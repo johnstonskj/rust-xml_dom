@@ -50,6 +50,7 @@ println!("HTML: {}", xml);
 
 * More Element unit tests for attributes
 * Implement rules for `child_nodes` mutation.
+* Implement an options capability to turn on processing behaviors.
 
 **Version 0.1.2**
 

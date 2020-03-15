@@ -1,3 +1,7 @@
+/*!
+Provides a common `Error` and `Result` type and a set of common error messages.
+*/
+
 use std::result::Result as StdResult;
 
 // ------------------------------------------------------------------------------------------------
@@ -66,27 +70,28 @@ pub type Result<T> = StdResult<T, Error>;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Error message, see value.
+/// Error message: "The node `self` is not of the type expected by this method."
 ///
 pub const MSG_INVALID_NODE_TYPE: &str =
     "The node `self` is not of the type expected by this method.";
 ///
-/// Error message, see value.
+/// Error message: "This node's extension does not match it's node type."
 ///
 pub const MSG_INVALID_EXTENSION: &str = "This node's extension does not match it's node type.";
 ///
-/// Error message, see value.
+/// Error message: "The provided value could not be parsed into a `Name`."
 ///
 pub const MSG_INVALID_NAME: &str = "The provided value could not be parsed into a `Name`.";
 ///
-/// Error message, see value.
+/// Error message: "This node is missing a `parent_node` value."
 ///
 pub const MSG_NO_PARENT_NODE: &str = "This node is missing a `parent_node` value.";
 ///
-/// Error message, see value.
+/// Error message: "Cannot append or insert a child node created in a different document."
 ///
-pub const MSG_WRONG_DOCUMENT: &str = "Cannot add a child node created in a different document.";
+pub const MSG_WRONG_DOCUMENT: &str =
+    "Cannot append or insert a child node created in a different document.";
 ///
-/// Error message, see value.
+/// Error message: "Either `offset` or `count` invalid for string operation."
 ///
-pub const MSG_INDEX_ERROR: &str = "`offset` or `count` invalid for string operation.";
+pub const MSG_INDEX_ERROR: &str = "Either `offset` or `count` invalid for string operation.";

@@ -45,6 +45,10 @@ println!("document 2: {}", xml);
   Level 1_.
 * [Document Object Model (DOM) Level 2 Core Specification](https://www.w3.org/TR/DOM-Level-2-Core/),
   Version 1.0, W3C Recommendation 13 November, 2000. Specifically §1, _Document Object Model Core_.
+* [Extensible Markup Language (XML) 1.0 (Fifth Edition)](https://www.w3.org/TR/REC-xml/), W3C
+  Recommendation 26 November 2008. Especially §3.3.3 _Attribute-Value Normalization_.
+* [xml:id Version 1.0](https://www.w3.org/TR/xml-id), W3C Recommendation 9 September 2005.
+  Especially §7.1 _Conformance to xml:id_.
 
 ## Conformance
 
@@ -141,6 +145,9 @@ The following extensions are provided beyond the DOM Level 2 specification.
    `DOMImplementation` to allow bootstrapping the creation of documents.
 1. The [`get_implementation_version`](fn.get_implementation_version.html) function returns a
    vendor-specific version identifier for the `DOMImplementation`.
+1. The standard `DOMImplementation` trait has an additional member
+   [`create_document_with_options`](trait.DOMImplementation.html#tymethod.create_document_with_options)
+   that can set optional behavior for a given `Document` instance.
 1. The trait [`Namespaced`](trait.Namespaced.html) extends `Element` with the ability to look
    up namespace mappings (using the standard `xmlns` attribute).
 
@@ -170,8 +177,8 @@ pub mod convert;
 mod dom_impl;
 pub use dom_impl::{get_implementation, get_implementation_version};
 
-mod error;
-pub use error::*;
+pub mod error;
+pub use error::{Error, Result};
 
 mod name;
 pub use name::*;

@@ -1,6 +1,7 @@
 use crate::node_impl::Extension;
 use crate::{
-    Element, Error, NodeType, RefNode, Result, MSG_INVALID_EXTENSION, MSG_INVALID_NODE_TYPE,
+    error::MSG_INVALID_EXTENSION, error::MSG_INVALID_NODE_TYPE, Element, Error, NodeType, RefNode,
+    Result,
 };
 
 // ------------------------------------------------------------------------------------------------
