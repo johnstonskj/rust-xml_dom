@@ -4,6 +4,7 @@ use crate::rc_cell::{RcRefCell, WeakRefCell};
 use crate::text;
 use crate::traits::NodeType;
 use std::collections::HashMap;
+use std::rc::Weak;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -41,6 +42,7 @@ pub(crate) enum Extension {
     Document {
         i_document_element: Option<RefNode>,
         i_document_type: Option<RefNode>,
+        i_id_map: HashMap<String, WeakRefNode>,
         i_options: ProcessingOptions,
     },
     DocumentType {
@@ -179,6 +181,7 @@ impl NodeImpl {
             i_extension: Extension::Document {
                 i_document_element: None,
                 i_document_type: doc_type,
+                i_id_map: Default::default(),
                 i_options: options,
             },
         }
