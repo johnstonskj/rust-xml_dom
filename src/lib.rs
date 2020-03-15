@@ -182,6 +182,9 @@ pub use namespaced::Namespaced;
 mod node_impl;
 pub use node_impl::RefNode;
 
+mod options;
+pub use options::ProcessingOptions;
+
 mod traits;
 pub use traits::*;
 
@@ -191,8 +194,6 @@ pub use trait_impls::*;
 // ------------------------------------------------------------------------------------------------
 // Private Modules
 // ------------------------------------------------------------------------------------------------
-
-mod options;
 
 mod rc_cell;
 

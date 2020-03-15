@@ -1,5 +1,6 @@
 use self::super::error::Result;
 use self::super::name::Name;
+use crate::options::ProcessingOptions;
 use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
@@ -776,6 +777,19 @@ pub trait DOMImplementation {
         namespace_uri: &str,
         qualified_name: &str,
         doc_type: Option<Self::NodeRef>,
+    ) -> Result<Self::NodeRef>;
+    ///
+    /// Extension to the standard DOM `create_document` method that takes an options structure to
+    /// control the processing of nodes.
+    ///
+    /// * `options` of type `ProcessingOptions`: the options to be set fot this document.
+    ///
+    fn create_document_with_options(
+        &self,
+        namespace_uri: &str,
+        qualified_name: &str,
+        doc_type: Option<Self::NodeRef>,
+        options: ProcessingOptions,
     ) -> Result<Self::NodeRef>;
     ///
     /// Creates an empty `DocumentType` node.

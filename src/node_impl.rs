@@ -164,7 +164,11 @@ impl NodeImpl {
             i_extension: Extension::None,
         }
     }
-    pub(crate) fn new_document(name: Name, doc_type: Option<RefNode>) -> Self {
+    pub(crate) fn new_document(
+        name: Name,
+        doc_type: Option<RefNode>,
+        options: ProcessingOptions,
+    ) -> Self {
         Self {
             i_node_type: NodeType::Document,
             i_name: name,
@@ -175,7 +179,7 @@ impl NodeImpl {
             i_extension: Extension::Document {
                 i_document_element: None,
                 i_document_type: doc_type,
-                i_options: ProcessingOptions::default(),
+                i_options: options,
             },
         }
     }
@@ -298,7 +302,11 @@ mod tests {
 
     #[test]
     fn test_escaping() {
-        let document = RefNode::new(NodeImpl::new_document(Name::for_document(), None));
+        let document = RefNode::new(NodeImpl::new_document(
+            Name::for_document(),
+            None,
+            Default::default(),
+        ));
         let document = document.downgrade();
         let name = Name::from_str("test").unwrap();
         let attribute =

@@ -3,6 +3,7 @@ use crate::dom_impl::{get_implementation, Implementation};
 use crate::error::{Error, Result};
 use crate::name::Name;
 use crate::node_impl::*;
+use crate::options::ProcessingOptions;
 use crate::syntax::*;
 use crate::traits::*;
 use crate::{
@@ -336,8 +337,23 @@ impl DOMImplementation for Implementation {
         qualified_name: &str,
         doc_type: Option<RefNode>,
     ) -> Result<RefNode> {
+        self.create_document_with_options(
+            namespace_uri,
+            qualified_name,
+            doc_type,
+            Default::default(),
+        )
+    }
+
+    fn create_document_with_options(
+        &self,
+        namespace_uri: &str,
+        qualified_name: &str,
+        doc_type: Option<Self::NodeRef>,
+        options: ProcessingOptions,
+    ) -> Result<Self::NodeRef> {
         let name = Name::new_ns(namespace_uri, qualified_name)?;
-        let node_impl = NodeImpl::new_document(name, doc_type);
+        let node_impl = NodeImpl::new_document(name, doc_type, options);
         let mut document_node = RefNode::new(node_impl);
 
         let element = {
