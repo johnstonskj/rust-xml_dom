@@ -1,3 +1,4 @@
+use crate::error::MSG_WEAK_REF;
 use crate::node_impl::Extension;
 use crate::{
     error::MSG_INVALID_EXTENSION, error::MSG_INVALID_NODE_TYPE, Element, Error, NodeType, RefNode,
@@ -131,7 +132,7 @@ impl Namespaced for RefNode {
                     None => None,
                     Some(parent) => {
                         let parent = parent.clone();
-                        let parent_node = parent.upgrade().expect("could not upgrade parent_node");
+                        let parent_node = parent.upgrade().expect(MSG_WEAK_REF);
                         parent_node.resolve_namespace(prefix)
                     }
                 }
@@ -172,7 +173,7 @@ impl Namespaced for RefNode {
                     None => None,
                     Some(parent) => {
                         let parent = parent.clone();
-                        let parent_node = parent.upgrade().expect("could not upgrade parent_node");
+                        let parent_node = parent.upgrade().expect(MSG_WEAK_REF);
                         parent_node.resolve_prefix(namespace_uri)
                     }
                 }

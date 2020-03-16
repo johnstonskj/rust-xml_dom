@@ -95,10 +95,9 @@ the specification documents listed above.
 
 ## Interface Mapping
 
-The actual concrete types used in the DOM tree are [`RefNode`](type.RefNode.html)
-and [`WeakRefNode`](type.WeakRefNode.html) which in turn are references to the opaque
-[`NodeImpl`](struct.NodeImpl.html) struct. Only `RefNode` implements all of the DOM interfaces
-and in general the programmer should never need to interact with `WeakRefNode`.
+The actual concrete types used in the DOM tree are [`RefNode`](type.RefNode.html) and `WeakRefNode`
+which in turn are references an opaque `NodeImpl struct. Only `RefNode` implements all of the DOM
+interfaces and client programmers should never need to interact with `WeakRefNode`.
 
 | IDL Interface           | Rust Mapping                                                |
 |-------------------------|-------------------------------------------------------------|

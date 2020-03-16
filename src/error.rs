@@ -95,3 +95,7 @@ pub const MSG_WRONG_DOCUMENT: &str =
 /// Error message: "Either `offset` or `count` invalid for string operation."
 ///
 pub const MSG_INDEX_ERROR: &str = "Either `offset` or `count` invalid for string operation.";
+///
+/// Error message: "Could not upgrade a weak reference."
+///
+pub const MSG_WEAK_REF: &str = "Could not upgrade a weak reference.";

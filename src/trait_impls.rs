@@ -8,6 +8,7 @@ use crate::error::{
 use crate::name::Name;
 use crate::node_impl::*;
 use crate::options::ProcessingOptions;
+use crate::rc_cell::RcRefCell;
 use crate::syntax::*;
 use crate::traits::*;
 use std::collections::hash_map::RandomState;
@@ -231,10 +232,13 @@ impl Document for RefNode {
         {
             match i_document_element {
                 None => Vec::default(),
-                Some(root_node) => {
-                    let root_element = as_element(root_node).expect("invalid node type");
-                    root_element.get_elements_by_tag_name(tag_name)
-                }
+                Some(root_node) => match as_element(root_node) {
+                    Ok(root_element) => root_element.get_elements_by_tag_name(tag_name),
+                    Err(_) => {
+                        warn!("{}", MSG_INVALID_NODE_TYPE);
+                        Vec::default()
+                    }
+                },
             }
         } else {
             warn!("{}", MSG_INVALID_EXTENSION);
@@ -253,10 +257,15 @@ impl Document for RefNode {
         {
             match i_document_element {
                 None => Vec::default(),
-                Some(root_node) => {
-                    let root_element = as_element(root_node).expect("invalid node type");
-                    root_element.get_elements_by_tag_name_ns(namespace_uri, local_name)
-                }
+                Some(root_node) => match as_element(root_node) {
+                    Ok(root_element) => {
+                        root_element.get_elements_by_tag_name_ns(namespace_uri, local_name)
+                    }
+                    Err(_) => {
+                        warn!("{}", MSG_INVALID_NODE_TYPE);
+                        Vec::default()
+                    }
+                },
             }
         } else {
             warn!("{}", MSG_INVALID_EXTENSION);
@@ -357,8 +366,7 @@ impl DOMImplementation for Implementation {
         let mut document_node = RefNode::new(node_impl);
 
         let element = {
-            let document =
-                as_document_mut(&mut document_node).expect("could not cast node to Document");
+            let document = as_document_mut(&mut document_node).unwrap();
             document.create_element_ns(namespace_uri, qualified_name)?
         };
 
