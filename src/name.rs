@@ -88,16 +88,12 @@ impl FromStr for Name {
                 .map(|s| s.to_string())
                 .collect::<Vec<String>>();
             match parts.len() {
-                1 => Ok(Name::new(
-                    Name::check_part(parts.get(0).unwrap())?,
-                    None,
-                    None,
-                )),
-                2 => Ok(Name::new(
+                1 => Name::new(Name::check_part(parts.get(0).unwrap())?, None, None),
+                2 => Name::new(
                     Name::check_part(parts.get(1).unwrap())?,
                     Some(Name::check_part(parts.get(0).unwrap())?),
                     None,
-                )),
+                ),
                 _ => Err(Error::Syntax),
             }
         }
@@ -143,12 +139,32 @@ impl Name {
     ///
     /// Note, errors include a malformed URI, or malformed prefix or local name.
     ///
-    fn new(local_name: String, prefix: Option<String>, namespace_uri: Option<String>) -> Self {
-        Self {
+    fn new(
+        local_name: String,
+        prefix: Option<String>,
+        namespace_uri: Option<String>,
+    ) -> Result<Self> {
+        if local_name.is_empty() {
+            warn!("local_name may not be empty");
+            return Err(Error::Syntax);
+        }
+        if let Some(prefix) = &prefix {
+            if prefix.is_empty() {
+                warn!("prefix may not be empty");
+                return Err(Error::Syntax);
+            }
+        }
+        if let Some(namespace_uri) = &namespace_uri {
+            if namespace_uri.is_empty() {
+                warn!("namespace_uri may not be empty");
+                return Err(Error::Syntax);
+            }
+        }
+        Ok(Self {
             namespace_uri,
             prefix,
             local_name,
-        }
+        })
     }
 
     fn check_part(part: &str) -> Result<String> {
@@ -200,80 +216,126 @@ impl Name {
     /// Return the reserved name for `CDATA` section nodes
     ///
     pub fn for_cdata() -> Self {
-        Self::new(XML_NAME_CDATA.to_string(), None, None)
+        Self {
+            namespace_uri: None,
+            prefix: None,
+            local_name: XML_NAME_CDATA.to_string(),
+        }
     }
 
     ///
     /// Return the reserved name for `Comment` nodes
     ///
     pub fn for_comment() -> Self {
-        Self::new(XML_NAME_COMMENT.to_string(), None, None)
+        Self {
+            namespace_uri: None,
+            prefix: None,
+            local_name: XML_NAME_COMMENT.to_string(),
+        }
     }
 
     ///
     /// Return the reserved name for `Document` nodes
     ///
     pub fn for_document() -> Self {
-        Self::new(XML_NAME_DOCUMENT.to_string(), None, None)
+        Self {
+            namespace_uri: None,
+            prefix: None,
+            local_name: XML_NAME_DOCUMENT.to_string(),
+        }
     }
 
     ///
     /// Return the reserved name for `Document` nodes
     ///
     pub fn for_document_fragment() -> Self {
-        Self::new(XML_NAME_DOCUMENT_FRAGMENT.to_string(), None, None)
+        Self {
+            namespace_uri: None,
+            prefix: None,
+            local_name: XML_NAME_DOCUMENT_FRAGMENT.to_string(),
+        }
     }
 
     ///
     /// Return the reserved name for `Text` nodes
     ///
     pub fn for_text() -> Self {
-        Self::new(XML_NAME_TEXT.to_string(), None, None)
+        Self {
+            namespace_uri: None,
+            prefix: None,
+            local_name: XML_NAME_TEXT.to_string(),
+        }
     }
 
     ///
     /// Return the reserved name for `DocumentType` `public_id` attribute
     ///
     pub fn for_public_id() -> Self {
-        Self::new(XML_DOCTYPE_PUBLIC.to_string(), None, None)
+        Self {
+            namespace_uri: None,
+            prefix: None,
+            local_name: XML_DOCTYPE_PUBLIC.to_string(),
+        }
     }
 
     ///
     /// Return the reserved name for `DocumentType` `system_id` attribute
     ///
     pub fn for_system_id() -> Self {
-        Self::new(XML_DOCTYPE_SYSTEM.to_string(), None, None)
+        Self {
+            namespace_uri: None,
+            prefix: None,
+            local_name: XML_DOCTYPE_SYSTEM.to_string(),
+        }
     }
 
     ///
     /// Return the reserved name for `Entity` `notation_name` attribute
     ///
     pub(crate) fn for_null() -> Self {
-        Self::new("null".to_string(), None, None)
+        Self {
+            namespace_uri: None,
+            prefix: None,
+            local_name: "null".to_string(),
+        }
     }
 
     ///
     /// Does this appear to be an `xmlns` attribute.
     ///
     pub fn is_namespace_attribute(&self) -> bool {
-        let ns_attribute = XMLNS_NS_ATTRIBUTE.to_string();
-        if self.local_name == ns_attribute || self.prefix == Some(ns_attribute) {
-            true
-        } else {
-            false
-        }
+        let xmlns_ns = Some(XMLNS_NS_URI.to_string());
+        let xmlns_attribute = XMLNS_NS_ATTRIBUTE.to_string();
+        self.namespace_uri == xmlns_ns
+            && ((self.local_name == xmlns_attribute && self.prefix == None)
+                || self.prefix == Some(xmlns_attribute))
     }
 
     ///
     /// Construct a name for an `xmlns` attribute.
     ///
     pub fn for_namespace(prefix: Option<&str>) -> Self {
-        let ns_attribute = XMLNS_NS_ATTRIBUTE.to_string();
-        let attribute_ns = Some(XMLNS_NS_URI.to_string());
+        let xmlns_ns = Some(XMLNS_NS_URI.to_string());
+        let xmlns_attribute = XMLNS_NS_ATTRIBUTE.to_string();
         match prefix {
-            None => Self::new(ns_attribute, None, attribute_ns),
-            Some(prefix) => Self::new(prefix.to_string(), Some(ns_attribute), attribute_ns),
+            None => Self::new(xmlns_attribute, None, xmlns_ns).unwrap(),
+            Some(prefix) => Self::new(prefix.to_string(), Some(xmlns_attribute), xmlns_ns).unwrap(),
         }
+    }
+
+    ///
+    /// Does this appear to be an `id` attribute.
+    ///
+    pub fn is_id_attribute(&self, lax: bool) -> bool {
+        let xml_ns = XML_NS_URI.to_string();
+        let xml_prefix = XML_NS_ATTRIBUTE.to_string();
+        let id_attribute = XML_NS_ATTR_ID.to_string();
+        if lax {
+            return self.local_name == id_attribute;
+        }
+        self.namespace_uri == Some(xml_ns)
+            && self.prefix == Some(xml_prefix)
+            && self.local_name == id_attribute
     }
 
     ///
@@ -324,8 +386,17 @@ impl Name {
 #[cfg(test)]
 mod tests {
     use crate::error::Error;
+    use crate::syntax::{XMLNS_NS_URI, XML_NS_URI};
     use crate::Name;
     use std::str::FromStr;
+
+    #[test]
+    #[ignore]
+    fn test_parse_invalid_chars() {
+        // TODO: add correct test cases
+        let name = Name::from_str("he lo");
+        assert!(name.is_err());
+    }
 
     #[test]
     fn test_parse_local() {
@@ -370,13 +441,50 @@ mod tests {
     }
 
     #[test]
-    fn test_xmlns_error() {
+    fn test_xml_ns_names() {
         const RDF_NS: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+
+        let name = Name::new_ns(XML_NS_URI, "xml:id");
+        assert!(name.is_ok());
+        let name = name.unwrap();
+        assert!(name.is_id_attribute(true));
+        assert!(name.is_id_attribute(false));
+
+        let name = Name::new_ns(RDF_NS, "xml:id");
+        assert_eq!(name.err().unwrap(), Error::Namespace);
+
+        let name = Name::from_str("another:id");
+        assert!(name.is_ok());
+        let name = name.unwrap();
+        assert!(name.is_id_attribute(true));
+        assert!(!name.is_id_attribute(false));
+
+        let name = Name::from_str("x:hello");
+        assert!(name.is_ok());
+        let name = name.unwrap();
+        assert!(!name.is_id_attribute(true));
+        assert!(!name.is_id_attribute(false));
+    }
+
+    #[test]
+    fn test_xmlns_ns_names() {
+        const RDF_NS: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+
+        let name = Name::new_ns(XMLNS_NS_URI, "xmlns");
+        assert!(name.is_ok());
+        assert!(name.unwrap().is_namespace_attribute());
+
+        let name = Name::new_ns(XMLNS_NS_URI, "xmlns:p");
+        assert!(name.is_ok());
+        assert!(name.unwrap().is_namespace_attribute());
 
         let name = Name::new_ns(RDF_NS, "xmlns");
         assert_eq!(name.err().unwrap(), Error::Namespace);
 
         let name = Name::new_ns(RDF_NS, "xmlns:rdf");
         assert_eq!(name.err().unwrap(), Error::Namespace);
+
+        let name = Name::from_str("x:hello").unwrap();
+        assert!(!name.is_namespace_attribute());
     }
 }

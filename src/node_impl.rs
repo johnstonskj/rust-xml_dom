@@ -4,7 +4,6 @@ use crate::rc_cell::{RcRefCell, WeakRefCell};
 use crate::text;
 use crate::traits::NodeType;
 use std::collections::HashMap;
-use std::rc::Weak;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types

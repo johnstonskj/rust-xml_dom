@@ -60,8 +60,7 @@ TBD
 
 The `has_feature` method [`DOMImplementation`](struct.DOMImplementation.html) and `is_supported` on
 [`Node`](trait.Node.html) will return true when the request is for support of the Core or XML
-feature and supports both version 1.0 and version 2.0 of Core and version 1.0 of XML. Currently some
-of the XML extended interfaces are unsupported.
+feature and supports both version 1.0 and version 2.0 of Core and version 1.0 of XML.
 
 ```rust
 use xml_dom::{DOMImplementation, get_implementation};

@@ -1,6 +1,6 @@
 use crate::convert::*;
 use crate::dom_impl::{get_implementation, Implementation};
-use crate::error::{Error, Result};
+use crate::error::{Error, Result, MSG_WEAK_REF};
 use crate::error::{
     MSG_INDEX_ERROR, MSG_INVALID_EXTENSION, MSG_INVALID_NAME, MSG_INVALID_NODE_TYPE,
     MSG_NO_PARENT_NODE,
@@ -8,7 +8,6 @@ use crate::error::{
 use crate::name::Name;
 use crate::node_impl::*;
 use crate::options::ProcessingOptions;
-use crate::rc_cell::RcRefCell;
 use crate::syntax::*;
 use crate::traits::*;
 use std::collections::hash_map::RandomState;
@@ -211,14 +210,23 @@ impl Document for RefNode {
         RefNode::new(node_impl)
     }
 
-    fn get_element_by_id(&self, _id: &str) -> Option<RefNode> {
-        //
-        // Until we are schema/data-type aware we do not know which attributes are actually XML
-        // identifiers. A common, but erroneous, implementation is to look for attributes named
-        // "id", we aren't going to do that. It may be possible to make that a flag on
-        // implementation for those that want the lax behavior.
-        //
-        None
+    fn get_element_by_id(&self, id: &str) -> Option<RefNode> {
+        let ref_self = self.borrow();
+        if let Extension::Document { i_id_map, .. } = &ref_self.i_extension {
+            match i_id_map.get(&id.to_string()) {
+                None => None,
+                Some(weak_ref) => match weak_ref.clone().upgrade() {
+                    None => {
+                        warn!("{}", MSG_WEAK_REF);
+                        None
+                    }
+                    Some(ref_element) => Some(ref_element),
+                },
+            }
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
+        }
     }
 
     fn get_elements_by_tag_name(&self, tag_name: &str) -> Vec<RefNode> {
@@ -480,6 +488,27 @@ impl Element for RefNode {
             if let Extension::Element { i_attributes, .. } = &mut mut_self.i_extension {
                 let _safe_to_ignore =
                     i_attributes.insert(new_attribute.name(), new_attribute.clone());
+                {
+                    let attribute = as_attribute(&new_attribute).unwrap();
+                    let document = attribute.owner_document().unwrap();
+                    let mut mut_document = document.borrow_mut();
+                    let lax =
+                        if let Extension::Document { i_options, .. } = &mut_document.i_extension {
+                            i_options.has_assume_ids()
+                        } else {
+                            warn!("{}", MSG_INVALID_EXTENSION);
+                            false
+                        };
+                    if name.is_id_attribute(lax) {
+                        if let Extension::Document { i_id_map, .. } = &mut mut_document.i_extension
+                        {
+                            let _safe_to_ignore = i_id_map
+                                .insert(attribute.value().unwrap(), self.clone().downgrade());
+                        } else {
+                            warn!("{}", MSG_INVALID_EXTENSION);
+                        }
+                    }
+                }
                 Ok(new_attribute)
             } else {
                 warn!("{}", MSG_INVALID_EXTENSION);

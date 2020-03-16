@@ -5,6 +5,7 @@ use xml_dom::*;
 
 pub const DC_NS: &str = "http://purl.org/dc/elements/1.1/";
 pub const RDF_NS: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+pub const XML_NS_URI: &str = "http://www.w3.org/XML/1998/namespace";
 pub const XMLNS_NS: &str = "http://www.w3.org/2000/xmlns/";
 
 pub fn create_empty_rdf_document() -> RefNode {
@@ -21,17 +22,21 @@ pub fn create_empty_rdf_document() -> RefNode {
 //   <rdf:Description rdf:about="http://media.example.com/audio/guide.ra" id="main">
 //
 //     <dc:creator>Rose Bush</dc:creator>
-//     <dc:title>A Guide to Growing Roses</dc:title>
-//     <dc:description>Describes process for planting &#38; nurturing different kinds of rose bushes.</dc:description>
+//     <dc:title xml:id="title">A Guide to Growing Roses</dc:title>
+//     <dc:description id="description">Describes process for planting &#38; nurturing different kinds of rose bushes.</dc:description>
 //     <dc:date>2001-01-20</dc:date>
 //
 //   </rdf:Description>
 // </rdf:RDF>
-#[allow(unused_must_use)]
+
 pub fn create_example_rdf_document() -> RefNode {
+    create_example_rdf_document_options(ProcessingOptions::default())
+}
+#[allow(unused_must_use)]
+pub fn create_example_rdf_document_options(options: ProcessingOptions) -> RefNode {
     let implementation = get_implementation();
     let mut document_node = implementation
-        .create_document(RDF_NS, "rdf:RDF", None)
+        .create_document_with_options(RDF_NS, "rdf:RDF", None, options)
         .unwrap();
     let document = as_document_mut(&mut document_node).unwrap();
 
@@ -57,18 +62,21 @@ pub fn create_example_rdf_document() -> RefNode {
         "dc:creator",
         "Rose Bush",
     ));
-    description_element.append_child(create_element_with(
-        document,
-        DC_NS,
-        "dc:title",
-        "A Guide to Growing Roses",
-    ));
-    description_element.append_child(create_element_with(
+
+    let mut new_element =
+        create_element_with(document, DC_NS, "dc:title", "A Guide to Growing Roses");
+    new_element.set_attribute_ns(XML_NS_URI, "xml:id", "title");
+    description_element.append_child(new_element);
+
+    let mut new_element = create_element_with(
         document,
         DC_NS,
         "dc:description",
         "Describes process for planting & nurturing different kinds of rose bushes.",
-    ));
+    );
+    new_element.set_attribute("id", "description");
+    description_element.append_child(new_element);
+
     description_element.append_child(create_element_with(
         document,
         DC_NS,
