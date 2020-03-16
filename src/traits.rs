@@ -1488,7 +1488,7 @@ pub trait Node {
     fn replace_child(
         &mut self,
         new_child: Self::NodeRef,
-        old_child: &Self::NodeRef,
+        old_child: Self::NodeRef,
     ) -> Result<Self::NodeRef>;
     ///
     /// Removes the child node indicated by oldChild from the list of children, and returns it.
