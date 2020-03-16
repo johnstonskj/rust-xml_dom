@@ -1,6 +1,6 @@
 use crate::convert::*;
 use crate::dom_impl::{get_implementation, Implementation};
-use crate::error::{Error, Result, MSG_WEAK_REF};
+use crate::error::{Error, Result, MSG_DUPLICATE_ID, MSG_WEAK_REF};
 use crate::error::{
     MSG_INDEX_ERROR, MSG_INVALID_EXTENSION, MSG_INVALID_NAME, MSG_INVALID_NODE_TYPE,
     MSG_NO_PARENT_NODE,
@@ -475,6 +475,9 @@ impl Element for RefNode {
         if is_element(self) && is_attribute(&new_attribute) {
             let name: Name = new_attribute.name();
             if name.is_namespace_attribute() {
+                //
+                // Add to the element's namespace mapping hash
+                //
                 let attribute = as_attribute(&new_attribute).unwrap();
                 let namespace_uri = attribute.value().unwrap();
 
@@ -489,6 +492,9 @@ impl Element for RefNode {
                 let _safe_to_ignore =
                     i_attributes.insert(new_attribute.name(), new_attribute.clone());
                 {
+                    //
+                    // Add to the owning document's id_map hash
+                    //
                     let attribute = as_attribute(&new_attribute).unwrap();
                     let document = attribute.owner_document().unwrap();
                     let mut mut_document = document.borrow_mut();
@@ -502,8 +508,13 @@ impl Element for RefNode {
                     if name.is_id_attribute(lax) {
                         if let Extension::Document { i_id_map, .. } = &mut mut_document.i_extension
                         {
-                            let _safe_to_ignore = i_id_map
-                                .insert(attribute.value().unwrap(), self.clone().downgrade());
+                            let id_value = attribute.value().unwrap();
+                            if i_id_map.contains_key(&id_value) {
+                                warn!("{}", MSG_DUPLICATE_ID);
+                                return Err(Error::Syntax);
+                            }
+                            let _safe_to_ignore =
+                                i_id_map.insert(id_value, self.clone().downgrade());
                         } else {
                             warn!("{}", MSG_INVALID_EXTENSION);
                         }

@@ -89,7 +89,7 @@ pub fn create_example_rdf_document_options(options: ProcessingOptions) -> RefNod
 }
 
 #[allow(unused_must_use)]
-fn create_element_with(document: RefDocument, ns: &str, qn: &str, content: &str) -> RefNode {
+pub fn create_element_with(document: RefDocument, ns: &str, qn: &str, content: &str) -> RefNode {
     let mut node = document.create_element_ns(ns, qn).unwrap();
     let element = as_element_mut(&mut node).unwrap();
     element.append_child(document.create_text_node(content));

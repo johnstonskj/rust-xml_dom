@@ -1,5 +1,5 @@
-use xml_dom::convert::{as_document, as_element};
-use xml_dom::ProcessingOptions;
+use xml_dom::convert::{as_document, as_element, as_element_mut};
+use xml_dom::*;
 
 mod common;
 
@@ -57,4 +57,32 @@ fn test_get_element_by_id_lax() {
 
     let element = ref_document.get_element_by_id("");
     assert!(element.is_none());
+}
+
+#[test]
+#[allow(unused_must_use)]
+fn test_no_duplicates() {
+    let document = common::create_empty_rdf_document();
+    let ref_document = as_document(&document).unwrap();
+    let mut root_node = ref_document.document_element().unwrap();
+    let root_element = as_element_mut(&mut root_node).unwrap();
+
+    let mut new_element = common::create_element_with(
+        ref_document,
+        common::DC_NS,
+        "dc:title",
+        "A Guide to Growing Roses",
+    );
+    new_element.set_attribute_ns(common::XML_NS_URI, "xml:id", "title");
+    root_element.append_child(new_element);
+
+    let mut new_element = common::create_element_with(
+        ref_document,
+        common::DC_NS,
+        "dc:title-2",
+        "Another Guide to Growing Roses",
+    );
+    let result = new_element.set_attribute_ns(common::XML_NS_URI, "xml:id", "title");
+    assert!(result.is_err());
+    assert_eq!(result.err().unwrap(), Error::Syntax);
 }

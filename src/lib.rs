@@ -148,8 +148,9 @@ The following extensions are provided beyond the DOM Level 2 specification.
 1. The [`get_implementation_version`](fn.get_implementation_version.html) function returns a
    vendor-specific version identifier for the `DOMImplementation`.
 1. The standard `DOMImplementation` trait has an additional member
-   [`create_document_with_options`](trait.DOMImplementation.html#tymethod.create_document_with_options)
-   that can set optional behavior for a given `Document` instance.
+   [`create_document_with_options`](trait.DOMImplementation.html#tymethod.create_document_with_options),
+   and associated [`ProcessingOptions`](struct.ProcessingOptions.html) structure, that can set
+   optional behavior for a given `Document` instance.
 1. The trait [`Namespaced`](trait.Namespaced.html) extends `Element` with the ability to look
    up namespace mappings (using the standard `xmlns` attribute).
 

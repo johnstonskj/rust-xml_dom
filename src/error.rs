@@ -99,3 +99,8 @@ pub const MSG_INDEX_ERROR: &str = "Either `offset` or `count` invalid for string
 /// Error message: "Could not upgrade a weak reference."
 ///
 pub const MSG_WEAK_REF: &str = "Could not upgrade a weak reference.";
+///
+/// Error message: "Violation of `xml:id` §4, attempt to insert duplicate ID value."
+///
+pub const MSG_DUPLICATE_ID: &str =
+    "Violation of `xml:id` §4, attempt to insert duplicate ID value.";

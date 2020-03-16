@@ -562,7 +562,11 @@ pub trait Document: Node {
     ///
     /// Returns the [`Element`](trait.Element.html) whose ID is given by `elementId`.
     ///
-    /// **Note:** this implementation does not support this method, it will always return `None`.
+    /// **Note:** This implementation will ensure that attributes named `xml:id` or `id` with the
+    /// XML namespace will be treated as identifiers. If the
+    /// [`ProcessingOptions::set_assume_ids`](struct.ProcessingOptions.html#method.set_assume_ids)
+    /// method is used when constructing a document any attribute with the local name `id` will
+    /// be treated as identifiers.
     ///
     /// # Specification
     ///
