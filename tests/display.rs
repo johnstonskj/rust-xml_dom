@@ -1,4 +1,6 @@
-use xml_dom::convert::{as_attribute_mut, as_document, as_document_decl_mut, as_element_mut};
+use xml_dom::convert::{
+    as_attribute_mut, as_document, as_document_decl_mut, as_document_fragment_mut, as_element_mut,
+};
 use xml_dom::{get_implementation, XmlDecl, XmlVersion};
 
 mod common;
@@ -176,7 +178,24 @@ fn test_display_document_type() {
 }
 
 #[test]
-#[ignore]
 fn test_display_document_fragment() {
-    unimplemented!()
+    let implementation = get_implementation();
+    let mut document_node = implementation
+        .create_document(common::RDF_NS, "rdf:RDF", None)
+        .unwrap();
+    let document = as_document(&mut document_node).unwrap();
+
+    let mut test_node = document.create_document_fragment().unwrap();
+    let mut_fragment = as_document_fragment_mut(&mut test_node).unwrap();
+
+    for name in vec!["one", "two", "three"] {
+        let node = document.create_element(name).unwrap();
+        mut_fragment.append_child(node);
+    }
+
+    let result = format!("{}", test_node);
+    assert_eq!(
+        result,
+        "<![CDATA[#document-fragment <one></one><two></two><three></three>]]>"
+    );
 }
