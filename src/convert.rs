@@ -8,7 +8,7 @@ Note that all of the `as_{name}` functions work as follows.
 * If the `node_type` is not implemented it returns `Error::NotSupported`.
 
 */
-use crate::error::{Error, Result};
+use crate::error::{Error, Result, MSG_INVALID_NODE_TYPE};
 use crate::namespaced::{MutNamespaced, Namespaced};
 use crate::node_impl::*;
 use crate::traits::*;
@@ -71,6 +71,11 @@ pub type RefDocument<'a> = &'a dyn Document<NodeRef = RefNode>;
 pub type MutRefDocument<'a> = &'a mut dyn Document<NodeRef = RefNode>;
 
 /// Type for dynamic trait cast
+pub type RefDocumentDecl<'a> = &'a dyn DocumentDecl<NodeRef = RefNode>;
+/// Type for mutable dynamic trait cast
+pub type MutRefDocumentDecl<'a> = &'a mut dyn DocumentDecl<NodeRef = RefNode>;
+
+/// Type for dynamic trait cast
 pub type RefDocumentType<'a> = &'a dyn DocumentType<NodeRef = RefNode>;
 /// Type for mutable dynamic trait cast
 pub type MutRefDocumentType<'a> = &'a mut dyn DocumentType<NodeRef = RefNode>;
@@ -105,7 +110,7 @@ pub fn as_attribute(ref_node: &RefNode) -> Result<RefAttribute<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Attribute {
         Ok(ref_node as RefAttribute<'_>)
     } else {
-        warn!("ref_node.node_type != Attribute");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -118,7 +123,7 @@ pub fn as_attribute_mut(ref_node: &mut RefNode) -> Result<MutRefAttribute<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Attribute {
         Ok(ref_node as MutRefAttribute<'_>)
     } else {
-        warn!("ref_node.node_type != Attribute");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -139,7 +144,7 @@ pub fn as_element(ref_node: &RefNode) -> Result<RefElement<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Element {
         Ok(ref_node as RefElement<'_>)
     } else {
-        warn!("ref_node.node_type != Element");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -152,7 +157,7 @@ pub fn as_element_mut(ref_node: &mut RefNode) -> Result<MutRefElement<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Element {
         Ok(ref_node as MutRefElement<'_>)
     } else {
-        warn!("ref_node.node_type != Element");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -174,7 +179,7 @@ pub fn as_element_namespaced(ref_node: &RefNode) -> Result<RefNamespaced<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Element {
         Ok(ref_node as RefNamespaced<'_>)
     } else {
-        warn!("ref_node.node_type != Element");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -187,7 +192,7 @@ pub(crate) fn as_element_namespaced_mut(ref_node: &mut RefNode) -> Result<MutRef
     if ref_node.borrow().i_node_type == NodeType::Element {
         Ok(ref_node as MutRefNamespaced<'_>)
     } else {
-        warn!("ref_node.node_type != Element");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -213,7 +218,7 @@ pub fn as_character_data(ref_node: &RefNode) -> Result<RefCharacterData<'_>> {
             Ok(ref_node as RefCharacterData<'_>)
         }
         _ => {
-            warn!("ref_node.node_type != CharacterData");
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             Err(Error::InvalidState)
         }
     }
@@ -230,7 +235,7 @@ pub fn as_character_data_mut(ref_node: &mut RefNode) -> Result<MutRefCharacterDa
             Ok(ref_node as MutRefCharacterData<'_>)
         }
         _ => {
-            warn!("ref_node.node_type != CharacterData");
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             Err(Error::InvalidState)
         }
     }
@@ -252,7 +257,7 @@ pub fn as_text(ref_node: &RefNode) -> Result<RefText<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Text {
         Ok(ref_node as RefText<'_>)
     } else {
-        warn!("ref_node.node_type != Text");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -265,7 +270,7 @@ pub fn as_text_mut(ref_node: &mut RefNode) -> Result<MutRefText<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Text {
         Ok(ref_node as MutRefText<'_>)
     } else {
-        warn!("ref_node.node_type != Text");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -286,7 +291,7 @@ pub fn as_cdata_section(ref_node: &RefNode) -> Result<RefCDataSection<'_>> {
     if ref_node.borrow().i_node_type == NodeType::CData {
         Ok(ref_node as RefCDataSection<'_>)
     } else {
-        warn!("ref_node.node_type != CData");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -299,7 +304,7 @@ pub fn as_cdata_section_mut(ref_node: &mut RefNode) -> Result<MutRefCDataSection
     if ref_node.borrow().i_node_type == NodeType::CData {
         Ok(ref_node as MutRefCDataSection<'_>)
     } else {
-        warn!("ref_node.node_type != CData");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -320,7 +325,7 @@ pub fn as_entity_reference(ref_node: &RefNode) -> Result<RefEntityReference<'_>>
     if ref_node.borrow().i_node_type == NodeType::EntityReference {
         Ok(ref_node as RefEntityReference<'_>)
     } else {
-        warn!("ref_node.node_type != EntityReference");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -333,7 +338,7 @@ pub fn as_entity_reference_mut(ref_node: &mut RefNode) -> Result<MutRefEntityRef
     if ref_node.borrow().i_node_type == NodeType::EntityReference {
         Ok(ref_node as MutRefEntityReference<'_>)
     } else {
-        warn!("ref_node.node_type != EntityReference");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -354,7 +359,7 @@ pub fn as_entity(ref_node: &RefNode) -> Result<RefEntity<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Entity {
         Ok(ref_node as RefEntity<'_>)
     } else {
-        warn!("ref_node.node_type != Entity");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -367,7 +372,7 @@ pub fn as_entity_mut(ref_node: &mut RefNode) -> Result<MutRefEntity<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Entity {
         Ok(ref_node as MutRefEntity<'_>)
     } else {
-        warn!("ref_node.node_type != Entity");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -388,7 +393,7 @@ pub fn as_processing_instruction(ref_node: &RefNode) -> Result<RefProcessingInst
     if ref_node.borrow().i_node_type == NodeType::ProcessingInstruction {
         Ok(ref_node as RefProcessingInstruction<'_>)
     } else {
-        warn!("ref_node.node_type != ProcessingInstruction");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -403,7 +408,7 @@ pub fn as_processing_instruction_mut(
     if ref_node.borrow().i_node_type == NodeType::ProcessingInstruction {
         Ok(ref_node as MutRefProcessingInstruction<'_>)
     } else {
-        warn!("ref_node.node_type != ProcessingInstruction");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -424,7 +429,7 @@ pub fn as_comment(ref_node: &RefNode) -> Result<RefComment<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Comment {
         Ok(ref_node as RefComment<'_>)
     } else {
-        warn!("ref_node.node_type != Comment");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -437,7 +442,7 @@ pub fn as_comment_mut(ref_node: &mut RefNode) -> Result<MutRefComment<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Comment {
         Ok(ref_node as MutRefComment<'_>)
     } else {
-        warn!("ref_node.node_type != Comment");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -458,7 +463,7 @@ pub fn as_document(ref_node: &RefNode) -> Result<RefDocument<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Document {
         Ok(ref_node as RefDocument<'_>)
     } else {
-        warn!("ref_node.node_type != Attribute");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -471,7 +476,41 @@ pub fn as_document_mut(ref_node: &mut RefNode) -> Result<MutRefDocument<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Document {
         Ok(ref_node as MutRefDocument<'_>)
     } else {
-        warn!("ref_node.node_type != Attribute");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
+        Err(Error::InvalidState)
+    }
+}
+
+///
+/// Determines if the specified node is of type `NodeType::Attribute`.
+///
+#[inline]
+pub fn is_document_decl(ref_node: &RefNode) -> bool {
+    ref_node.borrow().i_node_type == NodeType::Document
+}
+
+///
+/// Safely _cast_ the specified `RefNode` into a  `Document`.
+///
+#[inline]
+pub fn as_document_decl(ref_node: &RefNode) -> Result<RefDocumentDecl<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::Document {
+        Ok(ref_node as RefDocumentDecl<'_>)
+    } else {
+        warn!("{}", MSG_INVALID_NODE_TYPE);
+        Err(Error::InvalidState)
+    }
+}
+
+///
+/// Safely _cast_ the specified `RefNode` into a mutable `Document`.
+///
+#[inline]
+pub fn as_document_decl_mut(ref_node: &mut RefNode) -> Result<MutRefDocumentDecl<'_>> {
+    if ref_node.borrow().i_node_type == NodeType::Document {
+        Ok(ref_node as MutRefDocumentDecl<'_>)
+    } else {
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -492,7 +531,7 @@ pub fn as_document_type(ref_node: &RefNode) -> Result<RefDocumentType<'_>> {
     if ref_node.borrow().i_node_type == NodeType::DocumentType {
         Ok(ref_node as RefDocumentType<'_>)
     } else {
-        warn!("ref_node.node_type != DocumentType");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -505,7 +544,7 @@ pub fn as_document_type_mut(ref_node: &mut RefNode) -> Result<RefDocumentType<'_
     if ref_node.borrow().i_node_type == NodeType::DocumentType {
         Ok(ref_node as MutRefDocumentType<'_>)
     } else {
-        warn!("ref_node.node_type != DocumentType");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -526,7 +565,7 @@ pub fn as_document_fragment(ref_node: &RefNode) -> Result<RefDocumentFragment<'_
     if ref_node.borrow().i_node_type == NodeType::DocumentFragment {
         Ok(ref_node as RefDocumentFragment<'_>)
     } else {
-        warn!("ref_node.node_type != DocumentFragment");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -539,7 +578,7 @@ pub fn as_document_fragment_mut(ref_node: &mut RefNode) -> Result<MutRefDocument
     if ref_node.borrow().i_node_type == NodeType::DocumentFragment {
         Ok(ref_node as MutRefDocumentFragment<'_>)
     } else {
-        warn!("ref_node.node_type != DocumentFragment");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -560,7 +599,7 @@ pub fn as_notation(ref_node: &RefNode) -> Result<RefNotation<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Notation {
         Ok(ref_node as RefNotation<'_>)
     } else {
-        warn!("ref_node.node_type != Notation");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }
@@ -573,7 +612,7 @@ pub fn as_notation_mut(ref_node: &mut RefNode) -> Result<MutRefNotation<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Notation {
         Ok(ref_node as MutRefNotation<'_>)
     } else {
-        warn!("ref_node.node_type != Notation");
+        warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
     }
 }

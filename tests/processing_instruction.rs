@@ -32,3 +32,25 @@ fn test_unset_data() {
     assert!(processing_instruction.unset_data().is_ok());
     assert!(processing_instruction.data().is_none());
 }
+
+#[test]
+fn test_reserved_name() {
+    let document_node = common::create_empty_rdf_document();
+    let document = as_document(&document_node).unwrap();
+
+    assert!(document
+        .create_processing_instruction("xml", Some("reserved-name"))
+        .is_err());
+
+    assert!(document
+        .create_processing_instruction("XML", Some("reserved-name"))
+        .is_err());
+
+    assert!(document
+        .create_processing_instruction("xMl", Some("reserved-name"))
+        .is_err());
+
+    assert!(document
+        .create_processing_instruction("xml-ok", Some("should-work"))
+        .is_ok());
+}

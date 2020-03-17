@@ -4,8 +4,12 @@
 // Pure Syntactic Tokens
 // ------------------------------------------------------------------------------------------------
 
+pub(crate) const XML_DECL_START: &str = "<?xml";
+pub(crate) const XML_DECL_END: &str = ">";
+
 pub(crate) const XML_PI_START: &str = "<?";
 pub(crate) const XML_PI_END: &str = ">";
+pub(crate) const XML_PI_RESERVED: &str = "xml";
 
 pub(crate) const XML_COMMENT_START: &str = "<!--";
 pub(crate) const XML_COMMENT_END: &str = "-->";
@@ -31,6 +35,7 @@ pub(crate) const XML_ENTITY_NOTATION: &str = "NDATA";
 
 pub(crate) const XML_ENTITYREF_START: &str = "&";
 pub(crate) const XML_NUMBERED_ENTITYREF_START: &str = "&#";
+pub(crate) const XML_HEX_NUMBERED_ENTITYREF_START: &str = "&#x";
 pub(crate) const XML_ENTITYREF_END: &str = ";";
 
 pub(crate) const XML_NOTATION_START: &str = "<!NOTATION";
@@ -39,6 +44,22 @@ pub(crate) const XML_NOTATION_END: &str = ">";
 pub(crate) const XML_NS_SEPARATOR: &str = ":";
 
 pub(crate) const XML_EMPTY: &str = "";
+
+// ------------------------------------------------------------------------------------------------
+// XML Declaration
+// ------------------------------------------------------------------------------------------------
+
+pub(crate) const XML_DECL_VERSION: &str = "version";
+
+pub(crate) const XML_DECL_VERSION_10: &str = "1.0";
+pub(crate) const XML_DECL_VERSION_11: &str = "1.1";
+
+pub(crate) const XML_DECL_ENCODING: &str = "encoding";
+
+pub(crate) const XML_DECL_STANDALONE: &str = "standalone";
+
+pub(crate) const XML_DECL_STANDALONE_YES: &str = "yes";
+pub(crate) const XML_DECL_STANDALONE_NO: &str = "no";
 
 // ------------------------------------------------------------------------------------------------
 // The XML language namespace Support
@@ -83,25 +104,11 @@ pub(crate) const XML_FEATURE_V1: &str = "1.0";
 pub(crate) const XML_FEATURE_V2: &str = "2.0";
 
 // ------------------------------------------------------------------------------------------------
-// Character Entities
+// Pre-Defined Reserved Characters
 // ------------------------------------------------------------------------------------------------
 
 pub(crate) const XML_ESC_AMP_CHAR: char = '&';
-pub(crate) const XML_ESC_AMP_ENT: &str = "&amp;";
-pub(crate) const XML_ESC_AMP_NUM: &str = "&#38;";
-
 pub(crate) const XML_ESC_APOS_CHAR: char = '\'';
-pub(crate) const XML_ESC_APOS_ENT: &str = "&apos;";
-pub(crate) const XML_ESC_APOS_NUM: &str = "&#39;";
-
 pub(crate) const XML_ESC_GT_CHAR: char = '>';
-pub(crate) const XML_ESC_GT_ENT: &str = "&gt;";
-pub(crate) const XML_ESC_GT_NUM: &str = "&#62;";
-
 pub(crate) const XML_ESC_LT_CHAR: char = '<';
-pub(crate) const XML_ESC_LT_ENT: &str = "&lt;";
-pub(crate) const XML_ESC_LT_NUM: &str = "&#60;";
-
 pub(crate) const XML_ESC_QUOT_CHAR: char = '"';
-pub(crate) const XML_ESC_QUOT_ENT: &str = "&amp;";
-pub(crate) const XML_ESC_QUOT_NUM: &str = "&#34;";

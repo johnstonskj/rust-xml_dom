@@ -1,15 +1,12 @@
 use crate::convert::*;
 use crate::dom_impl::{get_implementation, Implementation};
-use crate::error::{Error, Result, MSG_DUPLICATE_ID, MSG_WEAK_REF};
-use crate::error::{
-    MSG_INDEX_ERROR, MSG_INVALID_EXTENSION, MSG_INVALID_NAME, MSG_INVALID_NODE_TYPE,
-    MSG_NO_PARENT_NODE,
-};
+use crate::error::*;
 use crate::name::Name;
 use crate::node_impl::*;
 use crate::options::ProcessingOptions;
 use crate::syntax::*;
 use crate::traits::*;
+use crate::XmlDecl;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -199,6 +196,14 @@ impl Document for RefNode {
     }
 
     fn create_processing_instruction(&self, target: &str, data: Option<&str>) -> Result<RefNode> {
+        //
+        // Ensure:
+        //
+        // `PITarget  ::=  Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))`
+        //
+        if target.to_ascii_lowercase() == XML_PI_RESERVED.to_string() {
+            return Err(Error::Syntax);
+        }
         let target = Name::from_str(target)?;
         let node_impl =
             NodeImpl::new_processing_instruction(self.clone().downgrade(), target, data);
@@ -278,6 +283,37 @@ impl Document for RefNode {
         } else {
             warn!("{}", MSG_INVALID_EXTENSION);
             Vec::default()
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+
+impl DocumentDecl for RefNode {
+    fn xml_declaration(&self) -> Option<XmlDecl> {
+        let ref_self = self.borrow();
+        if let Extension::Document {
+            i_xml_declaration, ..
+        } = &ref_self.i_extension
+        {
+            i_xml_declaration.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
+        }
+    }
+
+    fn set_xml_declaration(&mut self, xml_decl: XmlDecl) -> Result<()> {
+        let mut mut_self = self.borrow_mut();
+        if let Extension::Document {
+            i_xml_declaration, ..
+        } = &mut mut_self.i_extension
+        {
+            *i_xml_declaration = Some(xml_decl);
+            Ok(())
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            Err(Error::InvalidState)
         }
     }
 }
@@ -536,6 +572,11 @@ impl Element for RefNode {
             let mut mut_self = self.borrow_mut();
             if let Extension::Element { i_attributes, .. } = &mut mut_self.i_extension {
                 let _safe_to_ignore = i_attributes.remove(&old_attribute.name());
+                let mut_old = old_attribute.clone();
+                let mut mut_old = mut_old.borrow_mut();
+                mut_old.i_parent_node = None;
+                // TODO: remove from Element::namespaces
+                // TODO: remove from Document::id_map
                 Ok(old_attribute)
             } else {
                 warn!("{}", MSG_INVALID_EXTENSION);
@@ -899,6 +940,9 @@ impl Node for RefNode {
     }
 
     fn insert_before(&mut self, new_child: RefNode, ref_child: Option<RefNode>) -> Result<RefNode> {
+        if !is_child_allowed(self, &new_child) {
+            return Err(Error::HierarchyRequest);
+        }
         match ref_child {
             None => {
                 let mut_node = as_element_mut(self)?;
@@ -920,68 +964,118 @@ impl Node for RefNode {
         }
     }
 
-    fn replace_child(&mut self, _new_child: RefNode, _old_child: &RefNode) -> Result<RefNode> {
-        // TODO: see `append_child` for specifics
-        unimplemented!()
+    fn replace_child(&mut self, new_child: RefNode, old_child: RefNode) -> Result<RefNode> {
+        if !is_child_allowed(self, &new_child) {
+            return Err(Error::HierarchyRequest);
+        }
+        let mut mut_self = self.borrow_mut();
+        let removed = match mut_self
+            .i_child_nodes
+            .iter()
+            .position(|child| child == &old_child)
+        {
+            None => old_child,
+            Some(position) => {
+                let old_child = mut_self.i_child_nodes.remove(position);
+                mut_self.i_child_nodes.insert(position, new_child.clone());
+                old_child
+            }
+        };
+        {
+            let mut mut_removed = removed.borrow_mut();
+            mut_removed.i_parent_node = None;
+        }
+        Ok(removed.clone())
     }
 
-    fn remove_child(&mut self, _old_child: Self::NodeRef) -> Result<Self::NodeRef> {
-        unimplemented!()
+    fn remove_child(&mut self, old_child: Self::NodeRef) -> Result<Self::NodeRef> {
+        if is_attribute(&old_child) {
+            let element = as_element_mut(self).unwrap();
+            element.remove_attribute_node(old_child)
+        } else {
+            let mut mut_self = self.borrow_mut();
+            let removed = match mut_self
+                .i_child_nodes
+                .iter()
+                .position(|child| child == &old_child)
+            {
+                None => old_child,
+                Some(position) => mut_self.i_child_nodes.remove(position),
+            };
+            {
+                let mut mut_removed = removed.borrow_mut();
+                mut_removed.i_parent_node = None;
+            }
+            Ok(removed)
+        }
     }
-
-    // * Document -- Element (maximum of one), ProcessingInstruction, Comment, DocumentType (maximum of one)
-    // * DocumentFragment -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
-    // * DocumentType -- no children
-    // * EntityReference -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
-    // * Element -- Element, Text, Comment, ProcessingInstruction, CDATASection, EntityReference
-    // * Attr -- Text, EntityReference
-    // * ProcessingInstruction -- no children
-    // * Comment -- no children
-    // * Text -- no children
-    // * CDATASection -- no children
-    // * Entity -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
-    // * Notation -- no children
 
     fn append_child(&mut self, new_child: RefNode) -> Result<RefNode> {
         if !is_child_allowed(self, &new_child) {
             return Err(Error::HierarchyRequest);
         }
-        {
-            //
-            // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
-            // document than the one that created this node.
-            let self_parent = &self.borrow().i_parent_node;
-            let child_parent = &self.borrow().i_parent_node;
-            if !match (self_parent, child_parent) {
-                (None, None) => true,
-                (Some(_), None) => true,
-                (None, Some(_)) => false,
-                (Some(self_parent), Some(child_parent)) => {
-                    let self_parent = self_parent.clone().upgrade().unwrap();
-                    let child_parent = child_parent.clone().upgrade().unwrap();
-                    &self_parent == &child_parent
+        if is_attribute(&new_child) {
+            let element = as_element_mut(self).unwrap();
+            element.set_attribute_node(new_child)
+        } else {
+            {
+                //
+                // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
+                // document than the one that created this node.
+                //
+                let self_parent = &self.borrow().i_parent_node;
+                let child_parent = &self.borrow().i_parent_node;
+                if !match (self_parent, child_parent) {
+                    (None, None) => true,
+                    (Some(_), None) => true,
+                    (None, Some(_)) => false,
+                    (Some(self_parent), Some(child_parent)) => {
+                        let self_parent = self_parent.clone().upgrade().unwrap();
+                        let child_parent = child_parent.clone().upgrade().unwrap();
+                        &self_parent == &child_parent
+                    }
+                } {
+                    return Err(Error::WrongDocument);
                 }
-            } {
-                return Err(Error::WrongDocument);
             }
+
+            {
+                //
+                // Remove from it's current parent
+                //
+                let mut mut_self = self.borrow_mut();
+                if let Some(parent) = &mut mut_self.i_parent_node {
+                    let parent = parent.clone();
+                    if let Some(parent_node) = &mut parent.upgrade() {
+                        let _safe_to_ignore = parent_node.remove_child(new_child.clone())?;
+                    }
+                }
+            }
+
+            {
+                //
+                // update new child with references from self
+                //
+                let ref_self = self.borrow();
+                let mut mut_child = new_child.borrow_mut();
+                mut_child.i_parent_node = Some(self.to_owned().downgrade());
+                mut_child.i_owner_document = ref_self.i_owner_document.clone();
+            }
+
+            if is_document_fragment(&new_child) {
+                //
+                // Special case
+                //
+                for child in new_child.child_nodes() {
+                    let _safe_to_ignore = self.append_child(child)?;
+                }
+            } else {
+                let mut mut_self = self.borrow_mut();
+                mut_self.i_child_nodes.push(new_child.clone());
+            }
+
+            Ok(new_child)
         }
-        // TODO: Check to see if it is in the tree already, if so remove it
-        // update child with references
-        {
-            let ref_self = self.borrow();
-            let mut mut_child = new_child.borrow_mut();
-            mut_child.i_parent_node = Some(self.to_owned().downgrade());
-            mut_child.i_owner_document = ref_self.i_owner_document.clone();
-        }
-        let mut mut_self = self.borrow_mut();
-
-        // TODO: generalize, for each parent type, is child allowed
-
-        mut_self.i_child_nodes.push(new_child.clone());
-
-        // TODO: deal with document fragment as special case
-
-        Ok(new_child)
     }
 
     fn has_child_nodes(&self) -> bool {
@@ -1152,10 +1246,12 @@ impl Display for RefNode {
                 }
             }
             NodeType::Document => {
-                let document = as_document(self).unwrap();
-                match document.doc_type() {
-                    None => (),
-                    Some(doc_type) => write!(f, "{}", doc_type)?,
+                let document = as_document_decl(self).unwrap();
+                if let Some(xml_declaration) = &document.xml_declaration() {
+                    write!(f, "{}", xml_declaration)?;
+                }
+                if let Some(doc_type) = &document.doc_type() {
+                    write!(f, "{}", doc_type)?;
                 }
                 for child in self.child_nodes() {
                     write!(f, "{}", child.to_string())?;
@@ -1276,6 +1372,27 @@ fn namespaced_name_match(
     }
 }
 
+//
+// From [https://www.w3.org/TR/DOM-Level-2-Core/core.html#ID-1590626202]
+//
+// The DOM presents documents as a hierarchy of Node objects that also implement other, more
+// specialized interfaces. Some types of nodes may have child nodes of various types, and others
+// are leaf nodes that cannot have anything below them in the document structure. For XML and HTML,
+// the node types, and which node types they may have as children, are as follows:
+//
+// * Document -- Element (maximum of one), ProcessingInstruction, Comment, DocumentType (maximum of one)
+// * DocumentFragment -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+// * DocumentType -- no children
+// * EntityReference -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+// * Element -- Element, Text, Comment, ProcessingInstruction, CDATASection, EntityReference
+// * Attr -- Text, EntityReference
+// * ProcessingInstruction -- no children
+// * Comment -- no children
+// * Text -- no children
+// * CDATASection -- no children
+// * Entity -- Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+// * Notation -- no children
+//
 fn is_child_allowed(parent: &RefNode, child: &RefNode) -> bool {
     let self_node_type = { &parent.borrow().i_node_type };
     let child_node_type = { &child.borrow().i_node_type };

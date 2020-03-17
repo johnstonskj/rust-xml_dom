@@ -1,8 +1,8 @@
 use crate::name::Name;
 use crate::options::ProcessingOptions;
 use crate::rc_cell::{RcRefCell, WeakRefCell};
-use crate::text;
 use crate::traits::NodeType;
+use crate::{text, XmlDecl};
 use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
@@ -35,10 +35,10 @@ pub(crate) type WeakRefNode = WeakRefCell<NodeImpl>;
 ///
 #[doc(hidden)]
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub(crate) enum Extension {
     None,
     Document {
+        i_xml_declaration: Option<XmlDecl>,
         i_document_element: Option<RefNode>,
         i_document_type: Option<RefNode>,
         i_id_map: HashMap<String, WeakRefNode>,
@@ -178,6 +178,7 @@ impl NodeImpl {
             i_owner_document: None,
             i_child_nodes: vec![],
             i_extension: Extension::Document {
+                i_xml_declaration: None,
                 i_document_element: None,
                 i_document_type: doc_type,
                 i_id_map: Default::default(),

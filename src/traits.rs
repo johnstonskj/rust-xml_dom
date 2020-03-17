@@ -1,6 +1,7 @@
 use self::super::error::Result;
 use self::super::name::Name;
 use crate::options::ProcessingOptions;
+use crate::XmlDecl;
 use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
@@ -629,6 +630,34 @@ pub trait Document: Node {
         namespace_uri: &str,
         local_name: &str,
     ) -> Vec<Self::NodeRef>;
+}
+
+// ------------------------------------------------------------------------------------------------
+
+///
+/// This interface extends the DOM standard `Document` and allows the setting, and retrieval,
+/// of the XML declaration from the document prolog.
+///
+/// # Specification
+///  
+/// From XML 1.1 [§2.8 Prolog and Document Type Declaration](https://www.w3.org/TR/xml11/#sec-prolog-dtd)
+/// -- Definition: XML 1.1 documents **must** begin with an **XML declaration** which specifies the
+/// version of XML being used.
+///
+/// From XML 1.0 -- Definition: XML documents **should** begin with an **XML declaration** which
+/// specifies the version of XML being used.
+///
+pub trait DocumentDecl: Document {
+    ///
+    /// Retrieve the current XML declaration, if set.
+    ///
+    fn xml_declaration(&self) -> Option<XmlDecl>;
+    ///
+    /// Set the current XML declaration for this document.
+    ///
+    /// Note that it is not possible to unset (set to `None`) this value.
+    ///
+    fn set_xml_declaration(&mut self, xml_decl: XmlDecl) -> Result<()>;
 }
 
 // ------------------------------------------------------------------------------------------------

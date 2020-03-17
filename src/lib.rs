@@ -144,17 +144,22 @@ interfaces and client programmers should never need to interact with `WeakRefNod
 The following extensions are provided beyond the DOM Level 2 specification.
 
 1. The [`get_implementation`](fn.get_implementation.html) function returns an instance of
-   `DOMImplementation` to allow bootstrapping the creation of documents.
+   `DOMImplementation` to allow bootstrapping the creation of documents. This satisfies the
+   requirement from the specification: _"The DOM Level 2 API does not define a standard way to
+   create DOMImplementation objects; DOM implementations must provide some proprietary way of
+   bootstrapping these DOM interfaces, and then all other objects can be built from there."_.
 1. The [`get_implementation_version`](fn.get_implementation_version.html) function returns a
    vendor-specific version identifier for the `DOMImplementation`.
-1. The standard `DOMImplementation` trait has an additional member
+1. The standard `DOMImplementation` trait also has an additional member
    [`create_document_with_options`](trait.DOMImplementation.html#tymethod.create_document_with_options),
    and associated [`ProcessingOptions`](struct.ProcessingOptions.html) structure, that can set
    optional behavior for a given `Document` instance.
-1. The trait [`Namespaced`](trait.Namespaced.html) extends `Element` with the ability to look
-   up namespace mappings (using the standard `xmlns` attribute).
+1. The trait [`DocumentDecl`](trait.DocumentDecl.html) extends `Document` with the ability to set
+   and retrieve the XML declaration from the document's prolog.
+1. The trait [`Namespaced`](trait.Namespaced.html) extends `Element` with the ability to look-up
+   namespace mappings (using the standard `xmlns` attribute).
 
-## Logging
+# Logging
 
 As of this time the only dependency `xml_dom` has is the [`log`](https://crates.io/crates/log)
 crate and only `warn!` and `error!` macros are used to provide more information than the set of
@@ -182,6 +187,9 @@ extern crate log;
 // ------------------------------------------------------------------------------------------------
 
 pub mod convert;
+
+mod decl;
+pub use decl::{XmlDecl, XmlVersion};
 
 mod dom_impl;
 pub use dom_impl::{get_implementation, get_implementation_version};

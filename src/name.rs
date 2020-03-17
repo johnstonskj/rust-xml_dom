@@ -1,5 +1,6 @@
 use self::super::error::*;
 use self::super::syntax::*;
+use crate::text::is_xml_name;
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::result::Result as StdResult;
@@ -171,15 +172,7 @@ impl Name {
         if part.is_empty() {
             Err(Error::Syntax)
         } else {
-            // below ranges are always valid for XML 1.0 documents
-            // from https://en.wikipedia.org/wiki/XML#Valid_characters
-            if part.chars().all(|c| {
-                c == '\u{0009}'
-                    || c == '\u{000A}'
-                    || c == '\u{000D}'
-                    || (c >= '\u{0020}' && c <= '\u{D7FF}')
-                    || (c >= '\u{10000}' && c <= '\u{10FFF}')
-            }) {
+            if is_xml_name(part) {
                 Ok(part.to_string())
             } else {
                 Err(Error::InvalidCharacter)
@@ -391,11 +384,11 @@ mod tests {
     use std::str::FromStr;
 
     #[test]
-    #[ignore]
     fn test_parse_invalid_chars() {
-        // TODO: add correct test cases
-        let name = Name::from_str("he lo");
-        assert!(name.is_err());
+        for c in " \t\r\n\u{0}!?".chars() {
+            let name = Name::from_str(&format!("he{}lo", c));
+            assert!(name.is_err());
+        }
     }
 
     #[test]

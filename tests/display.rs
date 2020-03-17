@@ -1,5 +1,5 @@
-use xml_dom::convert::{as_attribute_mut, as_document, as_element_mut};
-use xml_dom::get_implementation;
+use xml_dom::convert::{as_attribute_mut, as_document, as_document_decl_mut, as_element_mut};
+use xml_dom::{get_implementation, XmlDecl, XmlVersion};
 
 mod common;
 
@@ -95,17 +95,17 @@ fn test_display_processing_instruction() {
     let document_node = common::create_empty_rdf_document();
     let document = as_document(&document_node).unwrap();
 
-    let test_node = document.create_processing_instruction("xml", None).unwrap();
+    let test_node = document.create_processing_instruction("foo", None).unwrap();
 
     let result = format!("{}", test_node);
-    assert_eq!(result, "<?xml>");
+    assert_eq!(result, "<?foo>");
 
     let test_node = document
-        .create_processing_instruction("xml", Some("version=\"1.0\""))
+        .create_processing_instruction("foo", Some("version=\"1.0\""))
         .unwrap();
 
     let result = format!("{}", test_node);
-    assert_eq!(result, "<?xml version=\"1.0\">");
+    assert_eq!(result, "<?foo version=\"1.0\">");
 }
 
 #[test]
@@ -135,6 +135,29 @@ fn test_display_document() {
 
     let result = format!("{}", test_node);
     assert_eq!(result, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" SYSTEM \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"><html></html>");
+}
+
+#[test]
+fn test_display_document_with_decl() {
+    let implementation = get_implementation();
+    let document_type = implementation
+        .create_document_type(
+            "html",
+            Some("-//W3C//DTD XHTML 1.0 Transitional//EN"),
+            Some("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"),
+        )
+        .unwrap();
+    let mut test_node = implementation
+        .create_document("http://www.w3.org/1999/xhtml", "html", Some(document_type))
+        .unwrap();
+
+    let mut_document = as_document_decl_mut(&mut test_node).unwrap();
+    let xml_decl = XmlDecl::new(XmlVersion::V11, Some("UTF-8".to_string()), None);
+    let result = mut_document.set_xml_declaration(xml_decl);
+    assert!(result.is_ok());
+
+    let result = format!("{}", test_node);
+    assert_eq!(result, "<?xml version=\"1.1\" encoding=\"UTF-8\"><!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" SYSTEM \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"><html></html>");
 }
 
 #[test]
