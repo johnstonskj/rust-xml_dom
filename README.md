@@ -48,8 +48,9 @@ println!("HTML: {}", xml);
 
 **Version 0.1.3** (_in progress_)
 
-* More Element unit tests for attributes
-* Implement rules for `child_nodes` mutation.
+* More unit tests overall, especially for append/insert/replace child
+* Add support for xml declaration, not reusing processing instruction
+* Support the last extended interfaces.
 * Implement an options capability to turn on processing behaviors.
 
 **Version 0.1.2**

@@ -285,6 +285,7 @@ impl Name {
     ///
     /// Return the reserved name for `Entity` `notation_name` attribute
     ///
+    #[allow(dead_code)]
     pub(crate) fn for_null() -> Self {
         Self {
             namespace_uri: None,

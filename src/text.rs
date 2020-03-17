@@ -76,6 +76,7 @@ pub(crate) fn to_entity(c: char) -> String {
     )
 }
 
+#[allow(dead_code)]
 pub(crate) fn to_entity_hex(c: char) -> String {
     format!(
         "{}{:X}{}",
@@ -113,6 +114,7 @@ pub(crate) fn to_entity_hex(c: char) -> String {
 /// [#x10FFFE-#x10FFFF].
 /// ```
 ///
+#[allow(dead_code)]
 pub(crate) fn is_xml_10_char(c: char) -> bool {
     c == '\u{0009}'
         || c == '\u{000A}'
@@ -122,6 +124,7 @@ pub(crate) fn is_xml_10_char(c: char) -> bool {
         || (c >= '\u{10000}' && c <= '\u{10FFF}')
 }
 
+#[allow(dead_code)]
 pub(crate) fn is_xml_10_restricted_char(c: char) -> bool {
     c == XML_ESC_AMP_CHAR
         || c == XML_ESC_APOS_CHAR
@@ -138,6 +141,7 @@ pub(crate) fn is_xml_10_restricted_char(c: char) -> bool {
 ///                 /* any Unicode character, excluding the surrogate blocks, FFFE, and FFFF. */
 /// ```
 ///
+#[allow(dead_code)]
 pub(crate) fn is_xml_11_char(c: char) -> bool {
     //
     // below ranges are always valid for XML 1.1 documents
@@ -155,6 +159,7 @@ pub(crate) fn is_xml_11_char(c: char) -> bool {
 /// RestrictedChar  ::=  #x1-#x8] | [#xB-#xC] | [#xE-#x1F] | [#x7F-#x84] | [#x86-#x9F]
 /// ```
 ///
+#[allow(dead_code)]
 pub(crate) fn is_xml_11_restricted_char(c: char) -> bool {
     //
     // below ranges are always valid for XML 1.1 documents
@@ -181,6 +186,7 @@ pub(crate) fn is_xml_11_restricted_char(c: char) -> bool {
 /// processing is done. The only way to get a #xD character to match this production is to use a
 /// character reference in an entity value literal.
 ///
+#[allow(dead_code)]
 pub(crate) fn is_xml_space(c: char) -> bool {
     c == '\u{09}' || c == '\u{0A}' || c == '\u{0D}' || c == '\u{20}'
 }
@@ -193,6 +199,7 @@ pub(crate) fn is_xml_space(c: char) -> bool {
 ///                      [#x10000-#xEFFFF]
 /// ```
 ///
+#[allow(dead_code)]
 pub(crate) fn is_xml_name_start_char(c: char) -> bool {
     c == ':'
         || (c >= 'A' && c <= 'Z')
@@ -242,6 +249,7 @@ pub(crate) fn is_xml_name(s: &str) -> bool {
 /// Names   ::=  Name (#x20 Name)*
 /// ```
 ///
+#[allow(dead_code)]
 pub(crate) fn is_xml_names(s: &str) -> bool {
     !s.is_empty() && s.split(' ').all(is_xml_name)
 }
@@ -251,6 +259,7 @@ pub(crate) fn is_xml_names(s: &str) -> bool {
 /// Nmtoken   ::=  (NameChar)+
 /// ```
 ///
+#[allow(dead_code)]
 pub(crate) fn is_xml_nmtoken(s: &str) -> bool {
     !s.is_empty() && s.chars().all(is_xml_name_char)
 }
@@ -260,6 +269,7 @@ pub(crate) fn is_xml_nmtoken(s: &str) -> bool {
 /// Nmtokens   ::=  Nmtoken (#x20 Nmtoken)*
 /// ```
 ///
+#[allow(dead_code)]
 pub(crate) fn is_xml_nmtokens(s: &str) -> bool {
     !s.is_empty() && s.split(' ').all(is_xml_nmtoken)
 }

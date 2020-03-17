@@ -1,4 +1,5 @@
 use xml_dom::convert::*;
+use xml_dom::dom_impl::get_implementation_version;
 use xml_dom::*;
 
 #[allow(unused_must_use)]

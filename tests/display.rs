@@ -190,7 +190,7 @@ fn test_display_document_fragment() {
 
     for name in vec!["one", "two", "three"] {
         let node = document.create_element(name).unwrap();
-        mut_fragment.append_child(node);
+        let _safe_to_ignore = mut_fragment.append_child(node).unwrap();
     }
 
     let result = format!("{}", test_node);

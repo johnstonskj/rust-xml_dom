@@ -814,18 +814,31 @@ impl Node for RefNode {
         ref_self.i_name.clone()
     }
 
+    //
+    // For Attribute instances:
+    // On retrieval, the value of the attribute is returned as a string. Character and general
+    // entity references are replaced with their values. See also the method `getAttribute` on the
+    // `Element` interface.
+    //
+    // On setting, this creates a `Text` node with the unparsed contents of the string. I.e. any
+    // characters that an XML processor would recognize as markup are instead treated as literal
+    // text. See also the method `setAttribute` on the `Element` interface.
+    //
     fn node_value(&self) -> Option<String> {
+        // TODO: attribute special handling
         let ref_self = self.borrow();
         ref_self.i_value.clone()
     }
 
     fn set_node_value(&mut self, value: &str) -> Result<()> {
+        // TODO: attribute special handling
         let mut mut_self = self.borrow_mut();
         mut_self.i_value = Some(value.to_string());
         Ok(())
     }
 
     fn unset_node_value(&mut self) -> Result<()> {
+        // TODO: attribute special handling
         let mut mut_self = self.borrow_mut();
         mut_self.i_value = None;
         Ok(())
@@ -837,6 +850,9 @@ impl Node for RefNode {
     }
 
     fn parent_node(&self) -> Option<RefNode> {
+        if is_attribute(self) {
+            return None;
+        }
         let ref_self = self.borrow();
         match &ref_self.i_parent_node {
             None => None,
@@ -866,6 +882,9 @@ impl Node for RefNode {
     }
 
     fn previous_sibling(&self) -> Option<RefNode> {
+        if is_attribute(self) {
+            return None;
+        }
         let ref_self = self.borrow();
         match &ref_self.i_parent_node {
             None => {
@@ -896,6 +915,9 @@ impl Node for RefNode {
     }
 
     fn next_sibling(&self) -> Option<RefNode> {
+        if is_attribute(self) {
+            return None;
+        }
         let ref_self = self.borrow();
         match &ref_self.i_parent_node {
             None => {
@@ -922,11 +944,16 @@ impl Node for RefNode {
     }
 
     fn attributes(&self) -> HashMap<Name, RefNode, RandomState> {
-        let ref_self = self.borrow();
-        if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
-            i_attributes.clone()
+        if is_element(self) {
+            let ref_self = self.borrow();
+            if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
+                i_attributes.clone()
+            } else {
+                warn!("{}", MSG_INVALID_EXTENSION);
+                HashMap::default()
+            }
         } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             HashMap::default()
         }
     }
@@ -989,93 +1016,83 @@ impl Node for RefNode {
     }
 
     fn remove_child(&mut self, old_child: Self::NodeRef) -> Result<Self::NodeRef> {
-        if is_attribute(&old_child) {
-            let element = as_element_mut(self).unwrap();
-            element.remove_attribute_node(old_child)
-        } else {
-            let mut mut_self = self.borrow_mut();
-            let removed = match mut_self
-                .i_child_nodes
-                .iter()
-                .position(|child| child == &old_child)
-            {
-                None => old_child,
-                Some(position) => mut_self.i_child_nodes.remove(position),
-            };
-            {
-                let mut mut_removed = removed.borrow_mut();
-                mut_removed.i_parent_node = None;
-            }
-            Ok(removed)
+        let mut mut_self = self.borrow_mut();
+        let removed = match mut_self
+            .i_child_nodes
+            .iter()
+            .position(|child| child == &old_child)
+        {
+            None => old_child,
+            Some(position) => mut_self.i_child_nodes.remove(position),
+        };
+        {
+            let mut mut_removed = removed.borrow_mut();
+            mut_removed.i_parent_node = None;
         }
+        Ok(removed)
     }
 
     fn append_child(&mut self, new_child: RefNode) -> Result<RefNode> {
         if !is_child_allowed(self, &new_child) {
             return Err(Error::HierarchyRequest);
         }
-        if is_attribute(&new_child) {
-            let element = as_element_mut(self).unwrap();
-            element.set_attribute_node(new_child)
-        } else {
-            {
-                //
-                // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
-                // document than the one that created this node.
-                //
-                let self_parent = &self.borrow().i_parent_node;
-                let child_parent = &self.borrow().i_parent_node;
-                if !match (self_parent, child_parent) {
-                    (None, None) => true,
-                    (Some(_), None) => true,
-                    (None, Some(_)) => false,
-                    (Some(self_parent), Some(child_parent)) => {
-                        let self_parent = self_parent.clone().upgrade().unwrap();
-                        let child_parent = child_parent.clone().upgrade().unwrap();
-                        &self_parent == &child_parent
-                    }
-                } {
-                    return Err(Error::WrongDocument);
+        {
+            //
+            // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
+            // document than the one that created this node.
+            //
+            let self_parent = &self.borrow().i_parent_node;
+            let child_parent = &self.borrow().i_parent_node;
+            if !match (self_parent, child_parent) {
+                (None, None) => true,
+                (Some(_), None) => true,
+                (None, Some(_)) => false,
+                (Some(self_parent), Some(child_parent)) => {
+                    let self_parent = self_parent.clone().upgrade().unwrap();
+                    let child_parent = child_parent.clone().upgrade().unwrap();
+                    &self_parent == &child_parent
                 }
+            } {
+                return Err(Error::WrongDocument);
             }
-
-            {
-                //
-                // Remove from it's current parent
-                //
-                let mut mut_self = self.borrow_mut();
-                if let Some(parent) = &mut mut_self.i_parent_node {
-                    let parent = parent.clone();
-                    if let Some(parent_node) = &mut parent.upgrade() {
-                        let _safe_to_ignore = parent_node.remove_child(new_child.clone())?;
-                    }
-                }
-            }
-
-            {
-                //
-                // update new child with references from self
-                //
-                let ref_self = self.borrow();
-                let mut mut_child = new_child.borrow_mut();
-                mut_child.i_parent_node = Some(self.to_owned().downgrade());
-                mut_child.i_owner_document = ref_self.i_owner_document.clone();
-            }
-
-            if is_document_fragment(&new_child) {
-                //
-                // Special case
-                //
-                for child in new_child.child_nodes() {
-                    let _safe_to_ignore = self.append_child(child)?;
-                }
-            } else {
-                let mut mut_self = self.borrow_mut();
-                mut_self.i_child_nodes.push(new_child.clone());
-            }
-
-            Ok(new_child)
         }
+
+        {
+            //
+            // Remove from it's current parent
+            //
+            let mut mut_self = self.borrow_mut();
+            if let Some(parent) = &mut mut_self.i_parent_node {
+                let parent = parent.clone();
+                if let Some(parent_node) = &mut parent.upgrade() {
+                    let _safe_to_ignore = parent_node.remove_child(new_child.clone())?;
+                }
+            }
+        }
+
+        {
+            //
+            // update new child with references from self
+            //
+            let ref_self = self.borrow();
+            let mut mut_child = new_child.borrow_mut();
+            mut_child.i_parent_node = Some(self.to_owned().downgrade());
+            mut_child.i_owner_document = ref_self.i_owner_document.clone();
+        }
+
+        if is_document_fragment(&new_child) {
+            //
+            // Special case
+            //
+            for child in new_child.child_nodes() {
+                let _safe_to_ignore = self.append_child(child)?;
+            }
+        } else {
+            let mut mut_self = self.borrow_mut();
+            mut_self.i_child_nodes.push(new_child.clone());
+        }
+
+        Ok(new_child)
     }
 
     fn has_child_nodes(&self) -> bool {

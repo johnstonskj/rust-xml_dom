@@ -191,8 +191,8 @@ pub mod convert;
 mod decl;
 pub use decl::{XmlDecl, XmlVersion};
 
-mod dom_impl;
-pub use dom_impl::{get_implementation, get_implementation_version};
+pub mod dom_impl;
+pub use dom_impl::get_implementation;
 
 pub mod error;
 pub use error::{Error, Result};
