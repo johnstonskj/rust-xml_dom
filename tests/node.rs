@@ -1,7 +1,11 @@
+use xml_dom::convert::*;
 use xml_dom::*;
 
 #[test]
 fn test_is_child_allowed() {
+    //
+    // This logic is shared by append, insert, and replace, so we only test once.
+    //
     let test_matrix: Vec<(NodeType, Vec<NodeType>)> = vec![
         (
             NodeType::Element,
@@ -86,8 +90,86 @@ fn test_replace_child_node() {}
 fn test_remove_child_node() {}
 
 #[test]
-#[ignore]
-fn test_child_node_navigation() {}
+fn test_next_sibling() {
+    //
+    // Setup the tree
+    //
+    let mut document = make_document_node();
+    let mut root_node = make_element_node(&mut document, "element");
+    {
+        let root_element = as_element_mut(&mut root_node).unwrap();
+
+        for index in 1..6 {
+            let child_node = make_element_node(&mut document, &format!("child-{}", index));
+            let _ignore = root_element.append_child(child_node.clone());
+        }
+    }
+
+    {
+        assert_eq!(root_node.child_nodes().len(), 5);
+    }
+
+    //
+    // Ask for siblings
+    //
+    let ref_root = as_element(&root_node).unwrap();
+    let child_nodes = ref_root.child_nodes();
+    let mid_node = child_nodes.get(2).unwrap();
+    let ref_mid = as_element(mid_node).unwrap();
+    assert_eq!(ref_mid.name().to_string(), "child-3".to_string());
+
+    let next_node = ref_mid.next_sibling().unwrap();
+    let ref_next = as_element(&next_node).unwrap();
+    assert_eq!(ref_next.name().to_string(), "child-4".to_string());
+
+    let last_node = ref_next.next_sibling().unwrap();
+    let ref_last = as_element(&last_node).unwrap();
+    assert_eq!(ref_last.name().to_string(), "child-5".to_string());
+
+    let no_node = ref_last.next_sibling();
+    assert!(no_node.is_none());
+}
+
+#[test]
+fn test_previous_sibling() {
+    let mut document = make_document_node();
+    //
+    // Setup the tree
+    //
+    let mut root_node = make_element_node(&mut document, "element");
+    {
+        let root_element = as_element_mut(&mut root_node).unwrap();
+
+        for index in 1..6 {
+            let child_node = make_element_node(&mut document, &format!("child-{}", index));
+            let _ignore = root_element.append_child(child_node.clone());
+        }
+    }
+
+    {
+        assert_eq!(root_node.child_nodes().len(), 5);
+    }
+
+    //
+    // Ask for siblings
+    //
+    let ref_root = as_element(&root_node).unwrap();
+    let child_nodes = ref_root.child_nodes();
+    let mid_node = child_nodes.get(2).unwrap();
+    let ref_mid = as_element(mid_node).unwrap();
+    assert_eq!(ref_mid.name().to_string(), "child-3".to_string());
+
+    let previous_node = ref_mid.previous_sibling().unwrap();
+    let ref_previous = as_element(&previous_node).unwrap();
+    assert_eq!(ref_previous.name().to_string(), "child-2".to_string());
+
+    let first_node = ref_previous.previous_sibling().unwrap();
+    let ref_first = as_element(&first_node).unwrap();
+    assert_eq!(ref_first.name().to_string(), "child-1".to_string());
+
+    let no_node = ref_first.previous_sibling();
+    assert!(no_node.is_none());
+}
 
 #[test]
 #[ignore]
@@ -170,4 +252,20 @@ fn test_parent(document: RefNode, parent_type: NodeType, allowed: &Vec<NodeType>
             allowed.contains(&child_type)
         );
     }
+}
+
+fn make_document_node() -> RefNode {
+    get_implementation()
+        .create_document("http://example.org/", "root", None)
+        .unwrap()
+}
+
+fn make_element_node(document: &mut RefNode, name: &str) -> RefNode {
+    let document = as_document_mut(document).unwrap();
+    let element = document.create_element(name).unwrap();
+    let mut document_element = document.document_element().unwrap();
+    let document_element = as_element_mut(&mut document_element).unwrap();
+    let result = document_element.append_child(element.clone());
+    assert!(result.is_ok());
+    element
 }

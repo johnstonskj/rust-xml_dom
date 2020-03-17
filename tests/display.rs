@@ -1,6 +1,7 @@
 use xml_dom::convert::{
     as_attribute_mut, as_document, as_document_decl_mut, as_document_fragment_mut, as_element_mut,
 };
+use xml_dom::dom_impl;
 use xml_dom::{get_implementation, XmlDecl, XmlVersion};
 
 mod common;
@@ -197,5 +198,117 @@ fn test_display_document_fragment() {
     assert_eq!(
         result,
         "<![CDATA[#document-fragment <one></one><two></two><three></three>]]>"
+    );
+}
+#[test]
+fn test_display_entity() {
+    let implementation = get_implementation();
+    let document_node = implementation
+        .create_document(common::RDF_NS, "rdf:RDF", None)
+        .unwrap();
+
+    let test_node =
+        dom_impl::create_internal_entity(document_node.clone(), "name", "My Name").unwrap();
+
+    let result = format!("{}", test_node);
+    assert_eq!(result, "<!ENTITY name \"My Name\">");
+
+    // ------------------------------------------------------------
+
+    let test_node =
+        dom_impl::create_entity(document_node.clone(), "name", Some("file-name.xml"), None)
+            .unwrap();
+
+    let result = format!("{}", test_node);
+    assert_eq!(result, "<!ENTITY name PUBLIC \"file-name.xml\">");
+
+    // ------------------------------------------------------------
+
+    let test_node =
+        dom_impl::create_entity(document_node.clone(), "name", None, Some("file-name.xml"))
+            .unwrap();
+
+    let result = format!("{}", test_node);
+    assert_eq!(result, "<!ENTITY name SYSTEM \"file-name.xml\">");
+
+    // ------------------------------------------------------------
+
+    let test_node = dom_impl::create_entity(
+        document_node.clone(),
+        "name",
+        Some("foo-bar"),
+        Some("file-name.xml"),
+    )
+    .unwrap();
+
+    let result = format!("{}", test_node);
+    assert_eq!(
+        result,
+        "<!ENTITY name PUBLIC \"foo-bar\" \"file-name.xml\">"
+    );
+
+    // ------------------------------------------------------------
+    /*
+            let mut test_node = dom_impl::create_entity(
+                document_node.clone(),
+                "name",
+                Some("foo-bar"),
+                Some("file-name.xml"),
+            )
+            .unwrap();
+            {
+                if let Extension::Entity {
+                    i_notation_name, ..
+                } = &mut test_node.i_extension
+                {
+                    *i_notation_name = Some("GIF".to_string());
+                }
+            }
+
+            let result = format!("{}", test_node);
+            assert_eq!(
+                result,
+                "<!ENTITY name PUBLIC \"foo-bar\" \"file-name.xml\" GIF>"
+            );
+    */
+}
+
+#[test]
+fn test_display_notation() {
+    let implementation = get_implementation();
+    let document_node = implementation
+        .create_document(common::RDF_NS, "rdf:RDF", None)
+        .unwrap();
+
+    let test_node =
+        dom_impl::create_notation(document_node.clone(), "name", Some("file-name.xml"), None)
+            .unwrap();
+
+    let result = format!("{}", test_node);
+    assert_eq!(result, "<!NOTATION name PUBLIC \"file-name.xml\">");
+
+    // ------------------------------------------------------------
+
+    let test_node =
+        dom_impl::create_notation(document_node.clone(), "name", None, Some("file-name.xml"))
+            .unwrap();
+
+    let result = format!("{}", test_node);
+    assert_eq!(result, "<!NOTATION name SYSTEM \"file-name.xml\">");
+
+    // ------------------------------------------------------------
+
+    let test_node = dom_impl::create_notation(
+        document_node.clone(),
+        "name",
+        Some("foo-bar"),
+        Some("file-name.xml"),
+    )
+    .unwrap();
+
+    let result = format!("{}", test_node);
+    assert_eq!(
+        result,
+        "<!NOTATION name PUBLIC \"foo-bar\" \"file-name.xml\">"
     );
 }
