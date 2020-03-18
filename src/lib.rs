@@ -139,7 +139,7 @@ interfaces and client programmers should never need to interact with `WeakRefNod
 | `unsigned short` | `Error`, `u16` | as representation of exception code  |
 | `unsigned long`  | `usize`        | list/string indexes and lengths      |
 
-## Extensions
+# Extensions
 
 The following extensions are provided beyond the DOM Level 2 specification.
 
@@ -148,8 +148,9 @@ The following extensions are provided beyond the DOM Level 2 specification.
    requirement from the specification: _"The DOM Level 2 API does not define a standard way to
    create DOMImplementation objects; DOM implementations must provide some proprietary way of
    bootstrapping these DOM interfaces, and then all other objects can be built from there."_.
-1. The [`get_implementation_version`](fn.get_implementation_version.html) function returns a
-   vendor-specific version identifier for the `DOMImplementation`.
+1. The [`get_implementation_version`](fn.get_implementation_version.html) function in the
+   [`dom_impl`](dom_impl/index.html) module returns a vendor-specific version identifier for the
+   `DOMImplementation`.
 1. The standard `DOMImplementation` trait also has an additional member
    [`create_document_with_options`](trait.DOMImplementation.html#tymethod.create_document_with_options),
    and associated [`ProcessingOptions`](struct.ProcessingOptions.html) structure, that can set
@@ -158,6 +159,12 @@ The following extensions are provided beyond the DOM Level 2 specification.
    and retrieve the XML declaration from the document's prolog.
 1. The trait [`Namespaced`](trait.Namespaced.html) extends `Element` with the ability to look-up
    namespace mappings (using the standard `xmlns` attribute).
+1. The functiions [`create_entity`](dom_impl/fn.create_entity.html),
+   [`create_internal_entity`](dom_impl/fn.create_internal_entity.html), and
+   [`create_notation`](dom_impl/fn.create_notation.html) in the
+   [`dom_impl`](dom_impl/index.html) module provide the ability to create instances of these
+   Level 2 extended interfaces. In general most clients using the DOM do not need to create these
+   however parsers constructing the DOM may.
 
 # Logging
 
