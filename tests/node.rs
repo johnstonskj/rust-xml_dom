@@ -161,7 +161,18 @@ fn test_replace_child_node() {}
 
 #[test]
 #[ignore]
-fn test_remove_child_node() {}
+fn test_remove_child_node() {
+    let document_node = make_sibling_document();
+    let ref_document = as_document(&document_node).unwrap();
+
+    let mut root_node = ref_document.document_element().unwrap();
+    let mut_root = as_element_mut(&mut root_node).unwrap();
+    let child_nodes = mut_root.child_nodes();
+    compare_node_names(
+        &child_nodes,
+        &["child-1", "child-2", "child-3", "child-4", "child-5"],
+    );
+}
 
 #[test]
 fn test_next_sibling() {

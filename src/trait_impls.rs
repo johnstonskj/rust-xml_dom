@@ -973,16 +973,36 @@ impl Node for RefNode {
     }
 
     fn insert_before(&mut self, new_child: RefNode, ref_child: Option<RefNode>) -> Result<RefNode> {
+        fn insert_or_append(
+            parent_node: &mut RefNode,
+            new_child: &RefNode,
+            insert_position: Option<usize>,
+        ) {
+            let mut mut_parent = parent_node.borrow_mut();
+            let new_child = new_child.clone();
+            match insert_position {
+                None => mut_parent.i_child_nodes.push(new_child),
+                Some(position) => mut_parent.i_child_nodes.insert(position, new_child),
+            }
+        }
+
         if !is_child_allowed(self, &new_child) {
             return Err(Error::HierarchyRequest);
         }
         let insert_position = match ref_child {
             None => None,
-            Some(ref_child) => self
+            Some(ref_child) => match self
                 .borrow()
                 .i_child_nodes
                 .iter()
-                .position(|child| child == &ref_child),
+                .position(|child| child == &ref_child)
+            {
+                None => {
+                    warn!("insert_before: ref_child not found in `child_nodes`");
+                    return Err(Error::NotFound);
+                }
+                position => position,
+            },
         };
 
         {
@@ -1006,16 +1026,13 @@ impl Node for RefNode {
             }
         }
 
-        {
-            //
-            // Remove from it's current parent
-            //
-            let mut mut_self = self.borrow_mut();
-            if let Some(parent) = &mut mut_self.i_parent_node {
-                let parent = parent.clone();
-                if let Some(parent_node) = &mut parent.upgrade() {
-                    let _safe_to_ignore = parent_node.remove_child(new_child.clone())?;
-                }
+        //
+        // Remove from it's current parent
+        //
+        match new_child.parent_node() {
+            None => (),
+            Some(mut parent_node) => {
+                let _safe_to_ignore = parent_node.remove_child(new_child.clone())?;
             }
         }
 
@@ -1043,19 +1060,6 @@ impl Node for RefNode {
             insert_or_append(self, &new_child, insert_position)
         }
 
-        fn insert_or_append(
-            parent_node: &mut RefNode,
-            new_child: &RefNode,
-            insert_position: Option<usize>,
-        ) {
-            let mut mut_parent = parent_node.borrow_mut();
-            let new_child = new_child.clone();
-            match insert_position {
-                None => mut_parent.i_child_nodes.push(new_child),
-                Some(position) => mut_parent.i_child_nodes.insert(position, new_child),
-            }
-        }
-
         Ok(new_child.clone())
     }
 
@@ -1063,41 +1067,44 @@ impl Node for RefNode {
         if !is_child_allowed(self, &new_child) {
             return Err(Error::HierarchyRequest);
         }
-        let mut mut_self = self.borrow_mut();
-        let removed = match mut_self
-            .i_child_nodes
-            .iter()
-            .position(|child| child == &old_child)
-        {
-            None => old_child,
-            Some(position) => {
-                let old_child = mut_self.i_child_nodes.remove(position);
-                mut_self.i_child_nodes.insert(position, new_child.clone());
-                old_child
-            }
+        let exists = {
+            let ref_self = self.borrow();
+            ref_self.i_child_nodes.contains(&old_child.clone())
         };
-        {
-            let mut mut_removed = removed.borrow_mut();
-            mut_removed.i_parent_node = None;
+        if exists {
+            let next_node = old_child.next_sibling();
+            let removed = self.remove_child(old_child)?;
+            let _safe_to_ignore = self.insert_before(new_child, next_node)?;
+            Ok(removed)
+        } else {
+            warn!("replace_child: old_child not found in `child_nodes`");
+            Err(Error::NotFound)
         }
-        Ok(removed.clone())
     }
 
     fn remove_child(&mut self, old_child: Self::NodeRef) -> Result<Self::NodeRef> {
-        let mut mut_self = self.borrow_mut();
-        let removed = match mut_self
-            .i_child_nodes
-            .iter()
-            .position(|child| child == &old_child)
-        {
-            None => old_child,
-            Some(position) => mut_self.i_child_nodes.remove(position),
+        let position = {
+            let ref_self = self.borrow();
+            ref_self
+                .i_child_nodes
+                .iter()
+                .position(|child| child == &old_child)
         };
-        {
-            let mut mut_removed = removed.borrow_mut();
-            mut_removed.i_parent_node = None;
+        match position {
+            None => {
+                warn!("remove_child: old_child not found in `child_nodes`");
+                Err(Error::NotFound)
+            }
+            Some(position) => {
+                let removed = {
+                    let mut mut_self = self.borrow_mut();
+                    mut_self.i_child_nodes.remove(position)
+                };
+                let mut mut_removed = removed.borrow_mut();
+                mut_removed.i_parent_node = None;
+                Ok(removed.clone())
+            }
         }
-        Ok(removed)
     }
 
     fn append_child(&mut self, new_child: RefNode) -> Result<RefNode> {
@@ -1170,7 +1177,7 @@ impl Text for RefNode {
             }
         };
 
-        let mut new_node = {
+        let new_node = {
             //
             // Create a new node and adjust contents
             //
@@ -1191,21 +1198,11 @@ impl Text for RefNode {
             }?
         };
 
-        let ref_self = self.borrow();
-        Ok(match &ref_self.i_parent_node {
-            None => RefNode::new(new_node),
-            Some(parent) => {
-                new_node.i_parent_node = Some(parent.clone());
-                let new_node = RefNode::new(new_node);
-                let parent = parent.clone();
-                let mut parent = parent.upgrade().unwrap();
-                let parent_element = as_element_mut(&mut parent)?;
-                let self_node = as_character_data(self)?;
-                let _safe_to_ignore =
-                    parent_element.insert_before(new_node.clone(), self_node.next_sibling())?;
-                new_node
-            }
-        })
+        let new_node = RefNode::new(new_node);
+        if let Some(mut parent) = self.parent_node() {
+            let _safe_to_ignore = parent.insert_before(new_node.clone(), self.next_sibling())?;
+        }
+        Ok(new_node.clone())
     }
 }
 
