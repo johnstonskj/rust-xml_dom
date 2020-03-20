@@ -411,7 +411,13 @@ impl DOMImplementation for Implementation {
 
         let element = {
             let document = as_document_mut(&mut document_node).unwrap();
-            document.create_element_ns(namespace_uri, qualified_name)?
+            let element_node = document.create_element_ns(namespace_uri, qualified_name)?;
+            {
+                let mut mut_element = element_node.borrow_mut();
+                mut_element.i_parent_node = Some(document_node.clone().downgrade());
+                mut_element.i_owner_document = Some(document_node.clone().downgrade());
+            }
+            element_node
         };
 
         {
