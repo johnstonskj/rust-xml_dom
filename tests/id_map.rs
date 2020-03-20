@@ -1,7 +1,7 @@
 use xml_dom::convert::{as_document, as_element, as_element_mut};
 use xml_dom::*;
 
-mod common;
+pub mod common;
 
 #[test]
 fn test_get_element_by_id_strict() {

@@ -4,7 +4,7 @@ use xml_dom::convert::{
 use xml_dom::dom_impl;
 use xml_dom::{get_implementation, XmlDecl, XmlVersion};
 
-mod common;
+pub mod common;
 
 #[test]
 fn test_display_element() {

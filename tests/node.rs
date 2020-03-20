@@ -1,7 +1,7 @@
 use xml_dom::convert::*;
 use xml_dom::*;
 
-mod common;
+pub mod common;
 
 #[test]
 fn test_is_child_allowed() {

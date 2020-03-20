@@ -4,7 +4,7 @@ use xml_dom::convert::{
 };
 use xml_dom::Error;
 
-mod common;
+pub mod common;
 
 #[test]
 fn test_text_node_contents() {

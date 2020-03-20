@@ -5,7 +5,7 @@
 use xml_dom::convert::{as_attribute_mut, as_document, as_element, as_element_mut};
 use xml_dom::RefNode;
 
-mod common;
+pub mod common;
 
 #[allow(unused_must_use)]
 fn create_example_element() -> RefNode {

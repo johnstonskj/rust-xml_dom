@@ -1,6 +1,6 @@
 use xml_dom::convert::{as_attribute_mut, as_document};
 
-mod common;
+pub mod common;
 
 #[test]
 fn test_set_data() {

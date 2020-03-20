@@ -5,7 +5,7 @@ use xml_dom::convert::{
 };
 use xml_dom::Name;
 
-mod common;
+pub mod common;
 
 const TEST_TEXT: &str = "Here is some useless text for testing";
 

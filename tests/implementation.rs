@@ -2,7 +2,7 @@ use std::str::FromStr;
 use xml_dom::convert::{as_document, as_document_type, as_element};
 use xml_dom::{get_implementation, Name};
 
-mod common;
+pub mod common;
 
 #[test]
 fn test_create_document() {
