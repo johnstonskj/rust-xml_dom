@@ -74,12 +74,86 @@ fn test_is_child_allowed() {
 }
 
 #[test]
-#[ignore]
-fn test_append_child_node() {}
+fn test_insert_child_node() {
+    let document_node = make_sibling_document();
+    let ref_document = as_document(&document_node).unwrap();
 
-#[test]
-#[ignore]
-fn test_insert_child_node() {}
+    let mut root_node = ref_document.document_element().unwrap();
+    let mut_root = as_element_mut(&mut root_node).unwrap();
+    let child_nodes = mut_root.child_nodes();
+    compare_node_names(
+        &child_nodes,
+        &["child-1", "child-2", "child-3", "child-4", "child-5"],
+    );
+
+    {
+        // insert node into the middle
+        let mid_node = child_nodes.get(2).unwrap();
+        let new_child_node = ref_document.create_element("inserted-1").unwrap();
+        let result = mut_root.insert_before(new_child_node, Some(mid_node.clone()));
+        assert!(result.is_ok());
+        let new_node = result.unwrap();
+        assert!(new_node.parent_node().is_some());
+        assert!(new_node.owner_document().is_some());
+        compare_node_names(
+            &mut_root.child_nodes(),
+            &[
+                "child-1",
+                "child-2",
+                "inserted-1",
+                "child-3",
+                "child-4",
+                "child-5",
+            ],
+        );
+    }
+
+    {
+        // insert node at the front
+        let first_node = child_nodes.first().unwrap();
+        let new_child_node = ref_document.create_element("inserted-2").unwrap();
+        let result = mut_root.insert_before(new_child_node, Some(first_node.clone()));
+        assert!(result.is_ok());
+        let new_node = result.unwrap();
+        assert!(new_node.parent_node().is_some());
+        assert!(new_node.owner_document().is_some());
+        compare_node_names(
+            &mut_root.child_nodes(),
+            &[
+                "inserted-2",
+                "child-1",
+                "child-2",
+                "inserted-1",
+                "child-3",
+                "child-4",
+                "child-5",
+            ],
+        );
+    }
+
+    {
+        // insert at the end
+        let new_child_node = ref_document.create_element("inserted-3").unwrap();
+        let result = mut_root.insert_before(new_child_node, None);
+        assert!(result.is_ok());
+        let new_node = result.unwrap();
+        assert!(new_node.parent_node().is_some());
+        assert!(new_node.owner_document().is_some());
+        compare_node_names(
+            &mut_root.child_nodes(),
+            &[
+                "inserted-2",
+                "child-1",
+                "child-2",
+                "inserted-1",
+                "child-3",
+                "child-4",
+                "child-5",
+                "inserted-3",
+            ],
+        );
+    }
+}
 
 #[test]
 #[ignore]
@@ -91,7 +165,9 @@ fn test_remove_child_node() {}
 
 #[test]
 fn test_next_sibling() {
-    let root_node = make_sibling_document();
+    let document_node = make_sibling_document();
+    let ref_document = as_document(&document_node).unwrap();
+    let root_node = ref_document.document_element().unwrap();
     let ref_root = as_element(&root_node).unwrap();
     let child_nodes = ref_root.child_nodes();
 
@@ -116,7 +192,9 @@ fn test_next_sibling() {
 
 #[test]
 fn test_previous_sibling() {
-    let root_node = make_sibling_document();
+    let document_node = make_sibling_document();
+    let ref_document = as_document(&document_node).unwrap();
+    let root_node = ref_document.document_element().unwrap();
     let ref_root = as_element(&root_node).unwrap();
     let child_nodes = ref_root.child_nodes();
 
@@ -222,32 +300,39 @@ fn test_parent(document: RefNode, parent_type: NodeType, allowed: &Vec<NodeType>
     }
 }
 
-fn make_element_node(document: &mut RefNode, name: &str) -> RefNode {
-    let document = as_document_mut(document).unwrap();
-    let element = document.create_element(name).unwrap();
-    let mut document_element = document.document_element().unwrap();
-    let document_element = as_element_mut(&mut document_element).unwrap();
-    let result = document_element.append_child(element.clone());
+fn append_element_node(parent_node: &mut RefNode, name: &str) -> RefNode {
+    let mut_parent = as_element_mut(parent_node).unwrap();
+
+    let mut document_node = mut_parent.owner_document().unwrap();
+    let mut_document = as_document_mut(&mut document_node).unwrap();
+    let new_element_node = mut_document.create_element(name).unwrap();
+
+    let result = mut_parent.append_child(new_element_node.clone());
     assert!(result.is_ok());
-    element
+    new_element_node
 }
 
 fn make_sibling_document() -> RefNode {
-    let mut document = get_implementation()
+    let document_node = get_implementation()
         .create_document("http://example.org/", "root", None)
         .unwrap();
-    let mut root_node = make_element_node(&mut document, "element");
+    let ref_document = as_document(&document_node).unwrap();
+    let mut root_node = ref_document.document_element().unwrap();
     {
-        let root_element = as_element_mut(&mut root_node).unwrap();
-
         for index in 1..6 {
-            let child_node = make_element_node(&mut document, &format!("child-{}", index));
-            let _ignore = root_element.append_child(child_node.clone());
+            let _safe_to_ignore = append_element_node(&mut root_node, &format!("child-{}", index));
         }
     }
 
     {
+        println!("{:#?}", root_node);
         assert_eq!(root_node.child_nodes().len(), 5);
     }
-    root_node
+    document_node
+}
+
+fn compare_node_names(nodes: &Vec<RefNode>, expected_names: &[&str]) {
+    let names: Vec<String> = nodes.iter().map(|n| n.name().to_string()).collect();
+    let expected_names: Vec<String> = expected_names.iter().map(|s| String::from(*s)).collect();
+    assert_eq!(names, expected_names);
 }
