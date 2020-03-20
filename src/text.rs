@@ -6,7 +6,7 @@ use std::str::FromStr;
 //  Public Types
 // ------------------------------------------------------------------------------------------------
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) enum SpaceHandling {
     Default,
     Preserve,
@@ -315,5 +315,52 @@ impl FromStr for SpaceHandling {
         } else {
             Err(())
         }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+// Unit Tests
+// ------------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_space_handling_default() {
+        let sh = SpaceHandling::default();
+        assert_eq!(sh, SpaceHandling::Default);
+    }
+
+    #[test]
+    fn test_space_handling_display() {
+        assert_eq!(
+            format!("{}", SpaceHandling::Default),
+            format!(
+                "{}{}{}=\"{}\"",
+                XML_NS_ATTRIBUTE, XML_NS_SEPARATOR, XML_NS_ATTR_SPACE, XML_NS_ATTR_SPACE_DEFAULT
+            )
+        );
+        assert_eq!(
+            format!("{}", SpaceHandling::Preserve),
+            format!(
+                "{}{}{}=\"{}\"",
+                XML_NS_ATTRIBUTE, XML_NS_SEPARATOR, XML_NS_ATTR_SPACE, XML_NS_ATTR_SPACE_PRESERVE
+            )
+        );
+    }
+
+    #[test]
+    fn test_space_handling_from_str() {
+        assert_eq!(
+            SpaceHandling::from_str(XML_NS_ATTR_SPACE_DEFAULT).unwrap(),
+            SpaceHandling::Default
+        );
+        assert_eq!(
+            SpaceHandling::from_str(XML_NS_ATTR_SPACE_PRESERVE).unwrap(),
+            SpaceHandling::Preserve
+        );
+        assert!(SpaceHandling::from_str("").is_err());
+        assert!(SpaceHandling::from_str("other").is_err());
     }
 }
