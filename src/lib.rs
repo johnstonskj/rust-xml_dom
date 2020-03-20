@@ -226,6 +226,8 @@ pub use trait_impls::*;
 // Private Modules
 // ------------------------------------------------------------------------------------------------
 
+mod display;
+
 mod rc_cell;
 
 mod syntax;
