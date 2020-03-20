@@ -10,11 +10,13 @@ mod common;
 fn test_display_element() {
     let document_node = common::create_empty_rdf_document();
     let document = as_document(&document_node).unwrap();
-    let mut test_node = document.create_element("test").unwrap();
 
+    common::sub_test("test_display_element", "element_only");
+    let mut test_node = document.create_element("test").unwrap();
     let result = format!("{}", test_node);
     assert_eq!(result, "<test></test>");
 
+    common::sub_test("test_display_element", "element_with_attribute");
     {
         let element = as_element_mut(&mut test_node).unwrap();
         let attribute_node = document.create_attribute_with("test", "data").unwrap();
@@ -23,6 +25,10 @@ fn test_display_element() {
     let result = format!("{}", test_node);
     assert_eq!(result, "<test test=\"data\"></test>");
 
+    common::sub_test(
+        "test_display_element",
+        "element_with_attribute_and_children",
+    );
     {
         let element = as_element_mut(&mut test_node).unwrap();
         let attribute_node = document
@@ -213,8 +219,10 @@ fn test_display_entity() {
     let result = format!("{}", test_node);
     assert_eq!(result, "<!ENTITY name \"My Name\">");
 
-    // ------------------------------------------------------------
-
+    common::sub_test(
+        "test_display_entity",
+        "create_entity(node, name, Some, None)",
+    );
     let test_node =
         dom_impl::create_entity(document_node.clone(), "name", Some("file-name.xml"), None)
             .unwrap();
@@ -222,8 +230,10 @@ fn test_display_entity() {
     let result = format!("{}", test_node);
     assert_eq!(result, "<!ENTITY name PUBLIC \"file-name.xml\">");
 
-    // ------------------------------------------------------------
-
+    common::sub_test(
+        "test_display_entity",
+        "create_entity(node, name, None, Some)",
+    );
     let test_node =
         dom_impl::create_entity(document_node.clone(), "name", None, Some("file-name.xml"))
             .unwrap();
@@ -231,8 +241,10 @@ fn test_display_entity() {
     let result = format!("{}", test_node);
     assert_eq!(result, "<!ENTITY name SYSTEM \"file-name.xml\">");
 
-    // ------------------------------------------------------------
-
+    common::sub_test(
+        "test_display_entity",
+        "create_entity(node, name, Some, Some)",
+    );
     let test_node = dom_impl::create_entity(
         document_node.clone(),
         "name",

@@ -1,6 +1,8 @@
 use xml_dom::convert::*;
 use xml_dom::*;
 
+mod common;
+
 #[test]
 fn test_is_child_allowed() {
     //
@@ -87,7 +89,7 @@ fn test_insert_child_node() {
     );
 
     {
-        // insert node into the middle
+        common::sub_test("test_insert_child_node", "insert_before(_, mid_node)");
         let mid_node = child_nodes.get(2).unwrap();
         let new_child_node = ref_document.create_element("inserted-1").unwrap();
         let result = mut_root.insert_before(new_child_node, Some(mid_node.clone()));
@@ -109,7 +111,7 @@ fn test_insert_child_node() {
     }
 
     {
-        // insert node at the front
+        common::sub_test("test_insert_child_node", "insert_before(_, first_node)");
         let first_node = child_nodes.first().unwrap();
         let new_child_node = ref_document.create_element("inserted-2").unwrap();
         let result = mut_root.insert_before(new_child_node, Some(first_node.clone()));
@@ -132,7 +134,7 @@ fn test_insert_child_node() {
     }
 
     {
-        // insert at the end
+        common::sub_test("test_insert_child_node", "insert_before(_, last_node)");
         let new_child_node = ref_document.create_element("inserted-3").unwrap();
         let result = mut_root.insert_before(new_child_node, None);
         assert!(result.is_ok());
@@ -153,14 +155,81 @@ fn test_insert_child_node() {
             ],
         );
     }
+
+    {
+        common::sub_test("test_insert_child_node", "insert_before(_, not_a_child)");
+        let not_a_child = ref_document.create_element("not-a-child").unwrap();
+        let new_child_node = ref_document.create_element("not-inserted").unwrap();
+        let result = mut_root.insert_before(new_child_node, Some(not_a_child));
+        assert!(result.is_err());
+    }
 }
 
 #[test]
-#[ignore]
-fn test_replace_child_node() {}
+fn test_replace_child_node() {
+    let document_node = make_sibling_document();
+    let ref_document = as_document(&document_node).unwrap();
+
+    let mut root_node = ref_document.document_element().unwrap();
+    let mut_root = as_element_mut(&mut root_node).unwrap();
+    let child_nodes = mut_root.child_nodes();
+    compare_node_names(
+        &child_nodes,
+        &["child-1", "child-2", "child-3", "child-4", "child-5"],
+    );
+
+    {
+        common::sub_test("test_replace_child_node", "remove_child(mid_node)");
+        let mid_node = child_nodes.get(2).unwrap();
+        let new_child_node = ref_document.create_element("inserted-1").unwrap();
+        let result = mut_root.replace_child(new_child_node, mid_node.clone());
+        assert!(result.is_ok());
+        compare_node_names(
+            &mut_root.child_nodes(),
+            &["child-1", "child-2", "inserted-1", "child-4", "child-5"],
+        );
+    }
+
+    {
+        common::sub_test("test_replace_child_node", "remove_child(first_node)");
+        let first_node = child_nodes.first().unwrap();
+        let new_child_node = ref_document.create_element("inserted-2").unwrap();
+        let result = mut_root.replace_child(new_child_node, first_node.clone());
+        assert!(result.is_ok());
+        compare_node_names(
+            &mut_root.child_nodes(),
+            &["inserted-2", "child-2", "inserted-1", "child-4", "child-5"],
+        );
+    }
+
+    {
+        common::sub_test("test_replace_child_node", "remove_child(last_node)");
+        let last_node = child_nodes.last().unwrap();
+        let new_child_node = ref_document.create_element("inserted-3").unwrap();
+        let result = mut_root.replace_child(new_child_node, last_node.clone());
+        assert!(result.is_ok());
+        compare_node_names(
+            &mut_root.child_nodes(),
+            &[
+                "inserted-2",
+                "child-2",
+                "inserted-1",
+                "child-4",
+                "inserted-3",
+            ],
+        );
+    }
+
+    {
+        common::sub_test("test_replace_child_node", "remove_child(not_a_child)");
+        let not_a_child = ref_document.create_element("not-a-child").unwrap();
+        let new_child_node = ref_document.create_element("not-inserted").unwrap();
+        let result = mut_root.replace_child(new_child_node, not_a_child);
+        assert!(result.is_err());
+    }
+}
 
 #[test]
-#[ignore]
 fn test_remove_child_node() {
     let document_node = make_sibling_document();
     let ref_document = as_document(&document_node).unwrap();
@@ -172,6 +241,40 @@ fn test_remove_child_node() {
         &child_nodes,
         &["child-1", "child-2", "child-3", "child-4", "child-5"],
     );
+
+    {
+        common::sub_test("test_remove_child_node", "remove_child(mid_node)");
+        let mid_node = child_nodes.get(2).unwrap();
+        let result = mut_root.remove_child(mid_node.clone());
+        assert!(result.is_ok());
+        compare_node_names(
+            &mut_root.child_nodes(),
+            &["child-1", "child-2", "child-4", "child-5"],
+        );
+    }
+
+    {
+        common::sub_test("test_remove_child_node", "remove_child(first_node)");
+        let first_node = child_nodes.first().unwrap();
+        let result = mut_root.remove_child(first_node.clone());
+        assert!(result.is_ok());
+        compare_node_names(&mut_root.child_nodes(), &["child-2", "child-4", "child-5"]);
+    }
+
+    {
+        common::sub_test("test_remove_child_node", "remove_child(last_node)");
+        let last_node = child_nodes.last().unwrap();
+        let result = mut_root.remove_child(last_node.clone());
+        assert!(result.is_ok());
+        compare_node_names(&mut_root.child_nodes(), &["child-2", "child-4"]);
+    }
+
+    {
+        common::sub_test("test_remove_child_node", "remove_child(not_a_child)");
+        let not_a_child = ref_document.create_element("not-a-child").unwrap();
+        let result = mut_root.remove_child(not_a_child);
+        assert!(result.is_err());
+    }
 }
 
 #[test]
@@ -189,14 +292,17 @@ fn test_next_sibling() {
     let ref_mid = as_element(mid_node).unwrap();
     assert_eq!(ref_mid.name().to_string(), "child-3".to_string());
 
+    common::sub_test("test_next_sibling", "next_sibling() 1");
     let next_node = ref_mid.next_sibling().unwrap();
     let ref_next = as_element(&next_node).unwrap();
     assert_eq!(ref_next.name().to_string(), "child-4".to_string());
 
+    common::sub_test("test_next_sibling", "next_sibling() 2");
     let last_node = ref_next.next_sibling().unwrap();
     let ref_last = as_element(&last_node).unwrap();
     assert_eq!(ref_last.name().to_string(), "child-5".to_string());
 
+    common::sub_test("test_next_sibling", "next_sibling() 3");
     let no_node = ref_last.next_sibling();
     assert!(no_node.is_none());
 }
@@ -216,14 +322,17 @@ fn test_previous_sibling() {
     let ref_mid = as_element(mid_node).unwrap();
     assert_eq!(ref_mid.name().to_string(), "child-3".to_string());
 
+    common::sub_test("test_previous_sibling", "previous_sibling() 1");
     let previous_node = ref_mid.previous_sibling().unwrap();
     let ref_previous = as_element(&previous_node).unwrap();
     assert_eq!(ref_previous.name().to_string(), "child-2".to_string());
 
+    common::sub_test("test_previous_sibling", "previous_sibling() 2");
     let first_node = ref_previous.previous_sibling().unwrap();
     let ref_first = as_element(&first_node).unwrap();
     assert_eq!(ref_first.name().to_string(), "child-1".to_string());
 
+    common::sub_test("test_previous_sibling", "previous_sibling() 3");
     let no_node = ref_first.previous_sibling();
     assert!(no_node.is_none());
 }
@@ -297,11 +406,14 @@ const ALL_CHILDREN: [NodeType; 12] = [
 fn test_parent(document: RefNode, parent_type: NodeType, allowed: &Vec<NodeType>) {
     let mut parent_node = make_node(document.clone(), parent_type.clone(), "parent");
     for child_type in ALL_CHILDREN.iter() {
-        println!(
-            "{:?}.append_child({:?}) -> {}?",
-            parent_type,
-            child_type,
-            allowed.contains(&child_type)
+        common::sub_test(
+            "test_is_child_allowed",
+            &format!(
+                "{:?}.append_child({:?}) -> {}?",
+                parent_type,
+                child_type,
+                allowed.contains(&child_type)
+            ),
         );
         let child_node = make_node(document.clone(), child_type.clone(), "child");
         assert_eq!(
@@ -336,7 +448,6 @@ fn make_sibling_document() -> RefNode {
     }
 
     {
-        println!("{:#?}", root_node);
         assert_eq!(root_node.child_nodes().len(), 5);
     }
     document_node

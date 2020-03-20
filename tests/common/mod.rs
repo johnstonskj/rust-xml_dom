@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use std::fmt::Display;
 use xml_dom::convert::*;
 use xml_dom::*;
 
@@ -94,4 +95,22 @@ pub fn create_element_with(document: RefDocument, ns: &str, qn: &str, content: &
     let element = as_element_mut(&mut node).unwrap();
     element.append_child(document.create_text_node(content));
     node
+}
+
+#[inline]
+pub fn sub_test(primary: &str, secondary: &str) {
+    println!("**[{}]** sub-case: `{}`", primary, secondary);
+}
+
+#[inline]
+pub fn sub_test_result<T: Display>(primary: &str, secondary: &str, result: T) {
+    println!("**[{}]** sub-case: `{}` -> {}", primary, secondary, result);
+}
+
+#[inline]
+pub fn sub_test_error<T: Display>(primary: &str, secondary: &str, result: T) {
+    println!(
+        "**[{}]** sub-case: `{}` ERROR {}",
+        primary, secondary, result
+    );
 }
