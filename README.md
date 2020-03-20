@@ -84,9 +84,11 @@ implementation of `Display` for `RefNode` does not format the output.
 **Version 0.1.3** (_in progress_)
 
 * More unit tests overall, especially for append/insert/replace child
-* Add support for xml declaration, not reusing processing instruction
-* Support the last Level 2 _extended interfaces_.
-* Implement an options capability to turn on processing behaviors.
+* Add support for xml declaration (`XmlDecl`, `XmlVersion`), not reusing processing instruction
+* Support the last Level 2 _extended interfaces_ (`Entity`, `EntityReference`, and `Notation`).
+  * Also, add `create_notation`, `create_entity`, and `create_internal_entity` to `dom_impl`.
+* Implement an options (`ProcessingOptions` and `DOMImplementation::create_document_with_options`) capability to turn 
+  on extended processing behaviors.
 
 **Version 0.1.2**
 
@@ -114,7 +116,7 @@ implementation of `Display` for `RefNode` does not format the output.
 
 ## TODO
 
-1. Currently does not support `DocumentFragment`, `Entity`, `EntityReference`, or `Notation`.
-1. Not intending to be schema-aware, so `Document::get_element_by_id` always returns `None`.
-1. A lot of required methods are still `unimplemented!()`.
-1. Intend to add `reader` feature to de-serialize using crate `quick_xml`.
+1. A small number of methods are still `unimplemented!()`; `Node::clone_node`, `Node::normalize`, and 
+   `Namespaced::normalize_mappings`.
+1. Need to build more tests.
+1. Add repository metadata to enable Travis CI builds.
