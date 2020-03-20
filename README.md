@@ -81,7 +81,15 @@ implementation of `Display` for `RefNode` does not format the output.
 
 ## Changes
 
-**Version 0.1.3** (_in progress_)
+**Version 0.1.4** (_in progress_)
+
+* Implement the following methods:
+  * `Node::clone_node`;
+  * `Node::normalize`.
+  * `Namespaced::normalize_mappings`.
+* Make this the 0.2.0 candidate.
+
+**Version 0.1.3**
 
 * More unit tests overall, especially for append/insert/replace child
 * Add support for xml declaration (`XmlDecl`, `XmlVersion`), not reusing processing instruction
@@ -89,6 +97,7 @@ implementation of `Display` for `RefNode` does not format the output.
   * Also, add `create_notation`, `create_entity`, and `create_internal_entity` to `dom_impl`.
 * Implement an options (`ProcessingOptions` and `DOMImplementation::create_document_with_options`) capability to turn 
   on extended processing behaviors.
+* Fixed some nested borrow issues.
 
 **Version 0.1.2**
 
