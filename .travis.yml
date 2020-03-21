@@ -1,7 +1,7 @@
 # Common language header
 language: rust
-sudo: false
 cache: cargo
+dist: xenial
 
 # Channels and versions I want to build
 rust:
@@ -30,7 +30,7 @@ install:
 - git clone https://github.com/johnstonskj/rust-ci.git $CARGO_CI
 - $CARGO_CI/bin/cargo-lint.sh --install
 
-matrix:
+jobs:
   # Performance tweak
   fast_finish: true
   # Ignore failures in nightly, not ideal, but necessary
