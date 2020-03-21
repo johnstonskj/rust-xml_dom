@@ -1,5 +1,5 @@
 use xml_dom::convert::{as_attribute_mut, as_document};
-
+use xml_dom::*;
 pub mod common;
 
 #[test]
@@ -27,4 +27,18 @@ fn test_unset_data() {
 
     assert!(attribute.unset_value().is_ok());
     assert!(attribute.value().is_none());
+}
+
+#[test]
+fn test_escaping() {
+    let document_node = common::create_empty_rdf_document();
+    let document = as_document(&document_node).unwrap();
+
+    let attribute = document
+        .create_attribute_with("test", "hello <\"world\"> & 'everyone' in it")
+        .unwrap();
+    assert_eq!(
+        attribute.value(),
+        Some("hello &#60;&#34;world&#34;&#62; &#38; &#39;everyone&#39; in it".to_string())
+    )
 }
