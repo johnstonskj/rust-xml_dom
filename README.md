@@ -4,7 +4,7 @@ A Rust crate providing a reasonably faithful implementation of the  W3C
 [Document Object Model Core, Level 2](https://www.w3.org/TR/DOM-Level-2-Core).
 
 ![MIT License](https://img.shields.io/badge/license-mit-118811.svg)
-![Minimum Rust Version](https://img.shields.io/badge/Min%20Rust-1.38-green.svg)
+![Minimum Rust Version](https://img.shields.io/badge/Min%20Rust-1.40-green.svg)
 [![crates.io](https://img.shields.io/crates/v/upnp-rs.svg)](https://crates.io/crates/xml_dom)
 [![docs.rs](https://docs.rs/xml_dom/badge.svg)](https://docs.rs/xml_dom)
 [![travis.ci](https://travis-ci.org/johnstonskj/rust-xml_dom.svg?branch=master)](https://travis-ci.org/johnstonskj/rust-xml_dom)
