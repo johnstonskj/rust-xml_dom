@@ -7,13 +7,14 @@ cache: cargo
 rust:
 - stable
 - beta
-- 1.38.0
+- 1.40.0
 - nightly
 
 # Operating systems I want to test
 os:
 - linux
 - osx
+- windows
 
 # Set global environment only
 env:
@@ -35,6 +36,7 @@ matrix:
   # Ignore failures in nightly, not ideal, but necessary
   allow_failures:
   - rust: nightly
+  - os: osx
 
 # Script supports packages and workspaces
 script:
