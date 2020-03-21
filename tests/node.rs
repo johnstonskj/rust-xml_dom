@@ -344,9 +344,56 @@ fn test_clone_node() {
 }
 
 #[test]
-#[ignore]
 fn test_normalize() {
-    unimplemented!()
+    let document_node = get_implementation()
+        .create_document("http://example.org/", "root", None)
+        .unwrap();
+    let ref_document = as_document(&document_node).unwrap();
+    let mut root_node = ref_document.document_element().unwrap();
+    {
+        let _safe_to_ignore = append_element_node(&mut root_node, "element-1");
+        let _safe_to_ignore = append_text_node(&mut root_node, "text-1");
+        let _safe_to_ignore = append_text_node(&mut root_node, "text-2");
+        let _safe_to_ignore = append_element_node(&mut root_node, "element-2");
+        let _safe_to_ignore = append_text_node(&mut root_node, "text-3");
+        let _safe_to_ignore = append_text_node(&mut root_node, "");
+        let _safe_to_ignore = append_text_node(&mut root_node, "text-4");
+        let _safe_to_ignore = append_element_node(&mut root_node, "element-3");
+    }
+
+    {
+        assert_eq!(root_node.child_nodes().len(), 8);
+    }
+
+    root_node.normalize();
+
+    {
+        assert_eq!(root_node.child_nodes().len(), 5);
+    }
+}
+
+#[test]
+fn test_normalize_empty() {
+    let document_node = get_implementation()
+        .create_document("http://example.org/", "root", None)
+        .unwrap();
+    let ref_document = as_document(&document_node).unwrap();
+    let mut root_node = ref_document.document_element().unwrap();
+    {
+        let _safe_to_ignore = append_element_node(&mut root_node, "element-1");
+        let _safe_to_ignore = append_text_node(&mut root_node, "");
+        let _safe_to_ignore = append_element_node(&mut root_node, "element-2");
+    }
+
+    {
+        assert_eq!(root_node.child_nodes().len(), 3);
+    }
+
+    root_node.normalize();
+
+    {
+        assert_eq!(root_node.child_nodes().len(), 2);
+    }
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -433,6 +480,18 @@ fn append_element_node(parent_node: &mut RefNode, name: &str) -> RefNode {
     let result = mut_parent.append_child(new_element_node.clone());
     assert!(result.is_ok());
     new_element_node
+}
+
+fn append_text_node(parent_node: &mut RefNode, content: &str) -> RefNode {
+    let mut_parent = as_element_mut(parent_node).unwrap();
+
+    let mut document_node = mut_parent.owner_document().unwrap();
+    let mut_document = as_document_mut(&mut document_node).unwrap();
+    let new_text_node = mut_document.create_text_node(content);
+
+    let result = mut_parent.append_child(new_text_node.clone());
+    assert!(result.is_ok());
+    new_text_node
 }
 
 fn make_sibling_document() -> RefNode {

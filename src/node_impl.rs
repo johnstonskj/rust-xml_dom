@@ -1,7 +1,7 @@
 use crate::name::Name;
 use crate::options::ProcessingOptions;
 use crate::rc_cell::{RcRefCell, WeakRefCell};
-use crate::traits::NodeType;
+use crate::traits::{Node, NodeType};
 use crate::{text, XmlDecl};
 use std::collections::HashMap;
 
@@ -230,7 +230,6 @@ impl NodeImpl {
             i_extension: Extension::None,
         }
     }
-    #[allow(dead_code)]
     pub(crate) fn new_entity(
         owner_document: Option<WeakRefNode>,
         notation_name: Name,
@@ -251,7 +250,6 @@ impl NodeImpl {
             },
         }
     }
-    #[allow(dead_code)]
     pub(crate) fn new_internal_entity(
         owner_document: Option<WeakRefNode>,
         notation_name: Name,
@@ -271,7 +269,6 @@ impl NodeImpl {
             },
         }
     }
-    #[allow(dead_code)]
     pub(crate) fn new_notation(
         owner_document: Option<WeakRefNode>,
         notation_name: Name,
@@ -291,32 +288,60 @@ impl NodeImpl {
             },
         }
     }
-}
-
-// ------------------------------------------------------------------------------------------------
-// Unit Tests
-// ------------------------------------------------------------------------------------------------
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::node_impl::NodeImpl;
-    use std::str::FromStr;
-
-    #[test]
-    fn test_escaping() {
-        let document = RefNode::new(NodeImpl::new_document(
-            Name::for_document(),
-            None,
-            Default::default(),
-        ));
-        let document = document.downgrade();
-        let name = Name::from_str("test").unwrap();
-        let attribute =
-            NodeImpl::new_attribute(document, name, Some("hello <\"world\"> & 'everyone' in it"));
-        assert_eq!(
-            attribute.i_value,
-            Some("hello &#60;&#34;world&#34;&#62; &#38; &#39;everyone&#39; in it".to_string())
-        )
+    pub(crate) fn clone_node(&self, deep: bool) -> Self {
+        let extension = match &self.i_extension {
+            Extension::None => Extension::None,
+            Extension::Document {
+                i_xml_declaration,
+                i_document_element,
+                i_document_type,
+                i_id_map,
+                i_options,
+            } => Extension::Document {
+                i_xml_declaration: i_xml_declaration.clone(),
+                i_document_element: i_document_element.clone(),
+                i_document_type: i_document_type.clone(),
+                i_id_map: i_id_map.clone(),
+                i_options: i_options.clone(),
+            },
+            Extension::DocumentType {
+                i_entities,
+                i_notations,
+                i_public_id,
+                i_system_id,
+                i_internal_subset,
+            } => Extension::DocumentType {
+                i_entities: i_entities.clone(),
+                i_notations: i_notations.clone(),
+                i_public_id: i_public_id.clone(),
+                i_system_id: i_system_id.clone(),
+                i_internal_subset: i_internal_subset.clone(),
+            },
+            Extension::Element {
+                i_attributes,
+                i_namespaces,
+            } => Extension::Element {
+                i_attributes: i_attributes.clone(),
+                i_namespaces: i_namespaces.clone(),
+            },
+            entity @ Extension::Entity { .. } => entity.clone(),
+            notation @ Extension::Notation { .. } => notation.clone(),
+        };
+        Self {
+            i_node_type: self.i_node_type.clone(),
+            i_name: self.i_name.clone(),
+            i_value: self.i_value.clone(),
+            i_parent_node: None,
+            i_owner_document: self.i_owner_document.clone(),
+            i_child_nodes: if deep {
+                self.i_child_nodes
+                    .iter()
+                    .map(|node| node.clone_node(deep).unwrap())
+                    .collect()
+            } else {
+                vec![]
+            },
+            i_extension: extension,
+        }
     }
 }

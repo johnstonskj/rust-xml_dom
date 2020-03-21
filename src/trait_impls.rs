@@ -1115,12 +1115,38 @@ impl Node for RefNode {
         !self.child_nodes().is_empty()
     }
 
-    fn clone_node(&self, _deep: bool) -> Option<RefNode> {
-        unimplemented!()
+    fn clone_node(&self, deep: bool) -> Option<RefNode> {
+        let ref_self = self.borrow();
+        let new_node = ref_self.clone_node(deep);
+        Some(RefNode::new(new_node))
     }
 
     fn normalize(&mut self) {
-        unimplemented!()
+        for child_node in self.child_nodes() {
+            if is_text(&child_node) {
+                if CharacterData::length(&child_node) == 0 {
+                    if self.remove_child(child_node).is_err() {
+                        panic!("Could not remove unnecessary text node");
+                    }
+                } else {
+                    let last_child_node = child_node.previous_sibling();
+                    if last_child_node.is_some() {
+                        let last_child_node = &mut last_child_node.unwrap().clone();
+                        if is_text(&last_child_node) {
+                            if last_child_node
+                                .append(&child_node.node_value().unwrap())
+                                .is_err()
+                            {
+                                panic!("Could not merge text nodes");
+                            }
+                            if self.remove_child(child_node).is_err() {
+                                panic!("Could not remove unnecessary text node");
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fn is_supported(&self, feature: &str, version: &str) -> bool {
