@@ -88,6 +88,7 @@ implementation of `Display` for `RefNode` does not format the output.
   * `Node::clone_node`;
   * `Node::normalize`.
   * `Namespaced::normalize_mappings`.
+* Get CI builds working with Travis
 * Make this the 0.2.0 candidate.
 
 **Version 0.1.3**
@@ -126,7 +127,5 @@ implementation of `Display` for `RefNode` does not format the output.
 
 ## TODO
 
-1. A small number of methods are still `unimplemented!()`; `Node::clone_node`, `Node::normalize`, and 
-   `Namespaced::normalize_mappings`.
 1. Need to build more tests.
-1. Add repository metadata to enable Travis CI builds.
+1. Have an XML Parser generate DOM from text.
