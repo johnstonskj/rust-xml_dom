@@ -2,6 +2,7 @@
 Provides a common `Error` and `Result` type and a set of common error messages.
 */
 
+use std::fmt::{Display, Formatter};
 use std::result::Result as StdResult;
 
 // ------------------------------------------------------------------------------------------------
@@ -66,41 +67,76 @@ pub enum Error {
 pub type Result<T> = StdResult<T, Error>;
 
 // ------------------------------------------------------------------------------------------------
-// Public Values
+// Internal Log/Error Messages
 // ------------------------------------------------------------------------------------------------
 
 ///
 /// Error message: "The node `self` is not of the type expected by this method."
 ///
-pub const MSG_INVALID_NODE_TYPE: &str =
+pub(crate) const MSG_INVALID_NODE_TYPE: &str =
     "The node `self` is not of the type expected by this method.";
 ///
 /// Error message: "This node's extension does not match it's node type."
 ///
-pub const MSG_INVALID_EXTENSION: &str = "This node's extension does not match it's node type.";
+pub(crate) const MSG_INVALID_EXTENSION: &str =
+    "This node's extension does not match it's node type.";
 ///
 /// Error message: "The provided value could not be parsed into a `Name`."
 ///
-pub const MSG_INVALID_NAME: &str = "The provided value could not be parsed into a `Name`.";
+pub(crate) const MSG_INVALID_NAME: &str = "The provided value could not be parsed into a `Name`.";
 ///
 /// Error message: "This node is missing a `parent_node` value."
 ///
-pub const MSG_NO_PARENT_NODE: &str = "This node is missing a `parent_node` value.";
+pub(crate) const MSG_NO_PARENT_NODE: &str = "This node is missing a `parent_node` value.";
 ///
 /// Error message: "Cannot append or insert a child node created in a different document."
 ///
-pub const MSG_WRONG_DOCUMENT: &str =
+pub(crate) const MSG_WRONG_DOCUMENT: &str =
     "Cannot append or insert a child node created in a different document.";
 ///
 /// Error message: "Either `offset` or `count` invalid for string operation."
 ///
-pub const MSG_INDEX_ERROR: &str = "Either `offset` or `count` invalid for string operation.";
+pub(crate) const MSG_INDEX_ERROR: &str = "Either `offset` or `count` invalid for string operation.";
 ///
 /// Error message: "Could not upgrade a weak reference."
 ///
-pub const MSG_WEAK_REF: &str = "Could not upgrade a weak reference.";
+pub(crate) const MSG_WEAK_REF: &str = "Could not upgrade a weak reference.";
 ///
 /// Error message: "Violation of `xml:id` §4, attempt to insert duplicate ID value."
 ///
-pub const MSG_DUPLICATE_ID: &str =
+pub(crate) const MSG_DUPLICATE_ID: &str =
     "Violation of `xml:id` §4, attempt to insert duplicate ID value.";
+
+// ------------------------------------------------------------------------------------------------
+// Implementations
+// ------------------------------------------------------------------------------------------------
+
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            Error::IndexSize => "Either `index` or `size` is negative, or greater than the allowed value",
+            Error::StringSize => "The specified range of text does not fit into a DOMString",
+            Error::HierarchyRequest => "An attempt insert a node somewhere it doesn't belong",
+            Error::WrongDocument => "An attempt to use a node in a different document than the one that created it",
+            Error::InvalidCharacter => "An invalid or illegal character was specified, such as in a name",
+            Error::NoDataAllowed => "An attempt to add data for a node which does not support data",
+            Error::NoModificationAllowed => "An attempt is made to modify an object where modifications are not allowed",
+            Error::NotFound => "An attempt is made to reference a node in a context where it does not exist",
+            Error::NotSupported => "The implementation does not support the requested type of object or operation",
+            Error::InUseAttribute => "An attempt was made to add an attribute that is already in use elsewhere",
+            Error::InvalidState => "An attempt is made to use an object that is not, or is no longer, usable",
+            Error::Syntax => "An invalid or illegal string was specified",
+            Error::InvalidModification => "An attempt was made to modify the type of the underlying object",
+            Error::Namespace => "An attempt was made to create or change an object in a way which is incorrect with regard to namespaces",
+            Error::InvalidAccess => "A parameter or an operation is not supported by the underlying object",
+        })
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl<T> Into<Result<T>> for Error {
+    fn into(self) -> Result<T> {
+        Err(self)
+    }
+}
