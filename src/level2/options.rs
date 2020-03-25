@@ -17,8 +17,8 @@ use std::ops::{BitAnd, BitOr};
 /// # Example
 ///
 /// ```rust
-/// use xml_dom::*;
-/// use xml_dom::convert::*;
+/// use xml_dom::level2::*;
+/// use xml_dom::level2::convert::*;
 ///
 /// let mut options = ProcessingOptions::new();
 /// options.set_assume_ids();
@@ -26,8 +26,8 @@ use std::ops::{BitAnd, BitOr};
 /// let implementation = get_implementation();
 /// let mut document_node = implementation
 ///     .create_document_with_options(
-///         "http://www.w3.org/1999/xhtml",
-///         "html",
+///         Some("http://www.w3.org/1999/xhtml"),
+///         Some("html"),
 ///         None,
 ///         options)
 ///     .unwrap();

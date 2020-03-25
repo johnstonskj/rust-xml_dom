@@ -1,10 +1,10 @@
 /*!
 This module implements certain capabilities required by, but not specified by, the DOM Core.
 */
-use crate::error::Result;
-use crate::node_impl::{NodeImpl, RefNode};
-use crate::traits::DOMImplementation;
-use crate::Name;
+use crate::level2::node_impl::{NodeImpl, RefNode};
+use crate::level2::traits::DOMImplementation;
+use crate::shared::error::Result;
+use crate::shared::name::Name;
 use std::str::FromStr;
 
 // ------------------------------------------------------------------------------------------------
@@ -31,11 +31,11 @@ const THIS_IMPLEMENTATION: &'static dyn DOMImplementation<NodeRef = RefNode> = &
 /// # Example
 ///
 /// ```rust
-/// use xml_dom::get_implementation;
+/// use xml_dom::level2::get_implementation;
 ///
 /// let implementation = get_implementation();
 /// let mut document_node = implementation
-///     .create_document("http://www.w3.org/1999/xhtml", "html", None)
+///     .create_document(Some("http://www.w3.org/1999/xhtml"), Some("html"), None)
 ///     .unwrap();
 /// ```
 ///

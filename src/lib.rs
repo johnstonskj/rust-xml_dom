@@ -17,12 +17,12 @@ view the implementation has the following characteristics:
 # Example
 
 ```rust
-use xml_dom::*;
-use xml_dom::convert::*;
+use xml_dom::level2::*;
+use xml_dom::level2::convert::*;
 
 let implementation = get_implementation();
 let mut document_node = implementation
-    .create_document("http://www.w3.org/1999/xhtml", "html", None)
+    .create_document(Some("http://www.w3.org/1999/xhtml"), Some("html"), None)
     .unwrap();
 println!("document 1: {:#?}", document_node);
 
@@ -63,7 +63,7 @@ The `has_feature` method [`DOMImplementation`](struct.DOMImplementation.html) an
 feature and supports both version 1.0 and version 2.0 of Core and version 1.0 of XML.
 
 ```rust
-use xml_dom::{DOMImplementation, get_implementation};
+use xml_dom::level2::{DOMImplementation, get_implementation};
 
 let implementation = get_implementation();
 assert!(implementation.has_feature("Core", "1.0"));
@@ -193,43 +193,13 @@ extern crate log;
 // Public Modules
 // ------------------------------------------------------------------------------------------------
 
-pub mod convert;
+//#[cfg(feature = "quick_parser")]
+//pub mod parser;
 
-mod decl;
-pub use decl::{XmlDecl, XmlVersion};
-
-pub mod dom_impl;
-pub use dom_impl::get_implementation;
-
-pub mod error;
-pub use error::{Error, Result};
-
-mod name;
-pub use name::*;
-
-mod namespaced;
-pub use namespaced::Namespaced;
-
-mod node_impl;
-pub use node_impl::RefNode;
-
-mod options;
-pub use options::ProcessingOptions;
-
-mod traits;
-pub use traits::*;
-
-mod trait_impls;
-pub use trait_impls::*;
+pub mod level2;
 
 // ------------------------------------------------------------------------------------------------
 // Private Modules
 // ------------------------------------------------------------------------------------------------
 
-mod display;
-
-mod rc_cell;
-
-mod syntax;
-
-mod text;
+mod shared;

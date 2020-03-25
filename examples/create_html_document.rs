@@ -1,5 +1,5 @@
-use xml_dom::convert::*;
-use xml_dom::*;
+use xml_dom::level2::convert::*;
+use xml_dom::level2::*;
 
 #[allow(unused_must_use)]
 fn main() {
@@ -19,7 +19,11 @@ fn main() {
     // Create a new `Document` using the document type defined above. Note that this
     // also has the side-effect of creating the document's root element named "html".
     let mut document_node = implementation
-        .create_document("http://www.w3.org/1999/xhtml", "html", Some(document_type))
+        .create_document(
+            Some("http://www.w3.org/1999/xhtml"),
+            Some("html"),
+            Some(document_type),
+        )
         .unwrap();
 
     // Cast the returned document `RefNode` into a `RefDocument` trait reference

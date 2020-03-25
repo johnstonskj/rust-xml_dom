@@ -1,8 +1,8 @@
-use xml_dom::convert::{
+use xml_dom::level2::convert::{
     as_cdata_section, as_cdata_section_mut, as_document, as_document_mut, as_element,
     as_element_mut, as_text, as_text_mut,
 };
-use xml_dom::Error;
+use xml_dom::level2::Error;
 
 pub mod common;
 

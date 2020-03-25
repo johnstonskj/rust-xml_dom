@@ -1,11 +1,19 @@
 # XML Structure and Parsing
 
 ## Specifications
+Th DOM 
+
+* DOM Level 1 provided a complete model for an entire HTML or XML document, including the means to change any portion of the document.
+* DOM Level 2 was published in late 2000. It introduced the getElementById function as well as an event model and support for XML namespaces and CSS.
+* DOM Level 3, published in April 2004, added support for XPath and keyboard event handling, as well as an interface for serializing documents as XML.
+* DOM Level 4 was published in 2015. It is a snapshot of the WHATWG living standard.
 
 * [_Document Object Model (DOM) Level 1 Specification_](https://www.w3.org/TR/REC-DOM-Level-1/),
   Version 1.0, W3C Recommendation 1 October, 1998.
 * [_Document Object Model (DOM) Level 2 Core Specification_](https://www.w3.org/TR/DOM-Level-2-Core/),
   Version 1.0, W3C Recommendation, 13 November, 2000.
+* [_Document Object Model (DOM) Level 3 Core Specification_](https://www.w3.org/TR/DOM-Level-3-Core/), Version 1.0,
+  W3C Recommendation, 07 April 2004.
 * [_XML Information Set (Second Edition)_](https://www.w3.org/TR/xml-infoset/), W3C Recommendation, 4 February 2004.
 * [_Extensible Markup Language (XML) 1.0 (Fifth Edition)_](https://www.w3.org/TR/REC-xml/), W3C
   Recommendation, 26 November 2008.
@@ -57,8 +65,8 @@
 [30]  extSubset         ::= TextDecl? extSubsetDecl
 [31]  extSubsetDecl     ::= ( markupdecl | conditionalSect | DeclSep)*
 [32]  SDDecl            ::= #x20+ 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"'))
-(Productions 33 through 38 have been removed.)
-[39]  element           ::= EmptyElemTag
+(Productions 33 through 38 have been removed in XML 1.1.)
+[39]  element           ::= EmptyElemTag | STag content ETag
 [40]  STag              ::= '<' Name (S Attribute)* S? '>'
 [41]  Attribute         ::= Name Eq AttValue
 [42]  ETag              ::= '</' Name S? '>'

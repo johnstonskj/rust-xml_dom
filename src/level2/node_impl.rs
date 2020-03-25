@@ -1,8 +1,9 @@
-use crate::name::Name;
-use crate::options::ProcessingOptions;
-use crate::rc_cell::{RcRefCell, WeakRefCell};
-use crate::traits::{Node, NodeType};
-use crate::{text, XmlDecl};
+use crate::level2::options::ProcessingOptions;
+use crate::level2::traits::{Node, NodeType};
+use crate::level2::XmlDecl;
+use crate::shared::name::Name;
+use crate::shared::rc_cell::{RcRefCell, WeakRefCell};
+use crate::shared::text;
 use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
@@ -39,7 +40,6 @@ pub(crate) enum Extension {
     None,
     Document {
         i_xml_declaration: Option<XmlDecl>,
-        i_document_element: Option<RefNode>,
         i_document_type: Option<RefNode>,
         i_id_map: HashMap<String, WeakRefNode>,
         i_options: ProcessingOptions,
@@ -165,21 +165,16 @@ impl NodeImpl {
             i_extension: Extension::None,
         }
     }
-    pub(crate) fn new_document(
-        name: Name,
-        doc_type: Option<RefNode>,
-        options: ProcessingOptions,
-    ) -> Self {
+    pub(crate) fn new_document(doc_type: Option<RefNode>, options: ProcessingOptions) -> Self {
         Self {
             i_node_type: NodeType::Document,
-            i_name: name,
+            i_name: Name::for_document(),
             i_value: None,
             i_parent_node: None,
             i_owner_document: None,
             i_child_nodes: vec![],
             i_extension: Extension::Document {
                 i_xml_declaration: None,
-                i_document_element: None,
                 i_document_type: doc_type,
                 i_id_map: Default::default(),
                 i_options: options,
@@ -293,13 +288,11 @@ impl NodeImpl {
             Extension::None => Extension::None,
             Extension::Document {
                 i_xml_declaration,
-                i_document_element,
                 i_document_type,
                 i_id_map,
                 i_options,
             } => Extension::Document {
                 i_xml_declaration: i_xml_declaration.clone(),
-                i_document_element: i_document_element.clone(),
                 i_document_type: i_document_type.clone(),
                 i_id_map: i_id_map.clone(),
                 i_options: i_options.clone(),

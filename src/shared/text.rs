@@ -1,4 +1,4 @@
-use crate::syntax::*;
+use crate::shared::syntax::*;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::str::FromStr;
 

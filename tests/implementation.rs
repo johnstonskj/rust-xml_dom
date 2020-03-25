@@ -1,6 +1,6 @@
 use std::str::FromStr;
-use xml_dom::convert::{as_document, as_document_type, as_element};
-use xml_dom::{get_implementation, Name};
+use xml_dom::level2::convert::{as_document, as_document_type, as_element};
+use xml_dom::level2::{get_implementation, Name};
 
 pub mod common;
 
@@ -8,7 +8,7 @@ pub mod common;
 fn test_create_document() {
     let implementation = get_implementation();
     let document_node = implementation
-        .create_document(common::RDF_NS, "rdf:RDF", None)
+        .create_document(Some(common::RDF_NS), Some("rdf:RDF"), None)
         .unwrap();
     let document = as_document(&document_node).unwrap();
     let root_node = document.document_element().unwrap();
@@ -41,7 +41,11 @@ fn test_create_document_type() {
     );
 
     let document_node = implementation
-        .create_document(common::RDF_NS, "rdf:RDF", Some(document_type_node.clone()))
+        .create_document(
+            Some(common::RDF_NS),
+            Some("rdf:RDF"),
+            Some(document_type_node.clone()),
+        )
         .unwrap();
     let document = as_document(&document_node).unwrap();
     let stored_doc_type = document.doc_type().unwrap();

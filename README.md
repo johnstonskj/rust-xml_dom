@@ -25,8 +25,8 @@ view the implementation has the following characteristics:
 # Example
 
 ```rust
-use xml_dom::*;
-use xml_dom::convert::*;
+use xml_dom::level2::*;
+use xml_dom::level2::convert::*;
 
 // Bootstrap; get an instance of `DOMImplementation`. The mechanism for this is
 // intentionally undefined by the specification.
@@ -44,7 +44,7 @@ let document_type = implementation
 // Create a new `Document` using the document type defined above. Note that this 
 // also has the side-effect of creating the document's root element named "html".
 let mut document_node = implementation
-    .create_document("http://www.w3.org/1999/xhtml", "html", Some(document_type))
+    .create_document(Some("http://www.w3.org/1999/xhtml"), Some("html"), Some(document_type))
     .unwrap();
 
 // Cast the returned document `RefNode` into a `RefDocument` trait reference
@@ -84,11 +84,13 @@ implementation of `Display` for `RefNode` does not format the output.
 
 **Version 0.1.4** (_in progress_)
 
+* Refactor, add a `level2` module, allowing other levels to be added at a later time.
 * Implement the following methods:
   * `Node::clone_node`;
   * `Node::normalize`.
   * `Namespaced::normalize_mappings`.
-* Get CI builds working with Travis
+* CI builds now working with Travis, [rust-xml_dom](https://travis-ci.org/github/johnstonskj/rust-xml_dom).
+* Added `quick_xml` based text parser.
 * Make this the 0.2.0 candidate.
 
 **Version 0.1.3**

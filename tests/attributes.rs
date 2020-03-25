@@ -1,5 +1,5 @@
-use xml_dom::convert::{as_attribute_mut, as_document};
-use xml_dom::*;
+use xml_dom::level2::convert::{as_attribute_mut, as_document};
+use xml_dom::level2::*;
 pub mod common;
 
 #[test]

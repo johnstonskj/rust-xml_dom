@@ -91,6 +91,7 @@ pub(crate) const MSG_NO_PARENT_NODE: &str = "This node is missing a `parent_node
 ///
 /// Error message: "Cannot append or insert a child node created in a different document."
 ///
+#[allow(dead_code)]
 pub(crate) const MSG_WRONG_DOCUMENT: &str =
     "Cannot append or insert a child node created in a different document.";
 ///

@@ -1,5 +1,5 @@
-use xml_dom::convert::*;
-use xml_dom::*;
+use xml_dom::level2::convert::*;
+use xml_dom::level2::*;
 
 pub mod common;
 
@@ -67,7 +67,7 @@ fn test_is_child_allowed() {
 
     let implementation = get_implementation();
     let document_node = implementation
-        .create_document("http://www.w3.org/1999/xhtml", "html", None)
+        .create_document(Some("http://www.w3.org/1999/xhtml"), Some("html"), None)
         .unwrap();
 
     for (parent_type, allowed_child_types) in test_matrix {
@@ -346,7 +346,7 @@ fn test_clone_node() {
 #[test]
 fn test_normalize() {
     let document_node = get_implementation()
-        .create_document("http://example.org/", "root", None)
+        .create_document(Some("http://example.org/"), Some("root"), None)
         .unwrap();
     let ref_document = as_document(&document_node).unwrap();
     let mut root_node = ref_document.document_element().unwrap();
@@ -375,7 +375,7 @@ fn test_normalize() {
 #[test]
 fn test_normalize_empty() {
     let document_node = get_implementation()
-        .create_document("http://example.org/", "root", None)
+        .create_document(Some("http://example.org/"), Some("root"), None)
         .unwrap();
     let ref_document = as_document(&document_node).unwrap();
     let mut root_node = ref_document.document_element().unwrap();
@@ -496,7 +496,7 @@ fn append_text_node(parent_node: &mut RefNode, content: &str) -> RefNode {
 
 fn make_sibling_document() -> RefNode {
     let document_node = get_implementation()
-        .create_document("http://example.org/", "root", None)
+        .create_document(Some("http://example.org/"), Some("root"), None)
         .unwrap();
     let ref_document = as_document(&document_node).unwrap();
     let mut root_node = ref_document.document_element().unwrap();

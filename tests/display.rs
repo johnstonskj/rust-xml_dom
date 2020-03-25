@@ -1,8 +1,8 @@
-use xml_dom::convert::{
+use xml_dom::level2::convert::{
     as_attribute_mut, as_document, as_document_decl_mut, as_document_fragment_mut, as_element_mut,
 };
-use xml_dom::dom_impl;
-use xml_dom::{get_implementation, XmlDecl, XmlVersion};
+use xml_dom::level2::dom_impl;
+use xml_dom::level2::{get_implementation, XmlDecl, XmlVersion};
 
 pub mod common;
 
@@ -139,7 +139,11 @@ fn test_display_document() {
         )
         .unwrap();
     let test_node = implementation
-        .create_document("http://www.w3.org/1999/xhtml", "html", Some(document_type))
+        .create_document(
+            Some("http://www.w3.org/1999/xhtml"),
+            Some("html"),
+            Some(document_type),
+        )
         .unwrap();
 
     let result = format!("{}", test_node);
@@ -157,7 +161,11 @@ fn test_display_document_with_decl() {
         )
         .unwrap();
     let mut test_node = implementation
-        .create_document("http://www.w3.org/1999/xhtml", "html", Some(document_type))
+        .create_document(
+            Some("http://www.w3.org/1999/xhtml"),
+            Some("html"),
+            Some(document_type),
+        )
         .unwrap();
 
     let mut_document = as_document_decl_mut(&mut test_node).unwrap();
@@ -188,7 +196,7 @@ fn test_display_document_type() {
 fn test_display_document_fragment() {
     let implementation = get_implementation();
     let mut document_node = implementation
-        .create_document(common::RDF_NS, "rdf:RDF", None)
+        .create_document(Some(common::RDF_NS), Some("rdf:RDF"), None)
         .unwrap();
     let document = as_document(&mut document_node).unwrap();
 
@@ -210,7 +218,7 @@ fn test_display_document_fragment() {
 fn test_display_entity() {
     let implementation = get_implementation();
     let document_node = implementation
-        .create_document(common::RDF_NS, "rdf:RDF", None)
+        .create_document(Some(common::RDF_NS), Some("rdf:RDF"), None)
         .unwrap();
 
     let test_node =
@@ -289,7 +297,7 @@ fn test_display_entity() {
 fn test_display_notation() {
     let implementation = get_implementation();
     let document_node = implementation
-        .create_document(common::RDF_NS, "rdf:RDF", None)
+        .create_document(Some(common::RDF_NS), Some("rdf:RDF"), None)
         .unwrap();
 
     let test_node =

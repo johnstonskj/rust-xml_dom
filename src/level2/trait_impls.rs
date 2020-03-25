@@ -1,12 +1,13 @@
-use crate::convert::*;
-use crate::dom_impl::{get_implementation, Implementation};
-use crate::error::*;
-use crate::name::Name;
-use crate::node_impl::*;
-use crate::options::ProcessingOptions;
-use crate::syntax::*;
-use crate::traits::*;
-use crate::{display, XmlDecl};
+use crate::level2::convert::*;
+use crate::level2::dom_impl::{get_implementation, Implementation};
+use crate::level2::node_impl::*;
+use crate::level2::options::ProcessingOptions;
+use crate::level2::traits::*;
+use crate::shared::decl::*;
+use crate::shared::display;
+use crate::shared::error::*;
+use crate::shared::name::Name;
+use crate::shared::syntax::*;
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -128,16 +129,7 @@ impl Document for RefNode {
     }
 
     fn document_element(&self) -> Option<RefNode> {
-        let ref_self = self.borrow();
-        if let Extension::Document {
-            i_document_element, ..
-        } = &ref_self.i_extension
-        {
-            i_document_element.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
+        self.child_nodes().first().map(Clone::clone)
     }
 
     fn implementation(&self) -> &dyn DOMImplementation<NodeRef = RefNode> {
@@ -238,23 +230,9 @@ impl Document for RefNode {
         //
         // Delegate this call to the document element
         //
-        let ref_self = self.borrow();
-        if let Extension::Document {
-            i_document_element, ..
-        } = &ref_self.i_extension
-        {
-            match i_document_element {
-                None => Vec::default(),
-                Some(root_node) => match as_element(root_node) {
-                    Ok(root_element) => root_element.get_elements_by_tag_name(tag_name),
-                    Err(_) => {
-                        warn!("{}", MSG_INVALID_NODE_TYPE);
-                        Vec::default()
-                    }
-                },
-            }
+        if let Some(root_element) = self.document_element() {
+            Element::get_elements_by_tag_name(&root_element, tag_name)
         } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
             Vec::default()
         }
     }
@@ -263,25 +241,9 @@ impl Document for RefNode {
         //
         // Delegate this call to the document element
         //
-        let ref_self = self.borrow();
-        if let Extension::Document {
-            i_document_element, ..
-        } = &ref_self.i_extension
-        {
-            match i_document_element {
-                None => Vec::default(),
-                Some(root_node) => match as_element(root_node) {
-                    Ok(root_element) => {
-                        root_element.get_elements_by_tag_name_ns(namespace_uri, local_name)
-                    }
-                    Err(_) => {
-                        warn!("{}", MSG_INVALID_NODE_TYPE);
-                        Vec::default()
-                    }
-                },
-            }
+        if let Some(root_element) = self.document_element() {
+            Element::get_elements_by_tag_name_ns(&root_element, namespace_uri, local_name)
         } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
             Vec::default()
         }
     }
@@ -386,8 +348,8 @@ impl DOMImplementation for Implementation {
 
     fn create_document(
         &self,
-        namespace_uri: &str,
-        qualified_name: &str,
+        namespace_uri: Option<&str>,
+        qualified_name: Option<&str>,
         doc_type: Option<RefNode>,
     ) -> Result<RefNode> {
         self.create_document_with_options(
@@ -400,38 +362,38 @@ impl DOMImplementation for Implementation {
 
     fn create_document_with_options(
         &self,
-        namespace_uri: &str,
-        qualified_name: &str,
+        namespace_uri: Option<&str>,
+        qualified_name: Option<&str>,
         doc_type: Option<Self::NodeRef>,
         options: ProcessingOptions,
     ) -> Result<Self::NodeRef> {
-        let name = Name::new_ns(namespace_uri, qualified_name)?;
-        let node_impl = NodeImpl::new_document(name, doc_type, options);
+        let node_impl = NodeImpl::new_document(doc_type, options);
         let mut document_node = RefNode::new(node_impl);
 
-        let element = {
-            let document = as_document_mut(&mut document_node).unwrap();
-            let element_node = document.create_element_ns(namespace_uri, qualified_name)?;
-            {
-                let mut mut_element = element_node.borrow_mut();
-                mut_element.i_parent_node = Some(document_node.clone().downgrade());
-                mut_element.i_owner_document = Some(document_node.clone().downgrade());
+        //
+        // If specified, create a new root element
+        //
+        let element: Option<RefNode> = {
+            let ref_document = as_document(&document_node)?;
+            match (namespace_uri, qualified_name) {
+                (Some(namespace_uri), Some(qualified_name)) => {
+                    Some(ref_document.create_element_ns(namespace_uri, qualified_name)?)
+                }
+                (None, Some(qualified_name)) => Some(ref_document.create_element(qualified_name)?),
+                (Some(_), None) => return Error::Namespace.into(),
+                (None, None) => None,
             }
-            element_node
         };
 
-        {
-            let mut mut_document = document_node.borrow_mut();
-            if let Extension::Document {
-                i_document_element, ..
-            } = &mut mut_document.i_extension
-            {
-                *i_document_element = Some(element);
-            } else {
-                warn!("{}", MSG_INVALID_EXTENSION);
-                return Err(Error::InvalidState);
-            }
-        }
+        //
+        // If successfully created, append root element. This can only be done once.
+        //
+        if let Some(element_node) = element {
+            let document = as_document_mut(&mut document_node)?;
+            let _safe_to_ignore = document.append_child(element_node)?;
+        } else {
+            return Error::InvalidState.into();
+        };
 
         Ok(document_node)
     }
@@ -637,6 +599,7 @@ impl Element for RefNode {
         let attr_name = Name::new_ns(namespace_uri, qualified_name)?;
         let attr_node = {
             let ref_self = &self.borrow_mut();
+            println!("{:#?}", ref_self);
             let document = ref_self.i_owner_document.as_ref().unwrap();
             NodeImpl::new_attribute(document.clone(), attr_name, Some(value))
         };
@@ -989,6 +952,20 @@ impl Node for RefNode {
         if !is_child_allowed(self, &new_child) {
             return Err(Error::HierarchyRequest);
         }
+
+        //
+        // Special case for Document only.
+        //
+        if is_document(self) {
+            if self.has_child_nodes() {
+                warn!("cannot add more than one element to a document");
+                return Error::HierarchyRequest.into();
+            }
+        }
+
+        //
+        // Find the index in `child_nodes` of the `ref_child`.
+        //
         let insert_position = match ref_child {
             None => None,
             Some(ref_child) => match self
@@ -999,7 +976,7 @@ impl Node for RefNode {
             {
                 None => {
                     warn!("insert_before: ref_child not found in `child_nodes`");
-                    return Err(Error::NotFound);
+                    return Error::NotFound.into();
                 }
                 position => position,
             },
@@ -1043,8 +1020,13 @@ impl Node for RefNode {
             let ref_self = self.borrow();
             let mut mut_child = new_child.borrow_mut();
             mut_child.i_parent_node = Some(self.to_owned().downgrade());
-            mut_child.i_owner_document = ref_self.i_owner_document.clone();
+            if is_document(self) {
+                mut_child.i_owner_document = Some(self.clone().downgrade());
+            } else {
+                mut_child.i_owner_document = ref_self.i_owner_document.clone();
+            }
         }
+        println!("{:#?}", new_child);
 
         if is_document_fragment(&new_child) {
             //
@@ -1331,7 +1313,7 @@ fn is_child_allowed(parent: &RefNode, child: &RefNode) -> bool {
         NodeType::ProcessingInstruction => false,
         NodeType::Comment => false,
         NodeType::Document => match child_node_type {
-            NodeType::Comment | NodeType::ProcessingInstruction => true,
+            NodeType::Element | NodeType::Comment | NodeType::ProcessingInstruction => true,
             _ => false,
         },
         NodeType::DocumentType => false,

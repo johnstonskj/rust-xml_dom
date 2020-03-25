@@ -1,7 +1,6 @@
-use crate::convert::*;
-use crate::node_impl::*;
-use crate::syntax::*;
-use crate::traits::*;
+use crate::level2::convert::*;
+use crate::level2::*;
+use crate::shared::syntax::*;
 use std::fmt::{Formatter, Result as FmtResult};
 
 // ------------------------------------------------------------------------------------------------
@@ -79,10 +78,7 @@ pub(crate) fn fmt_document(document: RefDocumentDecl<'_>, f: &mut Formatter<'_>)
     for child in document.child_nodes() {
         write!(f, "{}", child.to_string())?;
     }
-    match document.document_element() {
-        None => Ok(()),
-        Some(document_element) => write!(f, "{}", document_element),
-    }
+    Ok(())
 }
 
 pub(crate) fn fmt_document_type(doc_type: RefDocumentType<'_>, f: &mut Formatter<'_>) -> FmtResult {

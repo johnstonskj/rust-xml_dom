@@ -1,7 +1,7 @@
-use self::super::error::Result;
-use self::super::name::Name;
-use crate::options::ProcessingOptions;
-use crate::XmlDecl;
+use crate::level2::options::ProcessingOptions;
+use crate::shared::decl::XmlDecl;
+use crate::shared::error::Result;
+use crate::shared::name::Name;
 use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
@@ -807,8 +807,8 @@ pub trait DOMImplementation {
     ///
     fn create_document(
         &self,
-        namespace_uri: &str,
-        qualified_name: &str,
+        namespace_uri: Option<&str>,
+        qualified_name: Option<&str>,
         doc_type: Option<Self::NodeRef>,
     ) -> Result<Self::NodeRef>;
     ///
@@ -819,8 +819,8 @@ pub trait DOMImplementation {
     ///
     fn create_document_with_options(
         &self,
-        namespace_uri: &str,
-        qualified_name: &str,
+        namespace_uri: Option<&str>,
+        qualified_name: Option<&str>,
         doc_type: Option<Self::NodeRef>,
         options: ProcessingOptions,
     ) -> Result<Self::NodeRef>;

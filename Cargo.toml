@@ -15,5 +15,15 @@ publish = true
 # and only builds that target for documentation.
 targets = ["x86_64-unknown-linux-gnu"]
 
+[badges.travis-ci]
+branch = "master"
+repository = "johnstonskj/rust-xml_dom"
+
+[features]
+quick_parser = ["quick-xml"]
+
 [dependencies]
 log = "0.4.8"
+
+# Feature specific dependencies
+quick-xml = { optional = true, version = "0.17" }

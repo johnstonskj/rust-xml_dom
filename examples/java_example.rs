@@ -1,6 +1,6 @@
-use xml_dom::convert::*;
-use xml_dom::dom_impl::get_implementation_version;
-use xml_dom::*;
+use xml_dom::level2::convert::*;
+use xml_dom::level2::dom_impl::get_implementation_version;
+use xml_dom::level2::*;
 
 #[allow(unused_must_use)]
 fn main() {
@@ -8,7 +8,7 @@ fn main() {
     println!("Using: {}", get_implementation_version());
 
     let document_node = implementation
-        .create_document("zetcode.com", "users", None)
+        .create_document(Some("zetcode.com"), Some("users"), None)
         .unwrap();
 
     let mut root_node = {

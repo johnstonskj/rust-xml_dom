@@ -1,6 +1,6 @@
-use self::super::error::*;
-use self::super::syntax::*;
-use crate::text::is_xml_name;
+use crate::shared::error::*;
+use crate::shared::syntax::*;
+use crate::shared::text::is_xml_name;
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::result::Result as StdResult;
@@ -379,9 +379,9 @@ impl Name {
 
 #[cfg(test)]
 mod tests {
-    use crate::error::Error;
-    use crate::syntax::{XMLNS_NS_URI, XML_NS_URI};
-    use crate::Name;
+    use crate::shared::error::Error;
+    use crate::shared::name::Name;
+    use crate::shared::syntax::{XMLNS_NS_URI, XML_NS_URI};
     use std::str::FromStr;
 
     #[test]

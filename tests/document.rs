@@ -1,9 +1,9 @@
 use std::str::FromStr;
-use xml_dom::convert::{
+use xml_dom::level2::convert::{
     as_attribute, as_cdata_section, as_comment, as_document, as_document_fragment, as_element,
     as_entity_reference, as_processing_instruction, as_text,
 };
-use xml_dom::Name;
+use xml_dom::level2::Name;
 
 pub mod common;
 

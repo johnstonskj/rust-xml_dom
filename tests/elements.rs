@@ -2,8 +2,8 @@
 // `get_elements_by_tag_name` and `get_elements_by_tag_name_ns` tested in `document.rs`.
 //
 
-use xml_dom::convert::{as_attribute_mut, as_document, as_element, as_element_mut};
-use xml_dom::RefNode;
+use xml_dom::level2::convert::{as_attribute_mut, as_document, as_element, as_element_mut};
+use xml_dom::level2::RefNode;
 
 pub mod common;
 

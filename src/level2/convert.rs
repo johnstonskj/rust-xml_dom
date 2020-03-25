@@ -8,10 +8,10 @@ Note that all of the `as_{name}` functions work as follows.
 * If the `node_type` is not implemented it returns `Error::NotSupported`.
 
 */
-use crate::error::{Error, Result, MSG_INVALID_NODE_TYPE};
-use crate::namespaced::{MutNamespaced, Namespaced};
-use crate::node_impl::*;
-use crate::traits::*;
+use crate::level2::namespaced::{MutNamespaced, Namespaced};
+use crate::level2::node_impl::*;
+use crate::level2::traits::*;
+use crate::shared::error::{Error, Result, MSG_INVALID_NODE_TYPE};
 
 // ------------------------------------------------------------------------------------------------
 // Public Functions

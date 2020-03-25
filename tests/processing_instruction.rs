@@ -1,4 +1,4 @@
-use xml_dom::convert::{as_document, as_processing_instruction_mut};
+use xml_dom::level2::convert::{as_document, as_processing_instruction_mut};
 
 pub mod common;
 

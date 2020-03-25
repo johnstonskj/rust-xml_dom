@@ -1,8 +1,8 @@
-use crate::error::MSG_WEAK_REF;
-use crate::node_impl::Extension;
-use crate::{
-    error::MSG_INVALID_EXTENSION, error::MSG_INVALID_NODE_TYPE, Element, Error, NodeType, RefNode,
-    Result,
+use crate::level2::node_impl::Extension;
+use crate::level2::node_impl::RefNode;
+use crate::level2::traits::{Element, NodeType};
+use crate::shared::error::{
+    Error, Result, MSG_INVALID_EXTENSION, MSG_INVALID_NODE_TYPE, MSG_WEAK_REF,
 };
 
 // ------------------------------------------------------------------------------------------------
@@ -230,11 +230,11 @@ impl MutNamespaced for RefNode {
 
 #[cfg(test)]
 mod tests {
-    use crate::convert::{
+    use crate::level2::convert::{
         as_document_mut, as_element_mut, as_element_namespaced, as_element_namespaced_mut,
         MutRefNamespaced, RefNamespaced,
     };
-    use crate::{get_implementation, RefNode};
+    use crate::level2::{get_implementation, RefNode};
 
     const HTML: &str = "http://www.w3.org/1999/xhtml";
     const XSD: &str = "http://www.w3.org/2001/XMLSchema";
@@ -243,7 +243,7 @@ mod tests {
 
     fn make_document_node() -> RefNode {
         get_implementation()
-            .create_document("http://example.org/", "root", None)
+            .create_document(Some("http://example.org/"), Some("root"), None)
             .unwrap()
     }
 

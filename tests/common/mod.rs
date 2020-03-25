@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
 use std::fmt::Display;
-use xml_dom::convert::*;
-use xml_dom::*;
+use xml_dom::level2::convert::*;
+use xml_dom::level2::*;
 
 pub const DC_NS: &str = "http://purl.org/dc/elements/1.1/";
 pub const RDF_NS: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
@@ -12,7 +12,7 @@ pub const XMLNS_NS: &str = "http://www.w3.org/2000/xmlns/";
 pub fn create_empty_rdf_document() -> RefNode {
     let implementation = get_implementation();
     implementation
-        .create_document(RDF_NS, "rdf:RDF", None)
+        .create_document(Some(RDF_NS), Some("rdf:RDF"), None)
         .unwrap()
 }
 
@@ -33,14 +33,15 @@ pub fn create_empty_rdf_document() -> RefNode {
 pub fn create_example_rdf_document() -> RefNode {
     create_example_rdf_document_options(ProcessingOptions::default())
 }
+
 #[allow(unused_must_use)]
 pub fn create_example_rdf_document_options(options: ProcessingOptions) -> RefNode {
     let implementation = get_implementation();
     let mut document_node = implementation
-        .create_document_with_options(RDF_NS, "rdf:RDF", None, options)
+        .create_document_with_options(Some(RDF_NS), Some("rdf:RDF"), None, options)
         .unwrap();
+    println!("{:#?}", document_node.clone());
     let document = as_document_mut(&mut document_node).unwrap();
-
     let mut root_node = document.document_element().unwrap();
     let root_element = as_element_mut(&mut root_node).unwrap();
     root_element.set_attribute_ns(XMLNS_NS, "xmlns:rdf", RDF_NS);
