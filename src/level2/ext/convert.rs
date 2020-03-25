@@ -9,44 +9,36 @@ use crate::level2::node_impl::*;
 use crate::level2::traits::NodeType;
 use crate::shared::error::{Error, Result, MSG_INVALID_NODE_TYPE};
 
+use crate::{make_is_as_functions, make_ref_type};
+
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
 
-/// Type for dynamic trait cast
-pub type RefNamespaced<'a> = &'a dyn Namespaced<NodeRef = RefNode>;
-pub(crate) type MutRefNamespaced<'a> = &'a mut dyn MutNamespaced<NodeRef = RefNode>;
+make_ref_type!(RefDocumentDecl, MutRefDocumentDecl, DocumentDecl);
 
-/// Type for dynamic trait cast
-pub type RefDocumentDecl<'a> = &'a dyn DocumentDecl<NodeRef = RefNode>;
-/// Type for mutable dynamic trait cast
-pub type MutRefDocumentDecl<'a> = &'a mut dyn DocumentDecl<NodeRef = RefNode>;
+make_ref_type!(RefNamespaced, Namespaced);
+pub(crate) type MutRefNamespaced<'a> = &'a mut dyn MutNamespaced<NodeRef = RefNode>;
 
 // ------------------------------------------------------------------------------------------------
 // Public Functions
 // ------------------------------------------------------------------------------------------------
 
-///
-/// Determines if the specified node is of type `NodeType::Element` and supports the trait
-/// `Namespaced`.
-///
-#[inline]
-pub fn is_element_namespaced(ref_node: &RefNode) -> bool {
-    ref_node.borrow().i_node_type == NodeType::Element
-}
+make_is_as_functions!(
+    is_document_decl,
+    NodeType::Document,
+    as_document_decl,
+    RefDocumentDecl,
+    as_document_decl_mut,
+    MutRefDocumentDecl
+);
 
-///
-/// Safely _cast_ the specified `RefNode` into a  `Namespaced` element.
-///
-#[inline]
-pub fn as_element_namespaced(ref_node: &RefNode) -> Result<RefNamespaced<'_>> {
-    if ref_node.borrow().i_node_type == NodeType::Element {
-        Ok(ref_node as RefNamespaced<'_>)
-    } else {
-        warn!("{}", MSG_INVALID_NODE_TYPE);
-        Err(Error::InvalidState)
-    }
-}
+make_is_as_functions!(
+    is_element_namespaced,
+    NodeType::Element,
+    as_element_namespaced,
+    RefNamespaced
+);
 
 ///
 /// Safely _cast_ the specified `RefNode` into a mutable `Namespaced` element.
@@ -55,40 +47,6 @@ pub fn as_element_namespaced(ref_node: &RefNode) -> Result<RefNamespaced<'_>> {
 pub(crate) fn as_element_namespaced_mut(ref_node: &mut RefNode) -> Result<MutRefNamespaced<'_>> {
     if ref_node.borrow().i_node_type == NodeType::Element {
         Ok(ref_node as MutRefNamespaced<'_>)
-    } else {
-        warn!("{}", MSG_INVALID_NODE_TYPE);
-        Err(Error::InvalidState)
-    }
-}
-
-///
-/// Determines if the specified node is of type `NodeType::Document`.
-///
-#[inline]
-pub fn is_document_decl(ref_node: &RefNode) -> bool {
-    ref_node.borrow().i_node_type == NodeType::Document
-}
-
-///
-/// Safely _cast_ the specified `RefNode` into a  `Document`.
-///
-#[inline]
-pub fn as_document_decl(ref_node: &RefNode) -> Result<RefDocumentDecl<'_>> {
-    if ref_node.borrow().i_node_type == NodeType::Document {
-        Ok(ref_node as RefDocumentDecl<'_>)
-    } else {
-        warn!("{}", MSG_INVALID_NODE_TYPE);
-        Err(Error::InvalidState)
-    }
-}
-
-///
-/// Safely _cast_ the specified `RefNode` into a mutable `Document`.
-///
-#[inline]
-pub fn as_document_decl_mut(ref_node: &mut RefNode) -> Result<MutRefDocumentDecl<'_>> {
-    if ref_node.borrow().i_node_type == NodeType::Document {
-        Ok(ref_node as MutRefDocumentDecl<'_>)
     } else {
         warn!("{}", MSG_INVALID_NODE_TYPE);
         Err(Error::InvalidState)
