@@ -8,11 +8,12 @@ specification is described [below](#idl-to-rust-mapping), however from a purely 
 view the implementation has the following characteristics:
 
 1. It maintains a reasonable separation between the node type traits and the tree implementation
-   using opaque Node reference types.
+   using opaque `Node` reference types.
 1. Where possible the names from IDL are used with minimal conversion, however some redundant
    suffixes (`_data`, `_node`) have been reduced for brevity/clarity.
 1. This leads to a replication of the typical programmer experience where casting between the
-   node traits is required. This is supported by the `xml_dom::convert` module.
+   node traits is required. This is supported by the [`xml_dom::level2::convert`](level2/convert/index.html)
+   module.
 
 # Example
 
@@ -100,23 +101,23 @@ interfaces and client programmers should never need to interact with `WeakRefNod
 
 | IDL Interface           | Rust Mapping                                                |
 |-------------------------|-------------------------------------------------------------|
-| `Attr`                  | [`Attribute`](trait.Attribute.html)                         |
-| _`CharacterData`_       | [`CharacterData`](trait.CharacterData.html)                 |
-| `CDATASection`          | [`CDataSection`](trait.CDataSection.html)                   |
-| `Comment`               | [`Comment`](trait.Comment.html)                             |
-| `Document`              | [`Document`](trait.Document.html)                           |
-| `DocumentFragment`      | [`DocumentFragment`](trait.DocumentFragment.html)           |
-| `DocumentType`          | [`DocumentType`](trait.DocumentType.html)                   |
-| `DOMImplementation`     | [`DOMImplementation`](trait.DOMImplementation.html)         |
-| `Element`               | [`Element`](trait.Element.html)                             |
-| `Entity`                | [`Entity`](trait.Entity.html)                               |
-| `EntityReference`       | [`EntityReference`](trait.EntityReference.html)             |
+| `Attr`                  | [`Attribute`](level2/trait.Attribute.html)                         |
+| _`CharacterData`_       | [`CharacterData`](level2/trait.CharacterData.html)                 |
+| `CDATASection`          | [`CDataSection`](level2/trait.CDataSection.html)                   |
+| `Comment`               | [`Comment`](level2/trait.Comment.html)                             |
+| `Document`              | [`Document`](level2/trait.Document.html)                           |
+| `DocumentFragment`      | [`DocumentFragment`](level2/trait.DocumentFragment.html)           |
+| `DocumentType`          | [`DocumentType`](level2/trait.DocumentType.html)                   |
+| `DOMImplementation`     | [`DOMImplementation`](level2/trait.DOMImplementation.html)         |
+| `Element`               | [`Element`](level2/trait.Element.html)                             |
+| `Entity`                | [`Entity`](level2/trait.Entity.html)                               |
+| `EntityReference`       | [`EntityReference`](level2/trait.EntityReference.html)             |
 | `NamedNodeMap`          | `HashMap<Name, RefNode>`                                    |
-| `Node`                  | [`Node`](trait.Node.html)                                   |
+| `Node`                  | [`Node`](level2/trait.Node.html)                                   |
 | `NodeList`              | `Vec<Rc<RefNode>>`                                          |
-| `Notation`              | [`Notation`](trait.Notation.html)                           |
-| `ProcessingInstruction` | [`ProcessingInstruction`](trait.ProcessingInstruction.html) |
-| `Text`                  | [`Text`](trait.Text.html)                                   |
+| `Notation`              | [`Notation`](level2/trait.Notation.html)                           |
+| `ProcessingInstruction` | [`ProcessingInstruction`](level2/trait.ProcessingInstruction.html) |
+| `Text`                  | [`Text`](level2/trait.Text.html)                                   |
 
 * The exception type `DOMException` and associated constants are represented by the enumeration
   `Error`.
@@ -125,8 +126,8 @@ interfaces and client programmers should never need to interact with `WeakRefNod
   * writeable attributes also have a `set_attribute_name` setter,
   * some attributes allow null in which case they have an `unset_attribute_name` setter.
 * IDL function names are altered from `lowerCamelCase` to `snake_case`.
-* IDL functions that are marked `raises(DOMException)` return [`Result`](type.Result.html) with
-  [`Error`](enum.Error.html) as the error type.
+* IDL functions that are marked `raises(DOMException)` return [`Result`](level2/type.Result.html) with
+  [`Error`](level2/enum.Error.html) as the error type.
 * IDL attributes of type `T` that are described as "_may be `null`_", or IDL functions that "_may
   return `T` or `null`_" instead return `Option<T>`.
 
@@ -143,26 +144,26 @@ interfaces and client programmers should never need to interact with `WeakRefNod
 
 The following extensions are provided beyond the DOM Level 2 specification.
 
-1. The [`get_implementation`](fn.get_implementation.html) function returns an instance of
+1. The [`get_implementation`](level2/dom_impl/fn.get_implementation.html) function returns an instance of
    `DOMImplementation` to allow bootstrapping the creation of documents. This satisfies the
    requirement from the specification: _"The DOM Level 2 API does not define a standard way to
    create DOMImplementation objects; DOM implementations must provide some proprietary way of
    bootstrapping these DOM interfaces, and then all other objects can be built from there."_.
-1. The [`get_implementation_version`](fn.get_implementation_version.html) function in the
-   [`dom_impl`](dom_impl/index.html) module returns a vendor-specific version identifier for the
+1. The [`get_implementation_version`](level2/dom_impl/fn.get_implementation_version.html) function in the
+   [`dom_impl`](level2/dom_impl/index.html) module returns a vendor-specific version identifier for the
    `DOMImplementation`.
 1. The standard `DOMImplementation` trait also has an additional member
-   [`create_document_with_options`](trait.DOMImplementation.html#tymethod.create_document_with_options),
-   and associated [`ProcessingOptions`](struct.ProcessingOptions.html) structure, that can set
+   [`create_document_with_options`](level2/trait.DOMImplementation.html#tymethod.create_document_with_options),
+   and associated [`ProcessingOptions`](level2/options/struct.ProcessingOptions.html) structure, that can set
    optional behavior for a given `Document` instance.
-1. The trait [`DocumentDecl`](trait.DocumentDecl.html) extends `Document` with the ability to set
+1. The trait [`DocumentDecl`](level2/trait.DocumentDecl.html) extends `Document` with the ability to set
    and retrieve the XML declaration from the document's prolog.
-1. The trait [`Namespaced`](trait.Namespaced.html) extends `Element` with the ability to look-up
+1. The trait [`Namespaced`](level2/trait.Namespaced.html) extends `Element` with the ability to look-up
    namespace mappings (using the standard `xmlns` attribute).
-1. The functiions [`create_entity`](dom_impl/fn.create_entity.html),
-   [`create_internal_entity`](dom_impl/fn.create_internal_entity.html), and
-   [`create_notation`](dom_impl/fn.create_notation.html) in the
-   [`dom_impl`](dom_impl/index.html) module provide the ability to create instances of these
+1. The functiions [`create_entity`](level2/dom_impl/fn.create_entity.html),
+   [`create_internal_entity`](level2/dom_impl/fn.create_internal_entity.html), and
+   [`create_notation`](level2/dom_impl/fn.create_notation.html) in the
+   [`dom_impl`](level2/dom_impl/index.html) module provide the ability to create instances of these
    Level 2 extended interfaces. In general most clients using the DOM do not need to create these
    however parsers constructing the DOM may.
 
