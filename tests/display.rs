@@ -1,8 +1,10 @@
 use xml_dom::level2::convert::{
-    as_attribute_mut, as_document, as_document_decl_mut, as_document_fragment_mut, as_element_mut,
+    as_attribute_mut, as_document, as_document_fragment_mut, as_element_mut,
 };
-use xml_dom::level2::dom_impl;
-use xml_dom::level2::{get_implementation, XmlDecl, XmlVersion};
+use xml_dom::level2::ext::convert::as_document_decl_mut;
+use xml_dom::level2::ext::dom_impl as ext_dom_impl;
+use xml_dom::level2::ext::{XmlDecl, XmlVersion};
+use xml_dom::level2::get_implementation;
 
 pub mod common;
 
@@ -222,7 +224,7 @@ fn test_display_entity() {
         .unwrap();
 
     let test_node =
-        dom_impl::create_internal_entity(document_node.clone(), "name", "My Name").unwrap();
+        ext_dom_impl::create_internal_entity(document_node.clone(), "name", "My Name").unwrap();
 
     let result = format!("{}", test_node);
     assert_eq!(result, "<!ENTITY name \"My Name\">");
@@ -232,7 +234,7 @@ fn test_display_entity() {
         "create_entity(node, name, Some, None)",
     );
     let test_node =
-        dom_impl::create_entity(document_node.clone(), "name", Some("file-name.xml"), None)
+        ext_dom_impl::create_entity(document_node.clone(), "name", Some("file-name.xml"), None)
             .unwrap();
 
     let result = format!("{}", test_node);
@@ -243,7 +245,7 @@ fn test_display_entity() {
         "create_entity(node, name, None, Some)",
     );
     let test_node =
-        dom_impl::create_entity(document_node.clone(), "name", None, Some("file-name.xml"))
+        ext_dom_impl::create_entity(document_node.clone(), "name", None, Some("file-name.xml"))
             .unwrap();
 
     let result = format!("{}", test_node);
@@ -253,7 +255,7 @@ fn test_display_entity() {
         "test_display_entity",
         "create_entity(node, name, Some, Some)",
     );
-    let test_node = dom_impl::create_entity(
+    let test_node = ext_dom_impl::create_entity(
         document_node.clone(),
         "name",
         Some("foo-bar"),
@@ -301,7 +303,7 @@ fn test_display_notation() {
         .unwrap();
 
     let test_node =
-        dom_impl::create_notation(document_node.clone(), "name", Some("file-name.xml"), None)
+        ext_dom_impl::create_notation(document_node.clone(), "name", Some("file-name.xml"), None)
             .unwrap();
 
     let result = format!("{}", test_node);
@@ -310,7 +312,7 @@ fn test_display_notation() {
     // ------------------------------------------------------------
 
     let test_node =
-        dom_impl::create_notation(document_node.clone(), "name", None, Some("file-name.xml"))
+        ext_dom_impl::create_notation(document_node.clone(), "name", None, Some("file-name.xml"))
             .unwrap();
 
     let result = format!("{}", test_node);
@@ -318,7 +320,7 @@ fn test_display_notation() {
 
     // ------------------------------------------------------------
 
-    let test_node = dom_impl::create_notation(
+    let test_node = ext_dom_impl::create_notation(
         document_node.clone(),
         "name",
         Some("foo-bar"),

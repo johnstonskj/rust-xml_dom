@@ -1,9 +1,9 @@
 use crate::level2::convert::*;
 use crate::level2::dom_impl::{get_implementation, Implementation};
+use crate::level2::ext::convert::as_element_namespaced_mut;
+use crate::level2::ext::options::ProcessingOptions;
 use crate::level2::node_impl::*;
-use crate::level2::options::ProcessingOptions;
 use crate::level2::traits::*;
-use crate::shared::decl::*;
 use crate::shared::display;
 use crate::shared::error::*;
 use crate::shared::name::Name;
@@ -250,37 +250,6 @@ impl Document for RefNode {
 
 // ------------------------------------------------------------------------------------------------
 
-impl DocumentDecl for RefNode {
-    fn xml_declaration(&self) -> Option<XmlDecl> {
-        let ref_self = self.borrow();
-        if let Extension::Document {
-            i_xml_declaration, ..
-        } = &ref_self.i_extension
-        {
-            i_xml_declaration.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
-    }
-
-    fn set_xml_declaration(&mut self, xml_decl: XmlDecl) -> Result<()> {
-        let mut mut_self = self.borrow_mut();
-        if let Extension::Document {
-            i_xml_declaration, ..
-        } = &mut mut_self.i_extension
-        {
-            *i_xml_declaration = Some(xml_decl);
-            Ok(())
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            Err(Error::InvalidState)
-        }
-    }
-}
-
-// ------------------------------------------------------------------------------------------------
-
 impl DocumentFragment for RefNode {}
 
 // ------------------------------------------------------------------------------------------------
@@ -351,48 +320,7 @@ impl DOMImplementation for Implementation {
         qualified_name: Option<&str>,
         doc_type: Option<RefNode>,
     ) -> Result<RefNode> {
-        self.create_document_with_options(
-            namespace_uri,
-            qualified_name,
-            doc_type,
-            Default::default(),
-        )
-    }
-
-    fn create_document_with_options(
-        &self,
-        namespace_uri: Option<&str>,
-        qualified_name: Option<&str>,
-        doc_type: Option<Self::NodeRef>,
-        options: ProcessingOptions,
-    ) -> Result<Self::NodeRef> {
-        let node_impl = NodeImpl::new_document(doc_type, options);
-        let mut document_node = RefNode::new(node_impl);
-
-        //
-        // If specified, create a new root element
-        //
-        let element: Option<RefNode> = {
-            let ref_document = as_document(&document_node)?;
-            match (namespace_uri, qualified_name) {
-                (Some(namespace_uri), Some(qualified_name)) => {
-                    Some(ref_document.create_element_ns(namespace_uri, qualified_name)?)
-                }
-                (None, Some(qualified_name)) => Some(ref_document.create_element(qualified_name)?),
-                (Some(_), None) => return Error::Namespace.into(),
-                (None, None) => None,
-            }
-        };
-
-        //
-        // If successfully created, append root element. This can only be done once.
-        //
-        if let Some(element_node) = element {
-            let document = as_document_mut(&mut document_node)?;
-            let _safe_to_ignore = document.append_child(element_node)?;
-        }
-
-        Ok(document_node)
+        create_document_with_options(namespace_uri, qualified_name, doc_type, Default::default())
     }
 
     fn create_document_type(
@@ -407,8 +335,8 @@ impl DOMImplementation for Implementation {
     }
 
     fn has_feature(&self, feature: &str, version: &str) -> bool {
-        ((feature == XML_FEATURE_CORE || feature == XML_FEATURE_XML) && (version == XML_FEATURE_V1)
-            || (feature == XML_FEATURE_CORE && version == XML_FEATURE_V2))
+        (feature == XML_FEATURE_CORE || feature == XML_FEATURE_XML)
+            && (version == XML_FEATURE_V1 || version == XML_FEATURE_V2)
     }
 }
 
@@ -1317,4 +1245,39 @@ fn is_child_allowed(parent: &RefNode, child: &RefNode) -> bool {
         },
         NodeType::Notation => false,
     }
+}
+
+pub(crate) fn create_document_with_options(
+    namespace_uri: Option<&str>,
+    qualified_name: Option<&str>,
+    doc_type: Option<RefNode>,
+    options: ProcessingOptions,
+) -> Result<RefNode> {
+    let node_impl = NodeImpl::new_document(doc_type, options);
+    let mut document_node = RefNode::new(node_impl);
+
+    //
+    // If specified, create a new root element
+    //
+    let element: Option<RefNode> = {
+        let ref_document = as_document(&document_node)?;
+        match (namespace_uri, qualified_name) {
+            (Some(namespace_uri), Some(qualified_name)) => {
+                Some(ref_document.create_element_ns(namespace_uri, qualified_name)?)
+            }
+            (None, Some(qualified_name)) => Some(ref_document.create_element(qualified_name)?),
+            (Some(_), None) => return Error::Namespace.into(),
+            (None, None) => None,
+        }
+    };
+
+    //
+    // If successfully created, append root element. This can only be done once.
+    //
+    if let Some(element_node) = element {
+        let document = as_document_mut(&mut document_node)?;
+        let _safe_to_ignore = document.append_child(element_node)?;
+    }
+
+    Ok(document_node)
 }

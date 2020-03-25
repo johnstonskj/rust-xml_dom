@@ -1,4 +1,7 @@
-#![allow(dead_code)]
+/*!
+This module provides support types for the `DOMImplementation`'s
+[`create_document_with_options`](trait.DOMImplementation.html#method.create_document_with_options).
+*/
 
 use std::fmt::{Binary, Display, Formatter, Result};
 use std::ops::{BitAnd, BitOr};
@@ -19,11 +22,13 @@ use std::ops::{BitAnd, BitOr};
 /// ```rust
 /// use xml_dom::level2::*;
 /// use xml_dom::level2::convert::*;
+/// use xml_dom::level2::ext::*;
+/// use xml_dom::level2::ext::dom_impl::get_implementation_ext;
 ///
 /// let mut options = ProcessingOptions::new();
 /// options.set_assume_ids();
 ///
-/// let implementation = get_implementation();
+/// let implementation = get_implementation_ext();
 /// let mut document_node = implementation
 ///     .create_document_with_options(
 ///         Some("http://www.w3.org/1999/xhtml"),

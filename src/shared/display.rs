@@ -1,4 +1,5 @@
 use crate::level2::convert::*;
+use crate::level2::ext::convert::{as_document_decl, RefDocumentDecl};
 use crate::level2::*;
 use crate::shared::syntax::*;
 use std::fmt::{Formatter, Result as FmtResult};

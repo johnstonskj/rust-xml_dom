@@ -1,6 +1,11 @@
+/*!
+This module provides support types for the [`Namespaced`](trait.Namespaced.html) trait.
+*/
+
+use crate::level2::ext::traits::Namespaced;
 use crate::level2::node_impl::Extension;
 use crate::level2::node_impl::RefNode;
-use crate::level2::traits::{Element, NodeType};
+use crate::level2::traits::NodeType;
 use crate::shared::error::{
     Error, Result, MSG_INVALID_EXTENSION, MSG_INVALID_NODE_TYPE, MSG_WEAK_REF,
 };
@@ -8,74 +13,6 @@ use crate::shared::error::{
 // ------------------------------------------------------------------------------------------------
 // Public Types
 // ------------------------------------------------------------------------------------------------
-
-///
-/// An extended interface that provides access to namespace information for elements, including
-/// the resolving of prefixes and namespaces in the hierarchy of the document.
-///
-/// The abstraction is of a hash map for each element that maps prefixes to namespace URIs. A
-/// prefix is of type `Option<String>` so that the un-prefixed namespace can be represented as
-/// the prefix `None`. URIs are simply stored as `String`s.
-///
-/// So, given the following XML:
-///
-/// ```xml
-/// <element
-///   xmlns="example.org/schema/common"
-///   xmlns:p="example.org/schema/product"
-///   xmlns:o="example.org/schema/order">
-/// </element>
-/// ```
-///
-/// we would get the following hash:
-///
-/// ```rust,ignore
-/// {
-///     Some(
-///         "o",
-///     ): "example.org/schema/order",
-///     None: "example.org/schema/common",
-///     Some(
-///         "p",
-///     ): "example.org/schema/product",
-/// }
-/// ```
-///
-pub trait Namespaced: Element {
-    ///
-    /// Returns `true` if this, and only this, element has a URI mapping for the provided `prefix`,
-    /// `false` otherwise.
-    ///
-    fn contains_mapping(&self, prefix: Option<&str>) -> bool;
-    ///
-    /// Returns the namespace URI associated with the provided `prefix`, `None` if the prefix is not
-    /// mapped to a URI for this, and only this, element.
-    ///  
-    fn get_namespace(&self, prefix: Option<&str>) -> Option<String>;
-    ///
-    /// Returns the namespace URI associated with the provided `prefix` for this element by looking
-    /// up the DOM tree through `parent_node` links. Returns `None` if the prefix is not mapped to a
-    /// URI on this, or any parent, element.
-    ///  
-    fn resolve_namespace(&self, prefix: Option<&str>) -> Option<String>;
-
-    ///
-    /// Returns `true` if this, and only this, element has a URI mapping for the provided
-    /// `namespace_uri`, `false` otherwise.
-    ///
-    fn contains_mapped_namespace(&self, namespace_uri: &str) -> bool;
-    ///
-    /// Returns the prefix associated with the provided `namespace_uri`, `None` if the namespace
-    /// URI is not mapped with a prefix for this, and only this, element.
-    ///  
-    fn get_prefix(&self, namespace_uri: &str) -> NamespacePrefix;
-    ///
-    /// Returns the prefix associated with the provided `namespace_uri` for this element by looking
-    /// up the DOM tree through `parent_node` links. Returns `None` if the namespace is not mapped
-    /// with a prefix for this, or any parent, element.
-    ///  
-    fn resolve_prefix(&self, namespace_uri: &str) -> NamespacePrefix;
-}
 
 ///
 /// This represents the prefix value as a result of either [`Namespaced::get_prefix`](trait.Namespaced.html#method.get_prefix)
@@ -104,6 +41,58 @@ pub(crate) trait MutNamespaced: Namespaced {
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
+// ------------------------------------------------------------------------------------------------
+
+impl NamespacePrefix {
+    ///
+    /// Construct a new `NamespacePrefix::Some` value with the provided prefix.
+    ///
+    pub fn new_some(prefix: &str) -> Self {
+        Self::Some(prefix.to_string())
+    }
+
+    ///
+    /// Returns `true` of this is a `NamespacePrefix::None` value, otherwise `false`.
+    ///
+    pub fn is_none(&self) -> bool {
+        match *self {
+            NamespacePrefix::None => true,
+            _ => false,
+        }
+    }
+
+    ///
+    /// Returns `true` of this is a `NamespacePrefix::Default` value, otherwise `false`.
+    ///
+    pub fn is_default(&self) -> bool {
+        match *self {
+            NamespacePrefix::Default => true,
+            _ => false,
+        }
+    }
+
+    ///
+    /// Returns `true` of this is a `NamespacePrefix::Some` value, otherwise `false`.
+    ///
+    pub fn is_some(&self) -> bool {
+        match *self {
+            NamespacePrefix::Some(_) => true,
+            _ => false,
+        }
+    }
+
+    ///
+    /// If this is a `NamespacePrefix::Some` value, return `Some` with the prefix string,
+    /// otherwise `None`.
+    ///
+    pub fn some(&self) -> Option<String> {
+        match self {
+            NamespacePrefix::Some(s) => Some(s.clone()),
+            _ => None,
+        }
+    }
+}
+
 // ------------------------------------------------------------------------------------------------
 
 impl Namespaced for RefNode {
@@ -245,11 +234,12 @@ impl MutNamespaced for RefNode {
 
 #[cfg(test)]
 mod tests {
-    use crate::level2::convert::{
-        as_document_mut, as_element_mut, as_element_namespaced, as_element_namespaced_mut,
-        MutRefNamespaced, RefNamespaced,
+    use crate::level2::convert::{as_document_mut, as_element_mut};
+    use crate::level2::ext::convert::{
+        as_element_namespaced, as_element_namespaced_mut, MutRefNamespaced, RefNamespaced,
     };
-    use crate::level2::{get_implementation, NamespacePrefix, RefNode};
+    use crate::level2::ext::NamespacePrefix;
+    use crate::level2::{get_implementation, RefNode};
 
     const HTML: &str = "http://www.w3.org/1999/xhtml";
     const XSD: &str = "http://www.w3.org/2001/XMLSchema";
@@ -418,55 +408,5 @@ mod tests {
             ns_child.resolve_prefix(XSLT),
             NamespacePrefix::new_some("xslt")
         );
-    }
-}
-
-impl NamespacePrefix {
-    ///
-    /// Construct a new `NamespacePrefix::Some` value with the provided prefix.
-    ///
-    pub fn new_some(prefix: &str) -> Self {
-        Self::Some(prefix.to_string())
-    }
-
-    ///
-    /// Returns `true` of this is a `NamespacePrefix::None` value, otherwise `false`.
-    ///
-    pub fn is_none(&self) -> bool {
-        match *self {
-            NamespacePrefix::None => true,
-            _ => false,
-        }
-    }
-
-    ///
-    /// Returns `true` of this is a `NamespacePrefix::Default` value, otherwise `false`.
-    ///
-    pub fn is_default(&self) -> bool {
-        match *self {
-            NamespacePrefix::Default => true,
-            _ => false,
-        }
-    }
-
-    ///
-    /// Returns `true` of this is a `NamespacePrefix::Some` value, otherwise `false`.
-    ///
-    pub fn is_some(&self) -> bool {
-        match *self {
-            NamespacePrefix::Some(_) => true,
-            _ => false,
-        }
-    }
-
-    ///
-    /// If this is a `NamespacePrefix::Some` value, return `Some` with the prefix string,
-    /// otherwise `None`.
-    ///
-    pub fn some(&self) -> Option<String> {
-        match self {
-            NamespacePrefix::Some(s) => Some(s.clone()),
-            _ => None,
-        }
     }
 }

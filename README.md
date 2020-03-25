@@ -84,7 +84,8 @@ implementation of `Display` for `RefNode` does not format the output.
 
 **Version 0.1.4** (_in progress_)
 
-* **BREAKING** Refactor, add a `level2` module, allowing other levels to be added at a later time.
+* **BREAKING** Refactor, add a `level2` module, allowing other levels to be added at a later time. Also
+  moved extensions into `level2::ext` module.
 * Implemented the following methods:
   * `Node::clone_node`;
   * `Node::normalize`.

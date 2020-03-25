@@ -2,6 +2,8 @@
 
 use std::fmt::Display;
 use xml_dom::level2::convert::*;
+use xml_dom::level2::ext::dom_impl::get_implementation_ext;
+use xml_dom::level2::ext::options::ProcessingOptions;
 use xml_dom::level2::*;
 
 pub const DC_NS: &str = "http://purl.org/dc/elements/1.1/";
@@ -36,7 +38,7 @@ pub fn create_example_rdf_document() -> RefNode {
 
 #[allow(unused_must_use)]
 pub fn create_example_rdf_document_options(options: ProcessingOptions) -> RefNode {
-    let implementation = get_implementation();
+    let implementation = get_implementation_ext();
     let mut document_node = implementation
         .create_document_with_options(Some(RDF_NS), Some("rdf:RDF"), None, options)
         .unwrap();

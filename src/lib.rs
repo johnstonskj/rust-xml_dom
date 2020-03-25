@@ -1,7 +1,4 @@
 /*!
-A reasonably faithful implementation of the W3C [Document Object Model Core, Level
-2](https://www.w3.org/TR/DOM-Level-2-Core).
-
 This crate provides a trait-based implementation of the DOM with minimal changes to the style
 and semantics defined in the Level 2 specification. The specific mapping from the IDL in the
 specification is described [below](#idl-to-rust-mapping), however from a purely style point of
@@ -14,6 +11,15 @@ view the implementation has the following characteristics:
 1. This leads to a replication of the typical programmer experience where casting between the
    node traits is required. This is supported by the [`xml_dom::level2::convert`](level2/convert/index.html)
    module.
+
+# Levels supported.
+
+* **Level 1**: Only supported as a subset of Level 2 at this time
+  ([specification](https://www.w3.org/TR/REC-DOM-Level-1/)).
+* **Level 2**: Supported as described in the [`level2`](level2/index.html) module
+  ([specification](https://www.w3.org/TR/DOM-Level-2-Core/)).
+* **Level 3**: Not supported at this time.
+* **Level 4**: Not supported at this time.
 
 # Example
 
@@ -39,7 +45,7 @@ let xml = document_node.to_string();
 println!("document 2: {}", xml);
 ```
 
-# Specification
+# Specifications
 
 * [Document Object Model (DOM) Level 1 Specification](https://www.w3.org/TR/REC-DOM-Level-1/),
   Version 1.0, W3C Recommendation 1 October, 1998. Specifically §1, _Document Object Model (Core)
@@ -55,27 +61,9 @@ println!("document 2: {}", xml);
 * [XML Base (Second Edition)](https://www.w3.org/TR/xmlbase/), W3C Recommendation 28 January 2009.
 * [The "xml" Namespace](https://www.w3.org/XML/1998/namespace), W3C 26 October 2009.
 
-## Conformance
-
-TBD
-
-The `has_feature` method [`DOMImplementation`](struct.DOMImplementation.html) and `is_supported` on
-[`Node`](trait.Node.html) will return true when the request is for support of the Core or XML
-feature and supports both version 1.0 and version 2.0 of Core and version 1.0 of XML.
-
-```rust
-use xml_dom::level2::{DOMImplementation, get_implementation};
-
-let implementation = get_implementation();
-assert!(implementation.has_feature("Core", "1.0"));
-assert!(implementation.has_feature("Core", "2.0"));
-assert!(implementation.has_feature("XML", "1.0"));
-assert!(!implementation.has_feature("XML", "2.0"));
-```
-
 # IDL to Rust Mapping
 
-From the core documentation:
+From the Level 2 documentation:
 
 > The `Node` interface is the primary datatype for the entire Document Object Model. It represents
 > a single node in the document tree. While all objects implementing the `Node` interface expose
@@ -95,29 +83,9 @@ the specification documents listed above.
 
 ## Interface Mapping
 
-The actual concrete types used in the DOM tree are [`RefNode`](type.RefNode.html) and `WeakRefNode`
-which in turn are references an opaque `NodeImpl struct. Only `RefNode` implements all of the DOM
-interfaces and client programmers should never need to interact with `WeakRefNode`.
-
-| IDL Interface           | Rust Mapping                                                |
-|-------------------------|-------------------------------------------------------------|
-| `Attr`                  | [`Attribute`](level2/trait.Attribute.html)                         |
-| _`CharacterData`_       | [`CharacterData`](level2/trait.CharacterData.html)                 |
-| `CDATASection`          | [`CDataSection`](level2/trait.CDataSection.html)                   |
-| `Comment`               | [`Comment`](level2/trait.Comment.html)                             |
-| `Document`              | [`Document`](level2/trait.Document.html)                           |
-| `DocumentFragment`      | [`DocumentFragment`](level2/trait.DocumentFragment.html)           |
-| `DocumentType`          | [`DocumentType`](level2/trait.DocumentType.html)                   |
-| `DOMImplementation`     | [`DOMImplementation`](level2/trait.DOMImplementation.html)         |
-| `Element`               | [`Element`](level2/trait.Element.html)                             |
-| `Entity`                | [`Entity`](level2/trait.Entity.html)                               |
-| `EntityReference`       | [`EntityReference`](level2/trait.EntityReference.html)             |
-| `NamedNodeMap`          | `HashMap<Name, RefNode>`                                    |
-| `Node`                  | [`Node`](level2/trait.Node.html)                                   |
-| `NodeList`              | `Vec<Rc<RefNode>>`                                          |
-| `Notation`              | [`Notation`](level2/trait.Notation.html)                           |
-| `ProcessingInstruction` | [`ProcessingInstruction`](level2/trait.ProcessingInstruction.html) |
-| `Text`                  | [`Text`](level2/trait.Text.html)                                   |
+The actual concrete types used in the DOM tree are [`RefNode`](type.RefNode.html)
+which in turn are references an opaque `NodeImpl struct. `RefNode` implements all of the DOM
+specified, and extension, interfaces.
 
 * The exception type `DOMException` and associated constants are represented by the enumeration
   `Error`.
@@ -139,33 +107,6 @@ interfaces and client programmers should never need to interact with `WeakRefNod
 | `DOMString`      | `String`       | all                                  |
 | `unsigned short` | `Error`, `u16` | as representation of exception code  |
 | `unsigned long`  | `usize`        | list/string indexes and lengths      |
-
-# Extensions
-
-The following extensions are provided beyond the DOM Level 2 specification.
-
-1. The [`get_implementation`](level2/dom_impl/fn.get_implementation.html) function returns an instance of
-   `DOMImplementation` to allow bootstrapping the creation of documents. This satisfies the
-   requirement from the specification: _"The DOM Level 2 API does not define a standard way to
-   create DOMImplementation objects; DOM implementations must provide some proprietary way of
-   bootstrapping these DOM interfaces, and then all other objects can be built from there."_.
-1. The [`get_implementation_version`](level2/dom_impl/fn.get_implementation_version.html) function in the
-   [`dom_impl`](level2/dom_impl/index.html) module returns a vendor-specific version identifier for the
-   `DOMImplementation`.
-1. The standard `DOMImplementation` trait also has an additional member
-   [`create_document_with_options`](level2/trait.DOMImplementation.html#tymethod.create_document_with_options),
-   and associated [`ProcessingOptions`](level2/options/struct.ProcessingOptions.html) structure, that can set
-   optional behavior for a given `Document` instance.
-1. The trait [`DocumentDecl`](level2/trait.DocumentDecl.html) extends `Document` with the ability to set
-   and retrieve the XML declaration from the document's prolog.
-1. The trait [`Namespaced`](level2/trait.Namespaced.html) extends `Element` with the ability to look-up
-   namespace mappings (using the standard `xmlns` attribute).
-1. The functiions [`create_entity`](level2/dom_impl/fn.create_entity.html),
-   [`create_internal_entity`](level2/dom_impl/fn.create_internal_entity.html), and
-   [`create_notation`](level2/dom_impl/fn.create_notation.html) in the
-   [`dom_impl`](level2/dom_impl/index.html) module provide the ability to create instances of these
-   Level 2 extended interfaces. In general most clients using the DOM do not need to create these
-   however parsers constructing the DOM may.
 
 # Logging
 

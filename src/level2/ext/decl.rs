@@ -1,3 +1,7 @@
+/*!
+This module provides support types for the [`DocumentDecl`](trait.DocumentDecl.html) trait.
+*/
+
 use crate::shared::syntax::{
     XML_DECL_ENCODING, XML_DECL_END, XML_DECL_STANDALONE, XML_DECL_STANDALONE_NO,
     XML_DECL_STANDALONE_YES, XML_DECL_START, XML_DECL_VERSION, XML_DECL_VERSION_10,

@@ -1,6 +1,6 @@
-use crate::level2::options::ProcessingOptions;
+use crate::level2::ext::ProcessingOptions;
+use crate::level2::ext::XmlDecl;
 use crate::level2::traits::{Node, NodeType};
-use crate::level2::XmlDecl;
 use crate::shared::name::Name;
 use crate::shared::rc_cell::{RcRefCell, WeakRefCell};
 use crate::shared::text;

@@ -1,4 +1,5 @@
 use xml_dom::level2::convert::*;
+use xml_dom::level2::ext::dom_impl as ext_dom_impl;
 use xml_dom::level2::*;
 
 pub mod common;
@@ -426,10 +427,10 @@ fn make_node(document: RefNode, node_type: NodeType, prefix: &str) -> RefNode {
         NodeType::DocumentFragment => document.create_document_fragment().unwrap(),
         // Created by dom_impl not Document
         NodeType::Entity => {
-            dom_impl::create_internal_entity(document, &named("entity"), "some value").unwrap()
+            ext_dom_impl::create_internal_entity(document, &named("entity"), "some value").unwrap()
         }
         NodeType::Notation => {
-            dom_impl::create_notation(document, &named("notation"), Some("file-name.xml"), None)
+            ext_dom_impl::create_notation(document, &named("notation"), Some("file-name.xml"), None)
                 .unwrap()
         }
     }
