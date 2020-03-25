@@ -30,7 +30,7 @@ pub(crate) fn fmt_attribute(attribute: RefAttribute<'_>, f: &mut Formatter<'_>) 
         f,
         "{}=\"{}\"",
         attribute.name(),
-        attribute.value().unwrap_or(String::new())
+        attribute.value().unwrap_or_default()
     )
 }
 
@@ -121,16 +121,14 @@ pub(crate) fn fmt_document_fragment(
 pub(crate) fn fmt_entity(entity: RefEntity<'_>, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "{} {}", XML_ENTITY_START, entity.name())?;
     if entity.public_id().is_none() && entity.system_id().is_none() {
-        write!(f, " \"{}\"", entity.node_value().unwrap_or(String::new()))?;
-    } else {
-        if let Some(public_id) = entity.public_id() {
-            write!(f, " {} \"{}\"", XML_DOCTYPE_PUBLIC, public_id)?;
-            if let Some(system_id) = entity.system_id() {
-                write!(f, " \"{}\"", system_id)?;
-            }
-        } else if let Some(system_id) = entity.system_id() {
-            write!(f, " {} \"{}\"", XML_DOCTYPE_SYSTEM, system_id)?;
+        write!(f, " \"{}\"", entity.node_value().unwrap_or_default())?;
+    } else if let Some(public_id) = entity.public_id() {
+        write!(f, " {} \"{}\"", XML_DOCTYPE_PUBLIC, public_id)?;
+        if let Some(system_id) = entity.system_id() {
+            write!(f, " \"{}\"", system_id)?;
         }
+    } else if let Some(system_id) = entity.system_id() {
+        write!(f, " {} \"{}\"", XML_DOCTYPE_SYSTEM, system_id)?;
     }
     if let Some(entity_name) = entity.notation_name() {
         write!(f, " {}", entity_name)?;

@@ -44,9 +44,9 @@ pub struct ProcessingOptions(u8);
 #[derive(Clone, Debug)]
 #[repr(u8)]
 enum ProcessingOptionFlags {
-    AssumeIDs = 0b00000001,
-    ParseEntities = 0b00000010,
-    AddNamespaces = 0b00000100,
+    AssumeIDs = 0b0000_0001,
+    ParseEntities = 0b0000_0010,
+    AddNamespaces = 0b0000_0100,
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -159,19 +159,19 @@ impl ProcessingOptions {
     /// for more details.
     ///
     pub fn set_assume_ids(&mut self) {
-        self.0 = self.0 | (ProcessingOptionFlags::AssumeIDs as u8)
+        self.0 |= ProcessingOptionFlags::AssumeIDs as u8
     }
     ///
     /// TBD
     ///
     pub fn set_parse_entities(&mut self) {
-        self.0 = self.0 | (ProcessingOptionFlags::ParseEntities as u8)
+        self.0 |= ProcessingOptionFlags::ParseEntities as u8
     }
     ///
     /// TBD
     ///
     pub fn set_add_namespaces(&mut self) {
-        self.0 = self.0 | (ProcessingOptionFlags::AddNamespaces as u8)
+        self.0 |= ProcessingOptionFlags::AddNamespaces as u8
     }
 }
 

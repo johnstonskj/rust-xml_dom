@@ -40,12 +40,10 @@ impl CharacterData for RefNode {
                 if offset >= data.len() {
                     warn!("{}", MSG_INDEX_ERROR);
                     Err(Error::IndexSize)
+                } else if offset + count >= data.len() {
+                    Ok(data[offset..].to_string())
                 } else {
-                    if offset + count >= data.len() {
-                        Ok(data[offset..].to_string())
-                    } else {
-                        Ok(data[offset..offset + count].to_string())
-                    }
+                    Ok(data[offset..offset + count].to_string())
                 }
             }
         }
@@ -56,10 +54,11 @@ impl CharacterData for RefNode {
             return Ok(());
         }
         let mut mut_self = self.borrow_mut();
-        Ok(match &mut_self.i_value {
+        match &mut_self.i_value {
             None => mut_self.i_value = Some(new_data.to_string()),
             Some(old_data) => mut_self.i_value = Some(format!("{}{}", old_data, new_data)),
-        })
+        }
+        Ok(())
     }
 
     fn insert(&mut self, offset: usize, new_data: &str) -> Result<()> {
@@ -193,7 +192,7 @@ impl Document for RefNode {
         //
         // `PITarget  ::=  Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))`
         //
-        if target.to_ascii_lowercase() == XML_PI_RESERVED.to_string() {
+        if target.to_ascii_lowercase() == XML_PI_RESERVED {
             return Err(Error::Syntax);
         }
         let target = Name::from_str(target)?;
@@ -567,7 +566,6 @@ impl Element for RefNode {
                     Ok(ref_child) => results.extend(ref_child.get_elements_by_tag_name(&tag_name)),
                     Err(_) => {
                         warn!("{}", MSG_INVALID_NODE_TYPE);
-                        ()
                     }
                 }
             }
@@ -652,7 +650,10 @@ impl Element for RefNode {
             let local_name = local_name.to_string();
             let ref_self = self.borrow();
             if namespaced_name_match(
-                ref_self.i_name.namespace_uri(),
+                match ref_self.i_name.namespace_uri() {
+                    None => None,
+                    Some(s) => Some(s.as_str()),
+                },
                 &ref_self.i_name.local_name(),
                 &namespace_uri,
                 &local_name,
@@ -665,7 +666,6 @@ impl Element for RefNode {
                         .extend(ref_child.get_elements_by_tag_name_ns(&namespace_uri, &local_name)),
                     Err(_) => {
                         warn!("{}", MSG_INVALID_NODE_TYPE);
-                        ()
                     }
                 }
             }
@@ -681,8 +681,7 @@ impl Element for RefNode {
                     if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
                         i_attributes
                             .keys()
-                            .find(|n| n.to_string() == name.to_string())
-                            .is_some()
+                            .any(|n| n.to_string() == name.to_string())
                     } else {
                         warn!("{}", MSG_INVALID_EXTENSION);
                         false
@@ -705,13 +704,10 @@ impl Element for RefNode {
                 Ok(name) => {
                     let ref_self = self.borrow();
                     if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
-                        i_attributes
-                            .keys()
-                            .find(|n| {
-                                n.namespace_uri() == name.namespace_uri()
-                                    && n.local_name() == name.local_name()
-                            })
-                            .is_some()
+                        i_attributes.keys().any(|n| {
+                            n.namespace_uri() == name.namespace_uri()
+                                && n.local_name() == name.local_name()
+                        })
                     } else {
                         warn!("{}", MSG_INVALID_EXTENSION);
                         false
@@ -872,7 +868,7 @@ impl Node for RefNode {
                             None
                         } else {
                             let sibling = ref_parent.i_child_nodes.get(index - 1);
-                            sibling.map(|n| n.clone())
+                            sibling.cloned()
                         }
                     }
                 }
@@ -902,7 +898,7 @@ impl Node for RefNode {
                     None => None,
                     Some(index) => {
                         let sibling = ref_parent.i_child_nodes.get(index + 1);
-                        sibling.map(|n| n.clone())
+                        sibling.cloned()
                     }
                 }
             }
@@ -953,11 +949,9 @@ impl Node for RefNode {
         //
         // Special case for Document only.
         //
-        if is_document(self) {
-            if self.has_child_nodes() {
-                warn!("cannot add more than one element to a document");
-                return Error::HierarchyRequest.into();
-            }
+        if is_document(self) && self.has_child_nodes() {
+            warn!("cannot add more than one element to a document");
+            return Error::HierarchyRequest.into();
         }
 
         //
@@ -993,7 +987,7 @@ impl Node for RefNode {
                 (Some(self_parent), Some(child_parent)) => {
                     let self_parent = self_parent.clone().upgrade().unwrap();
                     let child_parent = child_parent.clone().upgrade().unwrap();
-                    &self_parent == &child_parent
+                    self_parent == child_parent
                 }
             } {
                 return Err(Error::WrongDocument);
@@ -1038,7 +1032,7 @@ impl Node for RefNode {
             insert_or_append(self, &new_child, insert_position)
         }
 
-        Ok(new_child.clone())
+        Ok(new_child)
     }
 
     fn replace_child(&mut self, new_child: RefNode, old_child: RefNode) -> Result<RefNode> {
@@ -1106,20 +1100,17 @@ impl Node for RefNode {
                     if self.remove_child(child_node).is_err() {
                         panic!("Could not remove unnecessary text node");
                     }
-                } else {
-                    let last_child_node = child_node.previous_sibling();
-                    if last_child_node.is_some() {
-                        let last_child_node = &mut last_child_node.unwrap().clone();
-                        if is_text(&last_child_node) {
-                            if last_child_node
-                                .append(&child_node.node_value().unwrap())
-                                .is_err()
-                            {
-                                panic!("Could not merge text nodes");
-                            }
-                            if self.remove_child(child_node).is_err() {
-                                panic!("Could not remove unnecessary text node");
-                            }
+                } else if let Some(last_child_node) = child_node.previous_sibling() {
+                    let last_child_node = &mut last_child_node.clone();
+                    if is_text(&last_child_node) {
+                        if last_child_node
+                            .append(&child_node.node_value().unwrap())
+                            .is_err()
+                        {
+                            panic!("Could not merge text nodes");
+                        }
+                        if self.remove_child(child_node).is_err() {
+                            panic!("Could not remove unnecessary text node");
                         }
                     }
                 }
@@ -1206,7 +1197,7 @@ impl Text for RefNode {
         if let Some(mut parent) = self.parent_node() {
             let _safe_to_ignore = parent.insert_before(new_node.clone(), self.next_sibling())?;
         }
-        Ok(new_node.clone())
+        Ok(new_node)
     }
 }
 
@@ -1224,26 +1215,28 @@ impl Display for RefNode {
 
 const WILD_CARD: &str = "*";
 
-fn tag_name_match(test: &String, against: &String) -> bool {
-    let wild = &WILD_CARD.to_string();
-    (test == against) || test == wild || against == wild
+fn tag_name_match(test: &str, against: &str) -> bool {
+    (test == against) || test == WILD_CARD || against == WILD_CARD
 }
 
 fn namespaced_name_match(
-    test_ns: &Option<String>,
-    test_local: &String,
-    against_ns: &String,
-    against_local: &String,
+    test_ns: Option<&str>,
+    test_local: &str,
+    against_ns: &str,
+    against_local: &str,
 ) -> bool {
-    let wild = &WILD_CARD.to_string();
     match test_ns {
         None => {
-            against_ns == wild
-                && ((test_local == against_local) || test_local == wild || against_local == wild)
+            against_ns == WILD_CARD
+                && ((test_local == against_local)
+                    || test_local == WILD_CARD
+                    || against_local == WILD_CARD)
         }
         Some(test_ns) => {
-            ((test_ns == against_ns) || test_ns == wild || against_ns == wild)
-                && ((test_local == against_local) || test_local == wild || against_local == wild)
+            ((test_ns == against_ns) || test_ns == WILD_CARD || against_ns == WILD_CARD)
+                && ((test_local == against_local)
+                    || test_local == WILD_CARD
+                    || against_local == WILD_CARD)
         }
     }
 }

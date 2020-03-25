@@ -25,7 +25,7 @@ pub use trait_impls::*;
 // ------------------------------------------------------------------------------------------------
 
 mod namespaced;
-pub use namespaced::Namespaced;
+pub use namespaced::{NamespacePrefix, Namespaced};
 
 mod options;
 pub use options::ProcessingOptions;

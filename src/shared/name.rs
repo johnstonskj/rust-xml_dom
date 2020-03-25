@@ -171,19 +171,17 @@ impl Name {
     fn check_part(part: &str) -> Result<String> {
         if part.is_empty() {
             Err(Error::Syntax)
+        } else if is_xml_name(part) {
+            Ok(part.to_string())
         } else {
-            if is_xml_name(part) {
-                Ok(part.to_string())
-            } else {
-                Err(Error::InvalidCharacter)
-            }
+            Err(Error::InvalidCharacter)
         }
     }
 
     fn check_namespace_uri(
         namespace_uri: &str,
         prefix: &Option<String>,
-        local: &String,
+        local: &str,
     ) -> Result<String> {
         if namespace_uri.is_empty() {
             Err(Error::Syntax)
