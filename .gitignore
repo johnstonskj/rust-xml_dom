@@ -1,4 +1,7 @@
 .idea
 
 /target
+
+/docs
+
 Cargo.lock
