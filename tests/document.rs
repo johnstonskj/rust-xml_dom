@@ -1,9 +1,9 @@
 use std::str::FromStr;
 use xml_dom::level2::convert::{
-    as_attribute, as_cdata_section, as_comment, as_document, as_document_fragment, as_element,
-    as_entity_reference, as_processing_instruction, as_text,
+    as_attribute, as_cdata_section, as_comment, as_document, as_document_fragment, as_document_mut,
+    as_element, as_entity_reference, as_processing_instruction, as_text,
 };
-use xml_dom::level2::Name;
+use xml_dom::level2::{get_implementation, Error, Name};
 
 pub mod common;
 
@@ -183,38 +183,139 @@ fn test_get_element_by_id() {
     let root_node = common::create_example_rdf_document();
     let document = as_document(&root_node).unwrap();
 
+    assert!(document.get_element_by_id("title").is_some());
+}
+
+#[test]
+fn test_get_element_by_id_none() {
+    let root_node = common::create_example_rdf_document();
+    let document = as_document(&root_node).unwrap();
+
     assert!(document.get_element_by_id("main").is_none());
 }
 
 #[test]
-fn test_get_elements() {
+fn test_get_elements_none() {
+    let root_node = common::create_example_rdf_document();
+    let document = as_document(&root_node).unwrap();
+    let elements = document.get_elements_by_tag_name("dc:created");
+    assert_eq!(elements.len(), 0);
+}
+
+#[test]
+fn test_get_elements_one() {
     let root_node = common::create_example_rdf_document();
     let document = as_document(&root_node).unwrap();
 
     let elements = document.get_elements_by_tag_name("dc:creator");
     assert_eq!(elements.len(), 1);
+}
 
-    let elements = document.get_elements_by_tag_name("dc:created");
-    assert_eq!(elements.len(), 0);
+#[test]
+fn test_get_elements_all() {
+    let root_node = common::create_example_rdf_document();
+    let document = as_document(&root_node).unwrap();
 
     let elements = document.get_elements_by_tag_name("*");
     assert_eq!(elements.len(), 6);
 }
 
 #[test]
-fn test_get_elements_ns() {
+fn test_get_elements_ns_none() {
+    let root_node = common::create_example_rdf_document();
+    let document = as_document(&root_node).unwrap();
+
+    let elements = document.get_elements_by_tag_name_ns(common::DC_NS, "created");
+    assert_eq!(elements.len(), 0);
+}
+
+#[test]
+fn test_get_elements_ns_one() {
     let root_node = common::create_example_rdf_document();
     let document = as_document(&root_node).unwrap();
 
     let elements = document.get_elements_by_tag_name_ns(common::DC_NS, "creator");
     assert_eq!(elements.len(), 1);
+}
 
-    let elements = document.get_elements_by_tag_name_ns(common::DC_NS, "created");
-    assert_eq!(elements.len(), 0);
+#[test]
+fn test_get_elements_ns_all_dc() {
+    let root_node = common::create_example_rdf_document();
+    let document = as_document(&root_node).unwrap();
 
     let elements = document.get_elements_by_tag_name_ns(common::DC_NS, "*");
     assert_eq!(elements.len(), 4);
+}
+
+#[test]
+fn test_get_elements_ns_all_rdf() {
+    let root_node = common::create_example_rdf_document();
+    let document = as_document(&root_node).unwrap();
 
     let elements = document.get_elements_by_tag_name_ns(common::RDF_NS, "*");
     assert_eq!(elements.len(), 2);
+}
+
+#[test]
+fn test_get_elements_ns_all_descriptions() {
+    let root_node = common::create_example_rdf_document();
+    let document = as_document(&root_node).unwrap();
+
+    let elements = document.get_elements_by_tag_name_ns("*", "Description");
+    assert_eq!(elements.len(), 2);
+}
+
+#[test]
+fn test_only_one_root() {
+    let implementation = get_implementation();
+    let mut document_node = implementation
+        .create_document(Some(common::RDF_NS), Some("rdf:RDF"), None)
+        .unwrap();
+    let document = as_document_mut(&mut document_node).unwrap();
+    assert!(document.document_element().is_some());
+
+    let second = document.create_element("should_not_work").unwrap();
+    let result = document.append_child(second);
+    assert_eq!(result, Err(Error::HierarchyRequest));
+}
+
+#[test]
+fn test_remove_root() {
+    let implementation = get_implementation();
+    let mut document_node = implementation
+        .create_document(Some(common::RDF_NS), Some("rdf:RDF"), None)
+        .unwrap();
+    let document = as_document_mut(&mut document_node).unwrap();
+    let root = document.document_element();
+    assert!(root.is_some());
+
+    let result = document.remove_child(root.unwrap());
+    assert!(result.is_ok());
+
+    let root = document.document_element();
+    assert!(root.is_none());
+}
+
+#[test]
+fn test_replace_root() {
+    let implementation = get_implementation();
+    let mut document_node = implementation
+        .create_document(Some(common::RDF_NS), Some("rdf:RDF"), None)
+        .unwrap();
+    let document = as_document_mut(&mut document_node).unwrap();
+    let root = document.document_element();
+    assert!(root.is_some());
+
+    let second = document.create_element("should_work").unwrap();
+    let result = document.replace_child(second, root.unwrap());
+    assert!(result.is_ok());
+
+    let root = document.document_element();
+    assert!(root.is_some());
+    let root = root.unwrap();
+    let element = as_element(&root).unwrap();
+    assert!(element.parent_node().is_some());
+    assert!(element.owner_document().is_some());
+    let expected_name = Name::from_str("should_work").unwrap();
+    assert_eq!(element.name(), expected_name);
 }

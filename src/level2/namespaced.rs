@@ -253,7 +253,7 @@ mod tests {
         let mut document_element = document.document_element().unwrap();
         let document_element = as_element_mut(&mut document_element).unwrap();
         let result = document_element.append_child(element.clone());
-        println!("{:#?}", result);
+        fprintln!("{:#?}", result);
         assert!(result.is_ok());
         element
     }

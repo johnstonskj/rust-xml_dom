@@ -48,7 +48,7 @@ fn test_get_element_by_id_lax() {
     {
         let element = element.unwrap();
         let ref_element = as_element(&element).unwrap();
-        assert_eq!(ref_element.name().local_name(), &"description".to_string());
+        assert_eq!(ref_element.name().local_name(), &"Description".to_string());
         assert_eq!(ref_element.name().prefix(), &Some("dc".to_string()));
     }
 

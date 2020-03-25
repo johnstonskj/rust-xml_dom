@@ -391,9 +391,7 @@ impl DOMImplementation for Implementation {
         if let Some(element_node) = element {
             let document = as_document_mut(&mut document_node)?;
             let _safe_to_ignore = document.append_child(element_node)?;
-        } else {
-            return Error::InvalidState.into();
-        };
+        }
 
         Ok(document_node)
     }
@@ -599,7 +597,6 @@ impl Element for RefNode {
         let attr_name = Name::new_ns(namespace_uri, qualified_name)?;
         let attr_node = {
             let ref_self = &self.borrow_mut();
-            println!("{:#?}", ref_self);
             let document = ref_self.i_owner_document.as_ref().unwrap();
             NodeImpl::new_attribute(document.clone(), attr_name, Some(value))
         };
@@ -687,17 +684,17 @@ impl Element for RefNode {
                             .find(|n| n.to_string() == name.to_string())
                             .is_some()
                     } else {
-                        println!("{}", MSG_INVALID_EXTENSION);
+                        warn!("{}", MSG_INVALID_EXTENSION);
                         false
                     }
                 }
                 Err(_) => {
-                    println!("{}: '{}'", MSG_INVALID_NAME, name);
+                    warn!("{}: '{}'", MSG_INVALID_NAME, name);
                     false
                 }
             }
         } else {
-            println!("{}", MSG_INVALID_NODE_TYPE);
+            warn!("{}", MSG_INVALID_NODE_TYPE);
             false
         }
     }
@@ -1026,7 +1023,6 @@ impl Node for RefNode {
                 mut_child.i_owner_document = ref_self.i_owner_document.clone();
             }
         }
-        println!("{:#?}", new_child);
 
         if is_document_fragment(&new_child) {
             //

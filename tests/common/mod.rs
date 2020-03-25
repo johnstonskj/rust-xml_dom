@@ -24,7 +24,7 @@ pub fn create_empty_rdf_document() -> RefNode {
 //
 //     <dc:creator>Rose Bush</dc:creator>
 //     <dc:title xml:id="title">A Guide to Growing Roses</dc:title>
-//     <dc:description id="description">Describes process for planting &#38; nurturing different kinds of rose bushes.</dc:description>
+//     <dc:Description id="description">Describes process for planting &#38; nurturing different kinds of rose bushes.</dc:Description>
 //     <dc:date>2001-01-20</dc:date>
 //
 //   </rdf:Description>
@@ -40,7 +40,6 @@ pub fn create_example_rdf_document_options(options: ProcessingOptions) -> RefNod
     let mut document_node = implementation
         .create_document_with_options(Some(RDF_NS), Some("rdf:RDF"), None, options)
         .unwrap();
-    println!("{:#?}", document_node.clone());
     let document = as_document_mut(&mut document_node).unwrap();
     let mut root_node = document.document_element().unwrap();
     let root_element = as_element_mut(&mut root_node).unwrap();
@@ -73,7 +72,7 @@ pub fn create_example_rdf_document_options(options: ProcessingOptions) -> RefNod
     let mut new_element = create_element_with(
         document,
         DC_NS,
-        "dc:description",
+        "dc:Description",
         "Describes process for planting & nurturing different kinds of rose bushes.",
     );
     new_element.set_attribute("id", "description");

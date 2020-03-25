@@ -5,12 +5,48 @@ use xml_dom::level2::{get_implementation, Name};
 pub mod common;
 
 #[test]
+fn test_create_document_no_element() {
+    let implementation = get_implementation();
+    let document_node = implementation.create_document(None, None, None).unwrap();
+    let document = as_document(&document_node).unwrap();
+    assert!(document.document_element().is_none());
+}
+
+#[test]
+fn test_create_document_namespaced_name() {
+    let implementation = get_implementation();
+    let document_node = implementation
+        .create_document(Some(common::RDF_NS), Some("rdf:RDF"), None)
+        .unwrap();
+    let document = as_document(&document_node).unwrap();
+    assert!(document.document_element().is_some());
+}
+
+#[test]
+fn test_create_document_local_name() {
+    let implementation = get_implementation();
+    let document_node = implementation
+        .create_document(None, Some("rdf:RDF"), None)
+        .unwrap();
+    let document = as_document(&document_node).unwrap();
+    assert!(document.document_element().is_some());
+}
+
+#[test]
+fn test_create_document_invalid_name() {
+    let implementation = get_implementation();
+    let document_node = implementation.create_document(Some(common::RDF_NS), None, None);
+    assert!(document_node.is_err());
+}
+
+#[test]
 fn test_create_document() {
     let implementation = get_implementation();
     let document_node = implementation
         .create_document(Some(common::RDF_NS), Some("rdf:RDF"), None)
         .unwrap();
     let document = as_document(&document_node).unwrap();
+    assert!(document.document_element().is_some());
     let root_node = document.document_element().unwrap();
     let root_element = as_element(&root_node).unwrap();
     let expected_name = Name::new_ns(common::RDF_NS, "rdf:RDF").unwrap();
@@ -48,6 +84,7 @@ fn test_create_document_type() {
         )
         .unwrap();
     let document = as_document(&document_node).unwrap();
+    assert!(document.doc_type().is_some());
     let stored_doc_type = document.doc_type().unwrap();
     assert_eq!(&document_type_node, &stored_doc_type);
 }
