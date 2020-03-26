@@ -871,14 +871,21 @@ impl Node for RefNode {
         }
 
         if !is_child_allowed(self, &new_child) {
+            println!("The child you tried to add is not valid for this parent.");
             return Err(Error::HierarchyRequest);
         }
 
         //
         // Special case for Document only.
         //
-        if is_document(self) && self.has_child_nodes() {
-            warn!("cannot add more than one element to a document");
+        if is_document(self)
+            && is_element(&new_child)
+            && self
+                .child_nodes()
+                .iter()
+                .any(|n| n.node_type() == NodeType::Element)
+        {
+            println!("cannot add more than one element to a document");
             return Error::HierarchyRequest.into();
         }
 

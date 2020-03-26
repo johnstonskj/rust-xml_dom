@@ -69,7 +69,7 @@ Th DOM
 [39]  element           ::= EmptyElemTag | STag content ETag
 [40]  STag              ::= '<' Name (S Attribute)* S? '>'
 [41]  Attribute         ::= Name Eq AttValue
-[42]  ETag              ::= '</' Name S? '>'
+[42]  Attribute         ::= Name Eq AttValue
 [43]  content           ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
 [44]  EmptyElemTag      ::= '<' Name (S Attribute)* S? '/>'
 [45]  elementdecl       ::= '<!ELEMENT' S Name S contentspec S? '>'

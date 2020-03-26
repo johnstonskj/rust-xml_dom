@@ -224,36 +224,36 @@ mod tests {
     #[test]
     fn test_decl_display_default() {
         let decl = XmlDecl::default();
-        assert_eq!(format!("{}", decl), "<?xml version=\"1.0\">".to_string());
+        assert_eq!(format!("{}", decl), "<?xml version=\"1.0\"?>".to_string());
     }
 
     #[test]
     fn test_decl_display() {
         let decl = XmlDecl::new(XmlVersion::V10, None, None);
-        assert_eq!(format!("{}", decl), "<?xml version=\"1.0\">".to_string());
+        assert_eq!(format!("{}", decl), "<?xml version=\"1.0\"?>".to_string());
 
         let decl = XmlDecl::new(XmlVersion::V10, Some("UTF-8".to_string()), None);
         assert_eq!(
             format!("{}", decl),
-            "<?xml version=\"1.0\" encoding=\"UTF-8\">".to_string()
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".to_string()
         );
 
         let decl = XmlDecl::new(XmlVersion::V10, Some("UTF-8".to_string()), Some(true));
         assert_eq!(
             format!("{}", decl),
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\">".to_string()
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>".to_string()
         );
 
         let decl = XmlDecl::new(XmlVersion::V10, Some("UTF-8".to_string()), Some(false));
         assert_eq!(
             format!("{}", decl),
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\">".to_string()
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>".to_string()
         );
 
         let decl = XmlDecl::new(XmlVersion::V10, None, Some(false));
         assert_eq!(
             format!("{}", decl),
-            "<?xml version=\"1.0\" standalone=\"no\">".to_string()
+            "<?xml version=\"1.0\" standalone=\"no\"?>".to_string()
         );
     }
 

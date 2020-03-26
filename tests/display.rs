@@ -109,14 +109,14 @@ fn test_display_processing_instruction() {
     let test_node = document.create_processing_instruction("foo", None).unwrap();
 
     let result = format!("{}", test_node);
-    assert_eq!(result, "<?foo>");
+    assert_eq!(result, "<?foo?>");
 
     let test_node = document
         .create_processing_instruction("foo", Some("version=\"1.0\""))
         .unwrap();
 
     let result = format!("{}", test_node);
-    assert_eq!(result, "<?foo version=\"1.0\">");
+    assert_eq!(result, "<?foo version=\"1.0\"?>");
 }
 
 #[test]
@@ -176,7 +176,7 @@ fn test_display_document_with_decl() {
     assert!(result.is_ok());
 
     let result = format!("{}", test_node);
-    assert_eq!(result, "<?xml version=\"1.1\" encoding=\"UTF-8\"><!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" SYSTEM \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"><html></html>");
+    assert_eq!(result, "<?xml version=\"1.1\" encoding=\"UTF-8\"?><!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" SYSTEM \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"><html></html>");
 }
 
 #[test]

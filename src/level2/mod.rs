@@ -78,7 +78,7 @@ pub mod convert;
 pub mod dom_impl;
 pub use dom_impl::get_implementation;
 
-mod node_impl;
+pub(crate) mod node_impl;
 pub use node_impl::RefNode;
 
 pub mod ext;
@@ -91,7 +91,7 @@ pub use crate::shared::error::{Error, Result};
 
 pub use crate::shared::name::*;
 
-mod traits;
+pub(crate) mod traits;
 pub use traits::*;
 
 // ------------------------------------------------------------------------------------------------

@@ -135,8 +135,8 @@ extern crate log;
 // Public Modules
 // ------------------------------------------------------------------------------------------------
 
-//#[cfg(feature = "quick_parser")]
-//pub mod parser;
+#[cfg(feature = "quick_parser")]
+pub mod parser;
 
 pub mod level2;
 

@@ -5,10 +5,10 @@
 // ------------------------------------------------------------------------------------------------
 
 pub(crate) const XML_DECL_START: &str = "<?xml";
-pub(crate) const XML_DECL_END: &str = ">";
+pub(crate) const XML_DECL_END: &str = "?>";
 
 pub(crate) const XML_PI_START: &str = "<?";
-pub(crate) const XML_PI_END: &str = ">";
+pub(crate) const XML_PI_END: &str = "?>";
 pub(crate) const XML_PI_RESERVED: &str = "xml";
 
 pub(crate) const XML_COMMENT_START: &str = "<!--";
