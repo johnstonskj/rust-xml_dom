@@ -19,7 +19,7 @@ module.
 Currently only one feature, `quick_parser`, is provided which provides a new module `parser` with the
 single public function:
 
-``` rust
+``` rust,ignore
 pub fn read_xml(xml: &str) -> Result<RefNode>;
 ```
 
