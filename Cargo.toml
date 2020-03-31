@@ -1,6 +1,6 @@
 [package]
 name = "xml_dom"
-version = "0.1.4"
+version = "0.2.0"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2018"
 description = "A Rust crate providing a reasonably faithful implementation of the W3C DOM Core"
@@ -20,6 +20,7 @@ branch = "master"
 repository = "johnstonskj/rust-xml_dom"
 
 [features]
+default = ["quick_parser"]
 quick_parser = ["quick-xml"]
 
 [dependencies]

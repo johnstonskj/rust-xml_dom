@@ -84,7 +84,7 @@ implementation of `Display` for `RefNode` does not format the output.
 ## Features
 
 Currently only one feature, `quick_parser`, is provided which provides a new module `parser` with the
-single public function:
+single public function. This feature is enabled by default.
 
 ``` rust
 pub fn read_xml(xml: &str) -> Result<RefNode>;
@@ -93,6 +93,11 @@ pub fn read_xml(xml: &str) -> Result<RefNode>;
 This will parse the document and return a new `RefNode` that corresponds to the `Document` trait.
 
 ## Changes
+
+**Version 0.2.0** 
+
+* Cleaned up documentation.
+* Stable release.
 
 **Version 0.1.4**
 
