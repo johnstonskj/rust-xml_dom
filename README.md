@@ -5,7 +5,7 @@ A Rust crate providing a reasonably faithful implementation of the  W3C
 
 ![MIT License](https://img.shields.io/badge/license-mit-118811.svg)
 ![Minimum Rust Version](https://img.shields.io/badge/Min%20Rust-1.40-green.svg)
-[![crates.io](https://img.shields.io/crates/v/upnp-rs.svg)](https://crates.io/crates/xml_dom)
+[![crates.io](https://img.shields.io/crates/v/xml_dom.svg)](https://crates.io/crates/xml_dom)
 [![docs.rs](https://docs.rs/xml_dom/badge.svg)](https://docs.rs/xml_dom)
 [![travis.ci](https://travis-ci.org/johnstonskj/rust-xml_dom.svg?branch=master)](https://travis-ci.org/johnstonskj/rust-xml_dom)
 [![GitHub stars](https://img.shields.io/github/stars/johnstonskj/rust-xml_dom.svg)](https://github.com/johnstonskj/rust-xml_dom/stargazers)
