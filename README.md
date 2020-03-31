@@ -20,8 +20,8 @@ view the implementation has the following characteristics:
 1. Where possible the names from IDL are used with minimal conversion.
 1. All IDL attributes become trait functions (`get_`, `set_`, and `unset_`).
 
-1. This leads to a replication of the typical DOM programmer experience where casting between the
-   node traits is required. This is supported by the `xml_dom::convert` module.
+This leads to a replication of the typical DOM programmer experience where casting between the
+node traits is required. This is supported by the `xml_dom::convert` module.
 
 ## Example
 
@@ -80,6 +80,17 @@ implementation of `Display` for `RefNode` does not format the output.
   <body></body>
 </html>
 ```
+
+## Features
+
+Currently only one feature, `quick_parser`, is provided which provides a new module `parser` with the
+single public function:
+
+``` rust
+pub fn read_xml(xml: &str) -> Result<RefNode>;
+```
+
+This will parse the document and return a new `RefNode` that corresponds to the `Document` trait.
 
 ## Changes
 
