@@ -26,7 +26,7 @@ impl CDataSection for RefNode {}
 // ------------------------------------------------------------------------------------------------
 
 impl CharacterData for RefNode {
-    fn substring(&self, offset: usize, count: usize) -> Result<String> {
+    fn substring_data(&self, offset: usize, count: usize) -> Result<String> {
         if offset + count == offset {
             return Ok(String::new());
         }
@@ -49,7 +49,7 @@ impl CharacterData for RefNode {
         }
     }
 
-    fn append(&mut self, new_data: &str) -> Result<()> {
+    fn append_data(&mut self, new_data: &str) -> Result<()> {
         if new_data.is_empty() {
             return Ok(());
         }
@@ -61,22 +61,22 @@ impl CharacterData for RefNode {
         Ok(())
     }
 
-    fn insert(&mut self, offset: usize, new_data: &str) -> Result<()> {
+    fn insert_data(&mut self, offset: usize, new_data: &str) -> Result<()> {
         if new_data.is_empty() {
             return Ok(());
         }
-        self.replace(offset, 0, new_data)
+        self.replace_data(offset, 0, new_data)
     }
 
-    fn delete(&mut self, offset: usize, count: usize) -> Result<()> {
+    fn delete_data(&mut self, offset: usize, count: usize) -> Result<()> {
         if offset + count == offset {
             return Ok(());
         }
         const NOTHING: &str = "";
-        self.replace(offset, count, NOTHING)
+        self.replace_data(offset, count, NOTHING)
     }
 
-    fn replace(&mut self, offset: usize, count: usize, replace_data: &str) -> Result<()> {
+    fn replace_data(&mut self, offset: usize, count: usize, replace_data: &str) -> Result<()> {
         let mut mut_self = self.borrow_mut();
         match &mut_self.i_value {
             None => {
@@ -402,7 +402,7 @@ impl Element for RefNode {
 
     fn set_attribute_node(&mut self, new_attribute: RefNode) -> Result<RefNode> {
         if is_element(self) && is_attribute(&new_attribute) {
-            let name: Name = new_attribute.name();
+            let name: Name = new_attribute.node_name();
             if name.is_namespace_attribute() {
                 //
                 // Add to the element's namespace mapping hash
@@ -419,7 +419,7 @@ impl Element for RefNode {
             let mut mut_self = self.borrow_mut();
             if let Extension::Element { i_attributes, .. } = &mut mut_self.i_extension {
                 let _safe_to_ignore =
-                    i_attributes.insert(new_attribute.name(), new_attribute.clone());
+                    i_attributes.insert(new_attribute.node_name(), new_attribute.clone());
                 {
                     //
                     // Add to the owning document's id_map hash
@@ -464,7 +464,7 @@ impl Element for RefNode {
         if is_element(self) {
             let mut mut_self = self.borrow_mut();
             if let Extension::Element { i_attributes, .. } = &mut mut_self.i_extension {
-                let _safe_to_ignore = i_attributes.remove(&old_attribute.name());
+                let _safe_to_ignore = i_attributes.remove(&old_attribute.node_name());
                 let mut_old = old_attribute.clone();
                 let mut mut_old = mut_old.borrow_mut();
                 mut_old.i_parent_node = None;
@@ -699,7 +699,7 @@ impl EntityReference for RefNode {}
 impl Node for RefNode {
     type NodeRef = RefNode;
 
-    fn name(&self) -> Name {
+    fn node_name(&self) -> Name {
         let ref_self = self.borrow();
         ref_self.i_name.clone()
     }
@@ -1039,7 +1039,7 @@ impl Node for RefNode {
                     let last_child_node = &mut last_child_node.clone();
                     if is_text(&last_child_node) {
                         if last_child_node
-                            .append(&child_node.node_value().unwrap())
+                            .append_data(&child_node.node_value().unwrap())
                             .is_err()
                         {
                             panic!("Could not merge text nodes");
@@ -1101,8 +1101,8 @@ impl Text for RefNode {
                 String::new()
             } else {
                 let count = length - offset;
-                let new_data = text.substring(offset, count)?;
-                text.delete(offset, count)?;
+                let new_data = text.substring_data(offset, count)?;
+                text.delete_data(offset, count)?;
                 new_data
             }
         };

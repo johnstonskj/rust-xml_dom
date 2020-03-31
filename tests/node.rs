@@ -291,17 +291,17 @@ fn test_next_sibling() {
     //
     let mid_node = child_nodes.get(2).unwrap();
     let ref_mid = as_element(mid_node).unwrap();
-    assert_eq!(ref_mid.name().to_string(), "child-3".to_string());
+    assert_eq!(ref_mid.node_name().to_string(), "child-3".to_string());
 
     common::sub_test("test_next_sibling", "next_sibling() 1");
     let next_node = ref_mid.next_sibling().unwrap();
     let ref_next = as_element(&next_node).unwrap();
-    assert_eq!(ref_next.name().to_string(), "child-4".to_string());
+    assert_eq!(ref_next.node_name().to_string(), "child-4".to_string());
 
     common::sub_test("test_next_sibling", "next_sibling() 2");
     let last_node = ref_next.next_sibling().unwrap();
     let ref_last = as_element(&last_node).unwrap();
-    assert_eq!(ref_last.name().to_string(), "child-5".to_string());
+    assert_eq!(ref_last.node_name().to_string(), "child-5".to_string());
 
     common::sub_test("test_next_sibling", "next_sibling() 3");
     let no_node = ref_last.next_sibling();
@@ -321,17 +321,17 @@ fn test_previous_sibling() {
     //
     let mid_node = child_nodes.get(2).unwrap();
     let ref_mid = as_element(mid_node).unwrap();
-    assert_eq!(ref_mid.name().to_string(), "child-3".to_string());
+    assert_eq!(ref_mid.node_name().to_string(), "child-3".to_string());
 
     common::sub_test("test_previous_sibling", "previous_sibling() 1");
     let previous_node = ref_mid.previous_sibling().unwrap();
     let ref_previous = as_element(&previous_node).unwrap();
-    assert_eq!(ref_previous.name().to_string(), "child-2".to_string());
+    assert_eq!(ref_previous.node_name().to_string(), "child-2".to_string());
 
     common::sub_test("test_previous_sibling", "previous_sibling() 2");
     let first_node = ref_previous.previous_sibling().unwrap();
     let ref_first = as_element(&first_node).unwrap();
-    assert_eq!(ref_first.name().to_string(), "child-1".to_string());
+    assert_eq!(ref_first.node_name().to_string(), "child-1".to_string());
 
     common::sub_test("test_previous_sibling", "previous_sibling() 3");
     let no_node = ref_first.previous_sibling();
@@ -514,7 +514,7 @@ fn make_sibling_document() -> RefNode {
 }
 
 fn compare_node_names(nodes: &Vec<RefNode>, expected_names: &[&str]) {
-    let names: Vec<String> = nodes.iter().map(|n| n.name().to_string()).collect();
+    let names: Vec<String> = nodes.iter().map(|n| n.node_name().to_string()).collect();
     let expected_names: Vec<String> = expected_names.iter().map(|s| String::from(*s)).collect();
     assert_eq!(names, expected_names);
 }

@@ -54,10 +54,10 @@ fn test_text_substring() {
     let mut text_node = children.get(0).unwrap().clone();
     let text = as_text_mut(&mut text_node).unwrap();
     assert_eq!(text.data(), Some("Hello cruel world!".to_string()));
-    assert_eq!(text.substring(0, 0), Ok("".to_string()));
-    assert_eq!(text.substring(6, 5), Ok("cruel".to_string()));
-    assert_eq!(text.substring(12, 10), Ok("world!".to_string()));
-    assert_eq!(text.substring(20, 5), Err(Error::IndexSize));
+    assert_eq!(text.substring_data(0, 0), Ok("".to_string()));
+    assert_eq!(text.substring_data(6, 5), Ok("cruel".to_string()));
+    assert_eq!(text.substring_data(12, 10), Ok("world!".to_string()));
+    assert_eq!(text.substring_data(20, 5), Err(Error::IndexSize));
 }
 
 #[test]
@@ -81,15 +81,15 @@ fn test_text_insert() {
 
     let mut text_node = children.get(0).unwrap().clone();
     let text = as_text_mut(&mut text_node).unwrap();
-    let result = text.insert(6, "my ");
+    let result = text.insert_data(6, "my ");
     assert!(result.is_ok());
     assert_eq!(text.data(), Some("Hello my cruel world!".to_string()));
 
-    let result = text.insert(30, "my ");
+    let result = text.insert_data(30, "my ");
     assert!(result.is_err());
     assert_eq!(text.data(), Some("Hello my cruel world!".to_string()));
 
-    let result = text.insert(0, "¡");
+    let result = text.insert_data(0, "¡");
     assert!(result.is_ok());
     assert_eq!(text.data(), Some("¡Hello my cruel world!".to_string()));
 }
@@ -115,18 +115,18 @@ fn test_text_replace() {
 
     let mut text_node = children.get(0).unwrap().clone();
     let text = as_text_mut(&mut text_node).unwrap();
-    let result = text.replace(6, 6, "my happy ");
+    let result = text.replace_data(6, 6, "my happy ");
     assert!(result.is_ok());
     assert_eq!(text.data(), Some("Hello my happy world!".to_string()));
 
-    let result = text.replace(0, 0, "my happy ");
+    let result = text.replace_data(0, 0, "my happy ");
     assert!(result.is_ok());
     assert_eq!(
         text.data(),
         Some("my happy Hello my happy world!".to_string())
     );
 
-    let result = text.replace(15, 30, "world");
+    let result = text.replace_data(15, 30, "world");
     assert!(result.is_ok());
     assert_eq!(text.data(), Some("my happy Hello world".to_string()));
 }
@@ -152,23 +152,23 @@ fn test_text_delete() {
 
     let mut text_node = children.get(0).unwrap().clone();
     let text = as_text_mut(&mut text_node).unwrap();
-    let result = text.delete(6, 6);
+    let result = text.delete_data(6, 6);
     assert!(result.is_ok());
     assert_eq!(text.data(), Some("Hello world!".to_string()));
 
-    let result = text.delete(0, 0);
+    let result = text.delete_data(0, 0);
     assert!(result.is_ok());
     assert_eq!(text.data(), Some("Hello world!".to_string()));
 
-    let result = text.delete(6, 0);
+    let result = text.delete_data(6, 0);
     assert!(result.is_ok());
     assert_eq!(text.data(), Some("Hello world!".to_string()));
 
-    let result = text.delete(20, 6);
+    let result = text.delete_data(20, 6);
     assert!(result.is_err());
     assert_eq!(text.data(), Some("Hello world!".to_string()));
 
-    let result = text.delete(6, 20);
+    let result = text.delete_data(6, 20);
     assert!(result.is_ok());
     assert_eq!(text.data(), Some("Hello ".to_string()));
 }

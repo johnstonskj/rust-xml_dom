@@ -69,6 +69,12 @@ pub trait Attribute: Node {
     fn specified(&self) -> bool {
         true
     }
+    ///
+    /// The `Element` node this attribute is attached to or `null` if this attribute is not in use.
+    ///
+    fn owner_element(&self) -> Option<Self::NodeRef> {
+        self.parent_node()
+    }
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -191,7 +197,7 @@ pub trait CharacterData: Node {
     ///   number of 16-bit units in data, or if the specified `count` is negative.
     /// * `DOMSTRING_SIZE_ERR`: Raised if the specified range of text does not fit into a `DOMString`.
     ///
-    fn substring(&self, offset: usize, count: usize) -> Result<String>;
+    fn substring_data(&self, offset: usize, count: usize) -> Result<String>;
     ///
     /// Append the string to the end of the character data of the node.
     ///
@@ -206,7 +212,7 @@ pub trait CharacterData: Node {
     /// **Exceptions**
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     ///
-    fn append(&mut self, data: &str) -> Result<()>;
+    fn append_data(&mut self, data: &str) -> Result<()>;
     ///
     /// Insert a string at the specified 16-bit unit offset.
     ///
@@ -223,7 +229,7 @@ pub trait CharacterData: Node {
     ///   of 16-bit units in data.
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     ///
-    fn insert(&mut self, offset: usize, data: &str) -> Result<()>;
+    fn insert_data(&mut self, offset: usize, data: &str) -> Result<()>;
     ///
     /// Remove a range of 16-bit units from the node. Upon success, data and length reflect the change.
     ///
@@ -242,7 +248,7 @@ pub trait CharacterData: Node {
     ///   of 16-bit units in data, or if the specified `count` is negative.
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     ///
-    fn delete(&mut self, offset: usize, count: usize) -> Result<()>;
+    fn delete_data(&mut self, offset: usize, count: usize) -> Result<()>;
     ///
     /// Replace the characters starting at the specified 16-bit unit offset with the specified string.
     ///
@@ -262,7 +268,7 @@ pub trait CharacterData: Node {
     ///   of 16-bit units in data, or if the specified `count` is negative.
     /// NO_MODIFICATION_ALLOWED_ERR: Raised if this node is readonly.
     ///
-    fn replace(&mut self, offset: usize, count: usize, data: &str) -> Result<()>;
+    fn replace_data(&mut self, offset: usize, count: usize, data: &str) -> Result<()>;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -873,7 +879,7 @@ pub trait Element: Node {
     /// in the canonical uppercase form, regardless of the case in the source HTML document.
     ///
     fn tag_name(&self) -> String {
-        Node::name(self).to_string()
+        Node::node_name(self).to_string()
     }
     ///
     /// Retrieves an attribute value by name.
@@ -1340,7 +1346,7 @@ pub trait Node {
     ///
     /// The name of this node, depending on its type; see the table above.
     ///
-    fn name(&self) -> Name;
+    fn node_name(&self) -> Name;
     ///
     /// The value of this node, depending on its type; see the table above. When it is defined to
     /// be `None`, setting it has no effect.
@@ -1609,6 +1615,69 @@ pub trait Node {
     /// * `boolean`: `true` if this node has any attributes, `false` otherwise.
     ///
     fn has_attributes(&self) -> bool;
+    ///
+    /// The namespace URI of this node, or null if it is unspecified.
+    ///
+    /// # Specification
+    ///
+    /// This is not a computed value that is the result of a namespace lookup based on an
+    /// examination of the namespace declarations in scope. It is merely the namespace URI given
+    /// at creation time.
+    ///
+    /// For nodes of any type other than `ELEMENT_NODE` and `ATTRIBUTE_NODE` and nodes created
+    /// with a DOM Level 1 method, such as `createElement` from the `Document` interface, this is
+    /// always `null`.
+    ///
+    /// **Note:** Per the _Namespaces in XML_ Specification an attribute does not inherit its
+    /// namespace from the element it is attached to. If an attribute is not explicitly given a
+    /// namespace, it simply has no namespace.
+    ///
+    fn namespace_uri(&self) -> Option<String> {
+        self.node_name().namespace_uri.clone()
+    }
+    ///
+    /// Returns the local part of the qualified name of this node.
+    ///
+    /// # Specification
+    ///
+    /// For nodes of any type other than `ELEMENT_NODE` and `ATTRIBUTE_NODE` and nodes created
+    /// with a DOM Level 1 method, such as `createElement` from the `Document` interface, this is
+    /// always `null`.
+    ///
+    fn local_name(&self) -> String {
+        self.node_name().local_name.clone()
+    }
+    ///
+    /// The namespace prefix of this node, or null if it is unspecified.
+    ///
+    /// # Specification
+    ///
+    /// Note that setting this attribute, when permitted, changes the `nodeName` attribute, which
+    /// holds the qualified name, as well as the `tagName` and `name` attributes of the `Element`
+    /// and `Attr` interfaces, when applicable.
+    ///
+    /// Note also that changing the prefix of an attribute that is known to have a default value,
+    /// does not make a new attribute with the default value and the original prefix appear, since
+    /// the `namespaceURI` and `localName` do not change.
+    ///
+    /// For nodes of any type other than `ELEMENT_NODE` and `ATTRIBUTE_NODE` and nodes created
+    /// with a DOM Level 1 method, such as `createElement` from the `Document` interface, this is
+    /// always `null`.
+    ///
+    /// **Exceptions**
+    ///
+    /// * `INVALID_CHARACTER_ERR`: Raised if the specified prefix contains an illegal character.
+    /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
+    /// * `NAMESPACE_ERR`: Raised if the specified prefix is malformed, if the `namespaceURI` of this
+    ///   node is `null`, if the specified prefix is "xml" and the namespaceURI of this node is
+    ///   different from "http://www.w3.org/XML/1998/namespace", if this node is an attribute and
+    ///   the specified prefix is "xmlns" and the namespaceURI of this node is different from  
+    ///   "http://www.w3.org/2000/xmlns/", or if this node is an attribute and the `qualifiedName`
+    ///   of this node is "xmlns".
+    ///
+    fn prefix(&self) -> Option<String> {
+        self.node_name().prefix.clone()
+    }
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1703,7 +1772,7 @@ pub trait ProcessingInstruction: Node {
     /// instruction.
     ///
     fn target(&self) -> String {
-        Node::name(self).to_string()
+        Node::node_name(self).to_string()
     }
 }
 

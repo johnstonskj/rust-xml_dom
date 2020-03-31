@@ -5,12 +5,13 @@ specification is described [below](#idl-to-rust-mapping), however from a purely 
 view the implementation has the following characteristics:
 
 1. It maintains a reasonable separation between the node type traits and the tree implementation
-   using opaque `Node` reference types.
-1. Where possible the names from IDL are used with minimal conversion, however some redundant
-   suffixes (`_data`, `_node`) have been reduced for brevity/clarity.
-1. This leads to a replication of the typical programmer experience where casting between the
-   node traits is required. This is supported by the [`xml_dom::level2::convert`](level2/convert/index.html)
-   module.
+   using opaque `NodeRef` reference types.
+1. Where possible the names from IDL are used with minimal conversion; see mapping section below.
+1. All IDL attributes become trait functions; see mapping section below.
+
+This leads to a replication of the typical programmer experience where casting between the
+node traits is required. This is supported by the [`xml_dom::level2::convert`](level2/convert/index.html)
+module.
 
 # Levels supported.
 

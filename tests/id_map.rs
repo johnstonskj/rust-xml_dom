@@ -14,8 +14,8 @@ fn test_get_element_by_id_strict() {
     {
         let element = element.unwrap();
         let ref_element = as_element(&element).unwrap();
-        assert_eq!(ref_element.name().local_name(), &"title".to_string());
-        assert_eq!(ref_element.name().prefix(), &Some("dc".to_string()));
+        assert_eq!(ref_element.node_name().local_name(), &"title".to_string());
+        assert_eq!(ref_element.node_name().prefix(), &Some("dc".to_string()));
     }
 
     let element = ref_document.get_element_by_id("description");
@@ -40,8 +40,8 @@ fn test_get_element_by_id_lax() {
     {
         let element = element.unwrap();
         let ref_element = as_element(&element).unwrap();
-        assert_eq!(ref_element.name().local_name(), &"title".to_string());
-        assert_eq!(ref_element.name().prefix(), &Some("dc".to_string()));
+        assert_eq!(ref_element.node_name().local_name(), &"title".to_string());
+        assert_eq!(ref_element.node_name().prefix(), &Some("dc".to_string()));
     }
 
     let element = ref_document.get_element_by_id("description");
@@ -49,8 +49,11 @@ fn test_get_element_by_id_lax() {
     {
         let element = element.unwrap();
         let ref_element = as_element(&element).unwrap();
-        assert_eq!(ref_element.name().local_name(), &"Description".to_string());
-        assert_eq!(ref_element.name().prefix(), &Some("dc".to_string()));
+        assert_eq!(
+            ref_element.node_name().local_name(),
+            &"Description".to_string()
+        );
+        assert_eq!(ref_element.node_name().prefix(), &Some("dc".to_string()));
     }
 
     let element = ref_document.get_element_by_id("unknown");

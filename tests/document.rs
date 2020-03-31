@@ -20,7 +20,7 @@ fn test_create_attribute() {
     assert!(attribute.node_value().is_none());
     assert!(attribute.specified());
     let expected_name = Name::from_str("test").unwrap();
-    assert_eq!(attribute.name(), expected_name);
+    assert_eq!(attribute.node_name(), expected_name);
     assert!(attribute.value().is_none());
     assert!(!attribute.has_child_nodes());
 }
@@ -38,7 +38,7 @@ fn test_create_attribute_ns() {
     assert!(attribute.node_value().is_none());
     assert!(attribute.specified());
     let expected_name = Name::new_ns(common::DC_NS, "dc:test").unwrap();
-    assert_eq!(attribute.name(), expected_name);
+    assert_eq!(attribute.node_name(), expected_name);
     assert!(attribute.value().is_none());
     assert!(!attribute.has_child_nodes());
 }
@@ -55,7 +55,7 @@ fn test_create_attribute_with() {
     assert!(attribute.owner_document().is_some());
     assert!(attribute.specified());
     let expected_name = Name::from_str("test").unwrap();
-    assert_eq!(attribute.name(), expected_name);
+    assert_eq!(attribute.node_name(), expected_name);
     let expected_value = Some("some &#39;data&#39;".to_string());
     assert_eq!(attribute.value(), expected_value);
     assert!(!attribute.has_child_nodes());
@@ -69,7 +69,7 @@ fn test_create_cdata_section() {
     let cdata_section = as_cdata_section(&node).unwrap();
     assert!(cdata_section.parent_node().is_none());
     assert!(cdata_section.owner_document().is_some());
-    assert_eq!(cdata_section.name(), Name::for_cdata());
+    assert_eq!(cdata_section.node_name(), Name::for_cdata());
     assert_eq!(cdata_section.length(), TEST_TEXT.len());
     assert_eq!(cdata_section.data(), Some(TEST_TEXT.to_string()));
     assert!(!cdata_section.has_child_nodes());
@@ -83,7 +83,7 @@ fn test_create_document_fragment() {
     let document_fragment = as_document_fragment(&node).unwrap();
     assert!(document_fragment.parent_node().is_none());
     assert!(document_fragment.owner_document().is_some());
-    assert_eq!(document_fragment.name(), Name::for_document_fragment());
+    assert_eq!(document_fragment.node_name(), Name::for_document_fragment());
     assert!(!document_fragment.has_child_nodes());
 }
 
@@ -96,7 +96,7 @@ fn test_create_entity_reference() {
     assert!(entity_reference.parent_node().is_none());
     assert!(entity_reference.owner_document().is_some());
     let expected_name = Name::from_str("test").unwrap();
-    assert_eq!(entity_reference.name(), expected_name);
+    assert_eq!(entity_reference.node_name(), expected_name);
     assert!(!entity_reference.has_child_nodes());
 }
 
@@ -108,7 +108,7 @@ fn test_create_comment() {
     let comment = as_comment(&node).unwrap();
     assert!(comment.parent_node().is_none());
     assert!(comment.owner_document().is_some());
-    assert_eq!(comment.name(), Name::for_comment());
+    assert_eq!(comment.node_name(), Name::for_comment());
     assert_eq!(comment.length(), TEST_TEXT.len());
     assert_eq!(comment.data(), Some(TEST_TEXT.to_string()));
     assert!(!comment.has_child_nodes());
@@ -124,7 +124,7 @@ fn test_create_element() {
     assert!(element.owner_document().is_some());
     assert!(element.node_value().is_none());
     let expected_name = Name::from_str("test").unwrap();
-    assert_eq!(element.name(), expected_name);
+    assert_eq!(element.node_name(), expected_name);
     assert!(!element.has_attributes());
     assert!(!element.has_child_nodes());
 }
@@ -141,7 +141,7 @@ fn test_create_element_ns() {
     assert!(element.owner_document().is_some());
     assert!(element.node_value().is_none());
     let expected_name = Name::new_ns(common::DC_NS, "dc:test").unwrap();
-    assert_eq!(element.name(), expected_name);
+    assert_eq!(element.node_name(), expected_name);
     assert!(!element.has_attributes());
     assert!(!element.has_child_nodes());
 }
@@ -157,7 +157,7 @@ fn test_create_processing_instruction() {
     assert!(processing_instruction.parent_node().is_none());
     assert!(processing_instruction.owner_document().is_some());
     let expected_name = Name::from_str("test").unwrap();
-    assert_eq!(processing_instruction.name(), expected_name);
+    assert_eq!(processing_instruction.node_name(), expected_name);
     assert_eq!(processing_instruction.target(), "test".to_string());
     assert_eq!(processing_instruction.length(), TEST_TEXT.len());
     assert_eq!(processing_instruction.data(), Some(TEST_TEXT.to_string()));
@@ -172,7 +172,7 @@ fn test_create_text_node() {
     let text = as_text(&node).unwrap();
     assert!(text.parent_node().is_none());
     assert!(text.owner_document().is_some());
-    assert_eq!(text.name(), Name::for_text());
+    assert_eq!(text.node_name(), Name::for_text());
     assert_eq!(text.length(), TEST_TEXT.len());
     assert_eq!(text.data(), Some(TEST_TEXT.to_string()));
     assert!(!text.has_child_nodes());
@@ -317,5 +317,5 @@ fn test_replace_root() {
     assert!(element.parent_node().is_some());
     assert!(element.owner_document().is_some());
     let expected_name = Name::from_str("should_work").unwrap();
-    assert_eq!(element.name(), expected_name);
+    assert_eq!(element.node_name(), expected_name);
 }

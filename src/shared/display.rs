@@ -9,7 +9,7 @@ use std::fmt::{Formatter, Result as FmtResult};
 // ------------------------------------------------------------------------------------------------
 
 pub(crate) fn fmt_element(element: RefElement<'_>, f: &mut Formatter<'_>) -> FmtResult {
-    write!(f, "{}{}", XML_ELEMENT_START_START, element.name())?;
+    write!(f, "{}{}", XML_ELEMENT_START_START, element.node_name())?;
     for attr in element.attributes().values() {
         write!(f, " {}", attr.to_string())?;
     }
@@ -21,7 +21,7 @@ pub(crate) fn fmt_element(element: RefElement<'_>, f: &mut Formatter<'_>) -> Fmt
         f,
         "{}{}{}",
         XML_ELEMENT_END_START,
-        element.name(),
+        element.node_name(),
         XML_ELEMENT_END_END
     )
 }
@@ -30,7 +30,7 @@ pub(crate) fn fmt_attribute(attribute: RefAttribute<'_>, f: &mut Formatter<'_>) 
     write!(
         f,
         "{}=\"{}\"",
-        attribute.name(),
+        attribute.node_name(),
         attribute.value().unwrap_or_default()
     )
 }
@@ -83,7 +83,7 @@ pub(crate) fn fmt_document(document: RefDocumentDecl<'_>, f: &mut Formatter<'_>)
 }
 
 pub(crate) fn fmt_document_type(doc_type: RefDocumentType<'_>, f: &mut Formatter<'_>) -> FmtResult {
-    write!(f, "{} {}", XML_DOCTYPE_START, doc_type.name())?;
+    write!(f, "{} {}", XML_DOCTYPE_START, doc_type.node_name())?;
     if let Some(id) = &doc_type.public_id() {
         write!(f, " {} \"{}\"", XML_DOCTYPE_PUBLIC, id)?;
     }
@@ -112,7 +112,7 @@ pub(crate) fn fmt_document_fragment(
     fragment: RefDocumentFragment<'_>,
     f: &mut Formatter<'_>,
 ) -> FmtResult {
-    write!(f, "{}{} ", XML_CDATA_START, fragment.name())?;
+    write!(f, "{}{} ", XML_CDATA_START, fragment.node_name())?;
     for child in fragment.child_nodes() {
         write!(f, "{}", child.to_string())?;
     }
@@ -120,7 +120,7 @@ pub(crate) fn fmt_document_fragment(
 }
 
 pub(crate) fn fmt_entity(entity: RefEntity<'_>, f: &mut Formatter<'_>) -> FmtResult {
-    write!(f, "{} {}", XML_ENTITY_START, entity.name())?;
+    write!(f, "{} {}", XML_ENTITY_START, entity.node_name())?;
     if entity.public_id().is_none() && entity.system_id().is_none() {
         write!(f, " \"{}\"", entity.node_value().unwrap_or_default())?;
     } else if let Some(public_id) = entity.public_id() {
@@ -145,13 +145,13 @@ pub(crate) fn fmt_entity_reference(
         f,
         "{}{}{}",
         XML_ENTITYREF_START,
-        entity_ref.name(),
+        entity_ref.node_name(),
         XML_ENTITYREF_END
     )
 }
 
 pub(crate) fn fmt_notation(notation: RefNotation<'_>, f: &mut Formatter<'_>) -> FmtResult {
-    write!(f, "{} {}", XML_NOTATION_START, notation.name())?;
+    write!(f, "{} {}", XML_NOTATION_START, notation.node_name())?;
     if let Some(public_id) = notation.public_id() {
         write!(f, " {} \"{}\"", XML_DOCTYPE_PUBLIC, public_id)?;
         if let Some(system_id) = notation.system_id() {

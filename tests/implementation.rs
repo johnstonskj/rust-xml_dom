@@ -64,7 +64,7 @@ fn test_create_document_type() {
         )
         .unwrap();
     let document_type = as_document_type(&document_type_node).unwrap();
-    assert_eq!(document_type.name(), Name::from_str("html").unwrap());
+    assert_eq!(document_type.node_name(), Name::from_str("html").unwrap());
     let public_id = document_type.public_id().unwrap();
     assert_eq!(
         public_id,

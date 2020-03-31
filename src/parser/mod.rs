@@ -73,8 +73,21 @@ pub fn read_xml(xml: &str) -> Result<RefNode> {
 // ------------------------------------------------------------------------------------------------
 
 impl Display for Error {
-    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
-        unimplemented!()
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Error::HierarchyRequest => "An attempt insert a node somewhere it doesn't belong",
+                Error::InvalidCharacter =>
+                    "An invalid or illegal character was specified, such as in a name",
+                Error::NotSupported =>
+                    "The implementation does not support the requested type of object or operation",
+                Error::IO => "I/O Error reading data",
+                Error::Encoding => "Issue decoding bytes to UTF-8",
+                Error::Malformed => "Input document malformed",
+            }
+        )
     }
 }
 
