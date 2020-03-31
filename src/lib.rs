@@ -13,14 +13,17 @@ This leads to a replication of the typical programmer experience where casting b
 node traits is required. This is supported by the [`xml_dom::level2::convert`](level2/convert/index.html)
 module.
 
-# Levels supported.
 
-* **Level 1**: Only supported as a subset of Level 2 at this time
-  ([specification](https://www.w3.org/TR/REC-DOM-Level-1/)).
-* **Level 2**: Supported as described in the [`level2`](level2/index.html) module
-  ([specification](https://www.w3.org/TR/DOM-Level-2-Core/)).
-* **Level 3**: Not supported at this time.
-* **Level 4**: Not supported at this time.
+## Features
+
+Currently only one feature, `quick_parser`, is provided which provides a new module `parser` with the
+single public function:
+
+``` rust
+pub fn read_xml(xml: &str) -> Result<RefNode>;
+```
+
+This will parse the document and return a new `RefNode` that corresponds to the `Document` trait.
 
 # Example
 
@@ -61,6 +64,15 @@ println!("document 2: {}", xml);
   Especially §7.1 _Conformance to xml:id_.
 * [XML Base (Second Edition)](https://www.w3.org/TR/xmlbase/), W3C Recommendation 28 January 2009.
 * [The "xml" Namespace](https://www.w3.org/XML/1998/namespace), W3C 26 October 2009.
+
+## Levels supported.
+
+* **Level 1**: Only supported as a subset of Level 2 at this time
+  ([specification](https://www.w3.org/TR/REC-DOM-Level-1/)).
+* **Level 2**: Supported as described in the [`level2`](level2/index.html) module
+  ([specification](https://www.w3.org/TR/DOM-Level-2-Core/)).
+* **Level 3**: Not supported at this time.
+* **Level 4**: Not supported at this time.
 
 # IDL to Rust Mapping
 
