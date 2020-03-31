@@ -18,6 +18,8 @@ view the implementation has the following characteristics:
 1. It maintains a reasonable separation between the node type traits and the tree implementation
    using opaque an `RefNode` reference type.
 1. Where possible the names from IDL are used with minimal conversion.
+1. All IDL attributes become trait functions (`get_`, `set_`, and `unset_`).
+
 1. This leads to a replication of the typical DOM programmer experience where casting between the
    node traits is required. This is supported by the `xml_dom::convert` module.
 
@@ -81,9 +83,9 @@ implementation of `Display` for `RefNode` does not format the output.
 
 ## Changes
 
-**Version 0.1.4** (_in progress_)
+**Version 0.1.4**
 
-* **BREAKING** Refactor, add a `level2` module, allowing other levels to be added at a later time. Also
+* **BREAKING** refactored to add a `level2` module, allowing other levels to be added at a later time. Also
   moved extensions into `level2::ext` module.
 * **BREAKING** renamed methods to conform with DOM names:
   * `Node::name` to `Node::node_name`;
