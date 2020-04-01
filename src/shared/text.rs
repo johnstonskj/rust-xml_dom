@@ -57,37 +57,36 @@ pub(crate) enum SpaceHandling {
 /// has been read.
 ///
 pub(crate) fn normalize_attribute_value(value: &str, is_cdata: bool) -> String {
-    fn char_from_entity(entity: &str, hex: bool) -> String {
-        let code_point = &entity[if hex { 3 } else { 2 }..entity.len() - 1];
-        let code_point = u32::from_str_radix(code_point, if hex { 16 } else { 10 }).unwrap();
-        let character = char::try_from(code_point).unwrap();
-        character.to_string()
-    }
     let step_1 = normalize_end_of_lines(value);
     let step_3 = if step_1.is_empty() {
         step_1
     } else {
-        //
-        // TODO: this does not yet deal with entity references.
-        //
         let find = regex::Regex::new(
-            r"(?P<char>&#\d+;)|(?P<char_hex>&#x[0-9a-fA-F]+;)|(?P<ws>[\u{09}\u{0A}\u{0D}])",
+            r"(?P<entity_ref>[&%][\pL_][\pL\.\d_\-]*;)|(?P<char>&#\d+;)|(?P<char_hex>&#x[0-9a-fA-F]+;)|(?P<ws>[\u{09}\u{0A}\u{0D}])",
         )
         .unwrap();
         let mut step_2 = String::new();
         let mut last_end = 0;
         for capture in find.captures_iter(&step_1) {
-            let (start, end, replacement) = if let Some(a_match) = capture.name("char") {
-                let replacement = char_from_entity(a_match.as_str(), false);
+            let (start, end, replacement) = if let Some(a_match) = capture.name("entity_ref") {
+                //
+                // TODO: this does not yet deal with entity references.
+                //
+                println!("entity reference: {}", a_match.as_str());
+                let replacement = "".to_string();
+                (a_match.start(), a_match.end(), replacement)
+            } else if let Some(a_match) = capture.name("char") {
+                let replacement = char_from_entity(a_match.as_str());
                 (a_match.start(), a_match.end(), replacement)
             } else if let Some(a_match) = capture.name("char_hex") {
-                let replacement = char_from_entity(a_match.as_str(), true);
+                let replacement = char_from_entity(a_match.as_str());
                 (a_match.start(), a_match.end(), replacement)
             } else if let Some(a_match) = capture.name("ws") {
                 (a_match.start(), a_match.end(), "\u{20}".to_string())
             } else {
                 panic!("unexpected result");
             };
+
             step_2.push_str(&step_1[last_end..start]);
             step_2.push_str(&replacement);
             last_end = end;
@@ -183,11 +182,6 @@ pub(crate) fn escape(input: &str) -> String {
     result
 }
 
-#[allow(dead_code)]
-pub(crate) fn unescape(_input: &str) -> String {
-    unimplemented!()
-}
-
 pub(crate) fn to_entity(c: char) -> String {
     format!(
         "{}{}{}",
@@ -201,6 +195,20 @@ pub(crate) fn to_entity_hex(c: char) -> String {
         "{}{:X}{}",
         XML_HEX_NUMBERED_ENTITYREF_START, c as u16, XML_ENTITYREF_END
     )
+}
+
+fn char_from_entity(entity: &str) -> String {
+    assert!(entity.starts_with("&#"));
+    assert!(entity.ends_with(";"));
+    let code_point = if &entity[2..3] == "x" {
+        let code_point = &entity[3..entity.len() - 1];
+        u32::from_str_radix(code_point, 16).unwrap()
+    } else {
+        let code_point = &entity[2..entity.len() - 1];
+        u32::from_str_radix(code_point, 10).unwrap()
+    };
+    let character = char::try_from(code_point).unwrap();
+    character.to_string()
 }
 
 ///
