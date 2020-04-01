@@ -1,5 +1,6 @@
 use crate::shared::error::Result;
 use crate::shared::name::Name;
+use crate::shared::text;
 use std::collections::HashMap;
 
 // ------------------------------------------------------------------------------------------------
@@ -27,21 +28,15 @@ pub trait Attribute: Node {
     ///
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised when the node is readonly.
     ///
-    fn value(&self) -> Option<String> {
-        Node::node_value(self)
-    }
+    fn value(&self) -> Option<String>;
     ///
     /// Set the `value` for the node; see [`value`](#tymethod.value).
     ///
-    fn set_value(&mut self, value: &str) -> Result<()> {
-        Node::set_node_value(self, value)
-    }
+    fn set_value(&mut self, value: &str) -> Result<()>;
     ///
     /// Set the `value` for the node to `None`; see [`value`](#tymethod.value).
     ///
-    fn unset_value(&mut self) -> Result<()> {
-        Node::unset_node_value(self)
-    }
+    fn unset_value(&mut self) -> Result<()>;
     ///
     /// If this attribute was explicitly given a value in the original document, this is `true`;
     /// otherwise, it is `false`.
@@ -160,7 +155,15 @@ pub trait CharacterData: Node {
     ///   `DOMString` variable on the implementation platform.
     ///
     fn data(&self) -> Option<String> {
-        Node::node_value(self)
+        let node_type = self.node_type();
+        match (
+            Node::node_value(self),
+            node_type == NodeType::Text || node_type == NodeType::Comment,
+        ) {
+            (None, _) => None,
+            (v @ Some(_), false) => v,
+            (Some(value), true) => Some(text::escape(&value)),
+        }
     }
     ///
     /// Set the `data` for the node; see [data()](#tymethod.data).

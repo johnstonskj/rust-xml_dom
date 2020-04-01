@@ -58,7 +58,7 @@ fn test_create_attribute_with() {
     assert_eq!(attribute.node_name(), expected_name);
     let expected_value = Some("some &#39;data&#39;".to_string());
     assert_eq!(attribute.value(), expected_value);
-    assert!(!attribute.has_child_nodes());
+    assert_eq!(attribute.child_nodes().len(), 1);
 }
 
 #[test]

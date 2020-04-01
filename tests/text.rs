@@ -32,7 +32,7 @@ fn test_text_node_contents() {
         assert_eq!(children.len(), 1);
         let text = children.first().unwrap();
         let text = as_text(&text).unwrap();
-        assert_eq!(text.node_value().unwrap(), text_values[index].to_string());
+        assert_eq!(text.data().unwrap(), text_values[index].to_string());
     }
 }
 

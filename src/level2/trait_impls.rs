@@ -4,10 +4,10 @@ use crate::level2::ext::convert::as_element_namespaced_mut;
 use crate::level2::ext::options::ProcessingOptions;
 use crate::level2::node_impl::*;
 use crate::level2::traits::*;
-use crate::shared::display;
 use crate::shared::error::*;
 use crate::shared::name::Name;
 use crate::shared::syntax::*;
+use crate::shared::{display, text};
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -67,6 +67,39 @@ macro_rules! unwrap_extension_field {
 // ------------------------------------------------------------------------------------------------
 
 impl Attribute for RefNode {
+    fn value(&self) -> Option<String> {
+        if self.has_child_nodes() {
+            let mut result = String::new();
+            for child_node in self.child_nodes() {
+                if child_node.node_type() == NodeType::EntityReference {
+                    if let Some(value) = child_node.node_value() {
+                        result.push_str(&value);
+                    }
+                } else if child_node.node_type() == NodeType::Text {
+                    let text_node = as_text(&child_node).unwrap();
+                    if let Some(data) = text_node.data() {
+                        result.push_str(&data);
+                    }
+                }
+            }
+            let normalized = text::normalize_attribute_value(&result, false);
+            Some(text::escape(&normalized))
+        } else {
+            None
+        }
+    }
+    fn set_value(&mut self, value: &str) -> Result<()> {
+        self.unset_value()?;
+        let document_node = self.owner_document().unwrap();
+        let document = as_document(&document_node).unwrap();
+        let _safe_to_ignore = self.append_child(document.create_text_node(value))?;
+        Ok(())
+    }
+    fn unset_value(&mut self) -> Result<()> {
+        let mut mut_self = self.borrow_mut();
+        mut_self.i_child_nodes.clear();
+        Ok(())
+    }
     fn owner_element(&self) -> Option<Self::NodeRef> {
         unwrap_extension_field!(
             self,

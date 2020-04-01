@@ -1,4 +1,5 @@
 use crate::shared::syntax::*;
+use std::convert::TryFrom;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::str::FromStr;
 
@@ -15,6 +16,122 @@ pub(crate) enum SpaceHandling {
 // ------------------------------------------------------------------------------------------------
 //  Public Functions
 // ------------------------------------------------------------------------------------------------
+
+///
+/// From XML 1.1 §3.3.3 [Attribute-Value Normalization](https://www.w3.org/TR/xml11/#AVNormalize):
+///
+/// Before the value of an attribute is passed to the application or checked for validity, the XML
+/// processor must normalize the attribute value by applying the algorithm below, or by using some
+/// other method such that the value passed to the application is the same as that produced by the
+/// algorithm.
+///
+/// 1. All line breaks must have been normalized on input to `#xA` as described in 2.11 End-of-Line
+///    Handling, so the rest of this algorithm operates on text normalized in this way.
+/// 2. Begin with a normalized value consisting of the empty string.
+/// 3. For each character, entity reference, or character reference in the unnormalized attribute
+///    value, beginning with the first and continuing to the last, do the following:
+///    * For a character reference, append the referenced character to the normalized value.
+///    * For an entity reference, recursively apply step 3 of this algorithm to the replacement text
+///      of the entity.
+///    * For a white space character (`#x20`, `#xD`, `#xA`, `#x9`), append a space character (`#x20`)
+///      to the normalized value.
+///    * For another character, append the character to the normalized value.
+///
+/// If the attribute type is not CDATA, then the XML processor must further process the normalized
+/// attribute value by discarding any leading and trailing space (`#x20`) characters, and by
+/// replacing sequences of space (`#x20`) characters by a single space (`#x20`) character.
+///
+/// Note that if the unnormalized attribute value contains a character reference to a white space
+/// character other than space (`#x20`), the normalized value contains the referenced character
+/// itself (`#xD`, `#xA` or `#x9`). This contrasts with the case where the unnormalized value
+/// contains a white space character (not a reference), which is replaced with a space character
+/// (`#x20`) in the normalized value and also contrasts with the case where the unnormalized value
+/// contains an entity reference whose replacement text contains a white space character; being
+/// recursively processed, the white space character is replaced with a space character (`#x20`) in
+/// the normalized value.
+///
+/// All attributes for which no declaration has been read should be treated by a non-validating
+/// processor as if declared CDATA.
+///
+/// It is an error if an attribute value contains a reference to an entity for which no declaration
+/// has been read.
+///
+pub(crate) fn normalize_attribute_value(value: &String, is_cdata: bool) -> String {
+    fn char_from_entity(entity: &str, hex: bool) -> String {
+        let code_point = &entity[2..entity.len() - 1];
+        let code_point = u32::from_str_radix(code_point, if hex { 16 } else { 10 }).unwrap();
+        let character = char::try_from(code_point).unwrap();
+        character.to_string()
+    }
+    let step_1 = normalize_end_of_lines(value);
+    let step_3 = if step_1.is_empty() {
+        step_1
+    } else {
+        let find = regex::Regex::new(
+            r"(?P<char>&#\d+;)|(?P<char_hex>&#x[0-9a-fA-F]+;)|(?P<ws>[\u{20}\u{09}\u{0A}\u{0D}])",
+        )
+        .unwrap();
+        let mut step_2 = String::new();
+        let mut last_end = 0;
+        for capture in find.captures_iter(&step_1) {
+            let (start, end, replacement) = if let Some(a_match) = capture.name("char") {
+                let replacement = char_from_entity(a_match.as_str(), false);
+                (a_match.start(), a_match.end(), replacement)
+            } else if let Some(a_match) = capture.name("char_hex") {
+                let replacement = char_from_entity(a_match.as_str(), true);
+                (a_match.start(), a_match.end(), replacement)
+            } else if let Some(a_match) = capture.name("ws") {
+                (a_match.start(), a_match.end(), "\u{20}".to_string())
+            } else {
+                panic!("unexpected result");
+            };
+            step_2.push_str(&value[last_end..start]);
+            step_2.push_str(&replacement);
+            last_end = end;
+        }
+        if last_end < value.len() {
+            step_2.push_str(&value[last_end..]);
+        }
+        step_2
+    };
+    if is_cdata {
+        step_3
+    } else {
+        step_3.trim_matches(' ').to_string()
+    }
+}
+
+///
+/// From XML 1.1 §2.11 [End-of-Line Handling](https://www.w3.org/TR/xml11/#sec-line-ends):
+///
+/// XML parsed entities are often stored in computer files which, for editing convenience, are
+/// organized into lines. These lines are typically separated by some combination of the characters
+/// CARRIAGE RETURN `(#xD`) and LINE FEED (`#xA`).
+///
+/// To simplify the tasks of applications, the XML processor must behave as if it normalized all line
+/// breaks in external parsed entities (including the document entity) on input, before parsing, by
+/// translating all of the following to a single `#xA` character:
+///
+/// * the two-character sequence `#xD` `#xA`
+/// * the two-character sequence `#xD` `#x85`
+/// * the single character `#x85`
+/// * the single character `#x2028`
+/// * any `#xD` character that is not immediately followed by `#xA` or `#x85`.
+///
+/// The characters `#x85` and `#x2028` cannot be reliably recognized and translated until an entity's
+/// encoding declaration (if present) has been read. Therefore, it is a fatal error to use them
+/// within the XML declaration or text declaration.
+///
+pub(crate) fn normalize_end_of_lines(value: &String) -> String {
+    if value.is_empty() {
+        value.to_string()
+    } else {
+        let line_ends = regex::Regex::new(r"\u{0D}[\u{0A}\u{85}]?|\u{85}|\u{2028}").unwrap();
+        let result = line_ends.replace_all(value, "\u{0A}");
+        result.to_string()
+    }
+    .to_string()
+}
 
 ///
 /// Escape character data according to XML 1.1
@@ -362,5 +479,15 @@ mod tests {
         );
         assert!(SpaceHandling::from_str("").is_err());
         assert!(SpaceHandling::from_str("other").is_err());
+    }
+
+    #[test]
+    fn test_end_of_line_handling() {
+        let input = "one\u{0D}two\u{0D}\u{0A}\u{0A}three\u{0A}\u{0D}\u{85}four\u{85}five\u{2028}";
+        let output = normalize_end_of_lines(&input.to_string());
+        assert_eq!(
+            output,
+            "one\u{0A}two\u{0A}\u{0A}three\u{0A}\u{0A}four\u{0A}five\u{0A}".to_string()
+        )
     }
 }

@@ -4,7 +4,6 @@ use crate::level2::traits::{Node, NodeType};
 use crate::level2::{get_implementation, DOMImplementation};
 use crate::shared::name::Name;
 use crate::shared::rc_cell::{RcRefCell, WeakRefCell};
-use crate::shared::text;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
@@ -121,13 +120,18 @@ impl NodeImpl {
         name: Name,
         value: Option<&str>,
     ) -> Self {
+        let children = if let Some(value) = value {
+            vec![RefNode::new(Self::new_text(owner_document.clone(), value))]
+        } else {
+            Vec::new()
+        };
         Self {
             i_node_type: NodeType::Attribute,
             i_name: name,
-            i_value: value.map(text::escape),
+            i_value: None,
             i_parent_node: None,
             i_owner_document: Some(owner_document),
-            i_child_nodes: vec![],
+            i_child_nodes: children,
             i_extension: Extension::Attribute {
                 i_owner_element: None,
             },
@@ -137,7 +141,7 @@ impl NodeImpl {
         Self {
             i_node_type: NodeType::Text,
             i_name: Name::for_text(),
-            i_value: Some(text::escape(data)),
+            i_value: Some(data.to_string()),
             i_parent_node: None,
             i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
@@ -148,7 +152,7 @@ impl NodeImpl {
         Self {
             i_node_type: NodeType::CData,
             i_name: Name::for_cdata(),
-            i_value: Some(text::escape(data)),
+            i_value: Some(data.to_string()),
             i_parent_node: None,
             i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
@@ -174,7 +178,7 @@ impl NodeImpl {
         Self {
             i_node_type: NodeType::Comment,
             i_name: Name::for_comment(),
-            i_value: Some(text::escape(data)),
+            i_value: Some(data.to_string()),
             i_parent_node: None,
             i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
