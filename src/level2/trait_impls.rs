@@ -154,7 +154,15 @@ impl Document for RefNode {
     }
 
     fn implementation(&self) -> &dyn DOMImplementation<NodeRef = RefNode> {
-        get_implementation()
+        let ref_self = self.borrow();
+        if let Extension::Document {
+            i_implementation, ..
+        } = &ref_self.i_extension
+        {
+            i_implementation.clone()
+        } else {
+            panic!("{}", MSG_INVALID_EXTENSION);
+        }
     }
 
     fn create_attribute(&self, name: &str) -> Result<RefNode> {

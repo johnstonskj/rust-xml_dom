@@ -1,10 +1,12 @@
 use crate::level2::ext::ProcessingOptions;
 use crate::level2::ext::XmlDecl;
 use crate::level2::traits::{Node, NodeType};
+use crate::level2::{get_implementation, DOMImplementation};
 use crate::shared::name::Name;
 use crate::shared::rc_cell::{RcRefCell, WeakRefCell};
 use crate::shared::text;
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -42,6 +44,7 @@ pub(crate) enum Extension {
         i_owner_element: Option<WeakRefNode>,
     },
     Document {
+        i_implementation: &'static dyn DOMImplementation<NodeRef = RefNode>,
         i_xml_declaration: Option<XmlDecl>,
         i_document_type: Option<RefNode>,
         i_id_map: HashMap<String, WeakRefNode>,
@@ -88,6 +91,14 @@ pub struct NodeImpl {
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
+// ------------------------------------------------------------------------------------------------
+
+impl Debug for &'static dyn DOMImplementation<NodeRef = RefNode> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "DOMImplementation")
+    }
+}
+
 // ------------------------------------------------------------------------------------------------
 
 impl NodeImpl {
@@ -179,6 +190,7 @@ impl NodeImpl {
             i_owner_document: None,
             i_child_nodes: vec![],
             i_extension: Extension::Document {
+                i_implementation: get_implementation(),
                 i_xml_declaration: None,
                 i_document_type: doc_type,
                 i_id_map: Default::default(),
@@ -295,11 +307,13 @@ impl NodeImpl {
                 i_owner_element: i_owner_element.clone(),
             },
             Extension::Document {
+                i_implementation,
                 i_xml_declaration,
                 i_document_type,
                 i_id_map,
                 i_options,
             } => Extension::Document {
+                i_implementation: i_implementation.clone(),
                 i_xml_declaration: i_xml_declaration.clone(),
                 i_document_type: i_document_type.clone(),
                 i_id_map: i_id_map.clone(),

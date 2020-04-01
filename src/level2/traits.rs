@@ -313,6 +313,9 @@ pub trait Document: Node {
     ///
     /// The DOMImplementation object that handles this document.
     ///
+    /// Note: this function will panic if for some reason an implementation is not associated
+    /// with the document instance.
+    ///
     /// # Specification
     ///
     /// A DOM application may use objects from multiple implementations.
