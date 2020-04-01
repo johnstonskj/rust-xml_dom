@@ -78,6 +78,8 @@ impl Attribute for RefNode {
     // text. See also the method `setAttribute` on the `Element` interface.
     //
     fn value(&self) -> Option<String> {
+        use std::borrow::Borrow;
+
         if self.has_child_nodes() {
             let mut result = String::new();
             for child_node in self.child_nodes() {
@@ -95,7 +97,8 @@ impl Attribute for RefNode {
                     }
                 }
             }
-            let normalized = text::normalize_attribute_value(&result, false);
+            let resolver = text::default_entity_resolver();
+            let normalized = text::normalize_attribute_value(&result, resolver.borrow(), false);
             Some(text::escape(&normalized))
         } else {
             None

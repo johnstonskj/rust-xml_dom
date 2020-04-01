@@ -228,3 +228,18 @@ fn test_normalization_character_entities() {
         Some("hello1world".to_string())
     );
 }
+
+#[test]
+#[should_panic]
+fn test_normalization_entity_not_found() {
+    let document_node = common::create_empty_rdf_document();
+    let document = as_document(&document_node).unwrap();
+    let mut element_node = document.document_element().unwrap();
+    let element = as_element_mut(&mut element_node).unwrap();
+
+    element.set_attribute("test", "hello&pound;world").unwrap();
+    assert_eq!(
+        element.get_attribute("test"),
+        Some("hello£world".to_string())
+    );
+}

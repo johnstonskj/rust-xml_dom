@@ -13,9 +13,18 @@ pub(crate) enum SpaceHandling {
     Preserve,
 }
 
+pub(crate) trait EntityResolver {
+    fn resolve(&self, entity: &str) -> Option<String>;
+}
+
 // ------------------------------------------------------------------------------------------------
 //  Public Functions
 // ------------------------------------------------------------------------------------------------
+
+pub(crate) fn default_entity_resolver() -> Box<dyn EntityResolver> {
+    let resolver = DefaultEntityResolver {};
+    Box::new(resolver)
+}
 
 ///
 /// From XML 1.1 §3.3.3 [Attribute-Value Normalization](https://www.w3.org/TR/xml11/#AVNormalize):
@@ -56,7 +65,11 @@ pub(crate) enum SpaceHandling {
 /// It is an error if an attribute value contains a reference to an entity for which no declaration
 /// has been read.
 ///
-pub(crate) fn normalize_attribute_value(value: &str, is_cdata: bool) -> String {
+pub(crate) fn normalize_attribute_value(
+    value: &str,
+    resolver: &dyn EntityResolver,
+    is_cdata: bool,
+) -> String {
     let step_1 = normalize_end_of_lines(value);
     let step_3 = if step_1.is_empty() {
         step_1
@@ -72,8 +85,12 @@ pub(crate) fn normalize_attribute_value(value: &str, is_cdata: bool) -> String {
                 //
                 // TODO: this does not yet deal with entity references.
                 //
-                println!("entity reference: {}", a_match.as_str());
-                let replacement = "".to_string();
+                let replacement = match resolver.resolve(a_match.as_str()) {
+                    None => panic!("unknown entity reference {}", a_match.as_str()),
+                    Some(replacement) => {
+                        normalize_attribute_value(&replacement, resolver, is_cdata)
+                    }
+                };
                 (a_match.start(), a_match.end(), replacement)
             } else if let Some(a_match) = capture.name("char") {
                 let replacement = char_from_entity(a_match.as_str());
@@ -199,7 +216,7 @@ pub(crate) fn to_entity_hex(c: char) -> String {
 
 fn char_from_entity(entity: &str) -> String {
     assert!(entity.starts_with("&#"));
-    assert!(entity.ends_with(";"));
+    assert!(entity.ends_with(';'));
     let code_point = if &entity[2..3] == "x" {
         let code_point = &entity[3..entity.len() - 1];
         u32::from_str_radix(code_point, 16).unwrap()
@@ -446,12 +463,27 @@ impl FromStr for SpaceHandling {
 }
 
 // ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+
+struct DefaultEntityResolver {}
+
+impl EntityResolver for DefaultEntityResolver {
+    fn resolve(&self, name: &str) -> Option<String> {
+        let result: Option<String> = None;
+        println!("EntityResolver::resolve({:?}) -> {:?}", name, result);
+        result
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
 // Unit Tests
 // ------------------------------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::borrow::Borrow;
+    use std::collections::HashMap;
 
     #[test]
     fn test_space_handling_default() {
@@ -499,5 +531,71 @@ mod tests {
             output,
             "one\u{0A}two\u{0A}\u{0A}three\u{0A}\u{0A}four\u{0A}five\u{0A}".to_string()
         )
+    }
+
+    #[test]
+    fn test_normalize_avalue_trim() {
+        let resolver = default_entity_resolver();
+        let resolver = resolver.borrow();
+        assert_eq!(
+            normalize_attribute_value("  abc ", resolver, true),
+            "  abc "
+        );
+        assert_eq!(normalize_attribute_value("  abc ", resolver, false), "abc");
+    }
+
+    struct TestResolver {
+        entity_map: HashMap<String, String>,
+    }
+
+    impl EntityResolver for TestResolver {
+        fn resolve(&self, entity: &str) -> Option<String> {
+            self.entity_map.get(entity).cloned()
+        }
+    }
+
+    impl TestResolver {
+        pub(crate) fn new() -> Self {
+            let mut new_self = Self {
+                entity_map: Default::default(),
+            };
+            let _safe_to_ignore = new_self
+                .entity_map
+                .insert("&pound;".to_string(), "£".to_string());
+            let _safe_to_ignore = new_self
+                .entity_map
+                .insert("&yen;".to_string(), "¥".to_string());
+            let _safe_to_ignore = new_self
+                .entity_map
+                .insert("&euro;".to_string(), "€".to_string());
+            let _safe_to_ignore = new_self.entity_map.insert(
+                "&currency;".to_string(),
+                "$, &pound;, &euro;, and &yen;".to_string(),
+            );
+            new_self
+        }
+    }
+
+    fn test_resolver() -> Box<dyn EntityResolver> {
+        let resolver = TestResolver::new();
+        Box::new(resolver)
+    }
+
+    #[test]
+    fn test_normalize_avalue_entity_resolver() {
+        let resolver = test_resolver();
+        let resolver = resolver.borrow();
+        assert_eq!(
+            normalize_attribute_value("10$ in &pound;s please", resolver, true),
+            "10$ in £s please"
+        );
+        assert_eq!(
+            normalize_attribute_value("&yen; to &euro;", resolver, false),
+            "¥ to €"
+        );
+        assert_eq!(
+            normalize_attribute_value("&currency;", resolver, false),
+            "$, £, €, and ¥"
+        );
     }
 }
