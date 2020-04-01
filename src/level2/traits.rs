@@ -1637,7 +1637,7 @@ pub trait Node {
     /// namespace, it simply has no namespace.
     ///
     fn namespace_uri(&self) -> Option<String> {
-        self.node_name().namespace_uri.clone()
+        self.node_name().namespace_uri
     }
     ///
     /// Returns the local part of the qualified name of this node.
@@ -1649,7 +1649,7 @@ pub trait Node {
     /// always `null`.
     ///
     fn local_name(&self) -> String {
-        self.node_name().local_name.clone()
+        self.node_name().local_name
     }
     ///
     /// The namespace prefix of this node, or null if it is unspecified.
@@ -1680,7 +1680,7 @@ pub trait Node {
     ///   of this node is "xmlns".
     ///
     fn prefix(&self) -> Option<String> {
-        self.node_name().prefix.clone()
+        self.node_name().prefix
     }
 }
 

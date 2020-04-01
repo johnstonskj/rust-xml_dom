@@ -56,9 +56,9 @@ pub(crate) enum SpaceHandling {
 /// It is an error if an attribute value contains a reference to an entity for which no declaration
 /// has been read.
 ///
-pub(crate) fn normalize_attribute_value(value: &String, is_cdata: bool) -> String {
+pub(crate) fn normalize_attribute_value(value: &str, is_cdata: bool) -> String {
     fn char_from_entity(entity: &str, hex: bool) -> String {
-        let code_point = &entity[2..entity.len() - 1];
+        let code_point = &entity[if hex { 3 } else { 2 }..entity.len() - 1];
         let code_point = u32::from_str_radix(code_point, if hex { 16 } else { 10 }).unwrap();
         let character = char::try_from(code_point).unwrap();
         character.to_string()
@@ -67,8 +67,11 @@ pub(crate) fn normalize_attribute_value(value: &String, is_cdata: bool) -> Strin
     let step_3 = if step_1.is_empty() {
         step_1
     } else {
+        //
+        // TODO: this does not yet deal with entity references.
+        //
         let find = regex::Regex::new(
-            r"(?P<char>&#\d+;)|(?P<char_hex>&#x[0-9a-fA-F]+;)|(?P<ws>[\u{20}\u{09}\u{0A}\u{0D}])",
+            r"(?P<char>&#\d+;)|(?P<char_hex>&#x[0-9a-fA-F]+;)|(?P<ws>[\u{09}\u{0A}\u{0D}])",
         )
         .unwrap();
         let mut step_2 = String::new();
@@ -85,12 +88,13 @@ pub(crate) fn normalize_attribute_value(value: &String, is_cdata: bool) -> Strin
             } else {
                 panic!("unexpected result");
             };
-            step_2.push_str(&value[last_end..start]);
+            step_2.push_str(&step_1[last_end..start]);
             step_2.push_str(&replacement);
             last_end = end;
         }
+
         if last_end < value.len() {
-            step_2.push_str(&value[last_end..]);
+            step_2.push_str(&step_1[last_end..]);
         }
         step_2
     };
@@ -122,15 +126,13 @@ pub(crate) fn normalize_attribute_value(value: &String, is_cdata: bool) -> Strin
 /// encoding declaration (if present) has been read. Therefore, it is a fatal error to use them
 /// within the XML declaration or text declaration.
 ///
-pub(crate) fn normalize_end_of_lines(value: &String) -> String {
+pub(crate) fn normalize_end_of_lines(value: &str) -> String {
     if value.is_empty() {
         value.to_string()
     } else {
         let line_ends = regex::Regex::new(r"\u{0D}[\u{0A}\u{85}]?|\u{85}|\u{2028}").unwrap();
-        let result = line_ends.replace_all(value, "\u{0A}");
-        result.to_string()
+        line_ends.replace_all(value, "\u{0A}").to_string()
     }
-    .to_string()
 }
 
 ///

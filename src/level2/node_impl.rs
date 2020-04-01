@@ -304,6 +304,7 @@ impl NodeImpl {
             },
         }
     }
+    #[allow(clippy::clone_double_ref)]
     pub(crate) fn clone_node(&self, deep: bool) -> Self {
         let extension = match &self.i_extension {
             Extension::None => Extension::None,

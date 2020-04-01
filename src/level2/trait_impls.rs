@@ -67,6 +67,16 @@ macro_rules! unwrap_extension_field {
 // ------------------------------------------------------------------------------------------------
 
 impl Attribute for RefNode {
+    //
+    // For Attribute instances:
+    // On retrieval, the value of the attribute is returned as a string. Character and general
+    // entity references are replaced with their values. See also the method `getAttribute` on the
+    // `Element` interface.
+    //
+    // On setting, this creates a `Text` node with the unparsed contents of the string. I.e. any
+    // characters that an XML processor would recognize as markup are instead treated as literal
+    // text. See also the method `setAttribute` on the `Element` interface.
+    //
     fn value(&self) -> Option<String> {
         if self.has_child_nodes() {
             let mut result = String::new();
@@ -76,8 +86,11 @@ impl Attribute for RefNode {
                         result.push_str(&value);
                     }
                 } else if child_node.node_type() == NodeType::Text {
-                    let text_node = as_text(&child_node).unwrap();
-                    if let Some(data) = text_node.data() {
+                    //
+                    // Do not use the Text::data function as this will escape the response.
+                    //
+                    let ref_node = child_node.borrow();
+                    if let Some(data) = &ref_node.i_value {
                         result.push_str(&data);
                     }
                 }
@@ -230,7 +243,7 @@ impl Document for RefNode {
             i_implementation, ..
         } = &ref_self.i_extension
         {
-            i_implementation.clone()
+            *i_implementation
         } else {
             panic!("{}", MSG_INVALID_EXTENSION);
         }
@@ -769,31 +782,18 @@ impl Node for RefNode {
         ref_self.i_name.clone()
     }
 
-    //
-    // For Attribute instances:
-    // On retrieval, the value of the attribute is returned as a string. Character and general
-    // entity references are replaced with their values. See also the method `getAttribute` on the
-    // `Element` interface.
-    //
-    // On setting, this creates a `Text` node with the unparsed contents of the string. I.e. any
-    // characters that an XML processor would recognize as markup are instead treated as literal
-    // text. See also the method `setAttribute` on the `Element` interface.
-    //
     fn node_value(&self) -> Option<String> {
-        // TODO: attribute special handling
         let ref_self = self.borrow();
         ref_self.i_value.clone()
     }
 
     fn set_node_value(&mut self, value: &str) -> Result<()> {
-        // TODO: attribute special handling
         let mut mut_self = self.borrow_mut();
         mut_self.i_value = Some(value.to_string());
         Ok(())
     }
 
     fn unset_node_value(&mut self) -> Result<()> {
-        // TODO: attribute special handling
         let mut mut_self = self.borrow_mut();
         mut_self.i_value = None;
         Ok(())
@@ -822,12 +822,12 @@ impl Node for RefNode {
 
     fn first_child(&self) -> Option<RefNode> {
         let ref_self = self.borrow();
-        ref_self.i_child_nodes.first().map(|node| node.clone())
+        ref_self.i_child_nodes.first().cloned()
     }
 
     fn last_child(&self) -> Option<RefNode> {
         let ref_self = self.borrow();
-        ref_self.i_child_nodes.last().map(|node| node.clone())
+        ref_self.i_child_nodes.last().cloned()
     }
 
     fn previous_sibling(&self) -> Option<RefNode> {

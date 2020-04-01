@@ -138,3 +138,93 @@ fn test_model_siblings() {
         assert!(attribute.next_sibling().is_none());
     }
 }
+
+#[test]
+fn test_normalization_new_lines() {
+    let document_node = common::create_empty_rdf_document();
+    let document = as_document(&document_node).unwrap();
+    let mut element_node = document.document_element().unwrap();
+    let element = as_element_mut(&mut element_node).unwrap();
+
+    element.set_attribute("test", "hello\nworld").unwrap();
+    assert_eq!(
+        element.get_attribute("test"),
+        Some("hello world".to_string())
+    );
+
+    element.set_attribute("test", "hello\u{0A}world").unwrap();
+    assert_eq!(
+        element.get_attribute("test"),
+        Some("hello world".to_string())
+    );
+
+    element.set_attribute("test", "hello\u{0D}world").unwrap();
+    assert_eq!(
+        element.get_attribute("test"),
+        Some("hello world".to_string())
+    );
+
+    element
+        .set_attribute("test", "hello\u{0D}\u{0A}world")
+        .unwrap();
+    assert_eq!(
+        element.get_attribute("test"),
+        Some("hello world".to_string())
+    );
+
+    element
+        .set_attribute("test", "hello\u{0D}\u{85}world")
+        .unwrap();
+    assert_eq!(
+        element.get_attribute("test"),
+        Some("hello world".to_string())
+    );
+
+    element.set_attribute("test", "hello\u{85}world").unwrap();
+    assert_eq!(
+        element.get_attribute("test"),
+        Some("hello world".to_string())
+    );
+
+    element.set_attribute("test", "hello\u{2028}world").unwrap();
+    assert_eq!(
+        element.get_attribute("test"),
+        Some("hello world".to_string())
+    );
+}
+
+#[test]
+fn test_normalization_whitespace() {
+    let document_node = common::create_empty_rdf_document();
+    let document = as_document(&document_node).unwrap();
+    let mut element_node = document.document_element().unwrap();
+    let element = as_element_mut(&mut element_node).unwrap();
+
+    element
+        .set_attribute("test", "hello\u{09}\u{0A}\u{0D}world")
+        .unwrap();
+    assert_eq!(
+        element.get_attribute("test"),
+        Some("hello   world".to_string())
+    );
+}
+
+#[test]
+fn test_normalization_character_entities() {
+    let document_node = common::create_empty_rdf_document();
+    let document = as_document(&document_node).unwrap();
+    let mut element_node = document.document_element().unwrap();
+    let element = as_element_mut(&mut element_node).unwrap();
+
+    element.set_attribute("test", "hello&#xA7;world").unwrap();
+    assert_eq!(
+        element.get_attribute("test"),
+        Some("hello§world".to_string())
+    );
+
+    element.set_attribute("test", "hello&#49;world").unwrap();
+    assert_eq!(
+        element.get_attribute("test"),
+        Some("hello1world".to_string())
+    );
+}

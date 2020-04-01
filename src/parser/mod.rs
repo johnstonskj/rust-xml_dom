@@ -211,7 +211,7 @@ fn document(reader: &mut Reader<&[u8]>, event_buffer: &mut Vec<u8>) -> Result<Re
             //     }
             //     prolog_pre_nodes.push(make_doc_type(reader, ev)?);
             // }
-            Ok(Event::Eof) => return Ok(document.clone()),
+            Ok(Event::Eof) => return Ok(document),
             Ok(ev) => {
                 error!("Unexpected parser event: {:?}", ev);
                 return Error::Malformed.into();
@@ -295,7 +295,7 @@ fn handle_start(
             None => document.clone(),
             Some(actual) => actual.clone(),
         };
-        actual_parent.append_child(new_node.clone())?
+        actual_parent.append_child(new_node)?
     };
 
     for attribute in ev.attributes() {
@@ -442,13 +442,14 @@ fn make_decl(
     Ok((version, encoding, standalone))
 }
 
+#[allow(clippy::if_same_then_else)]
 fn unquote(s: String) -> Result<String> {
     if s.starts_with('"') && s.ends_with('"') {
         Ok(s[1..s.len() - 1].to_string())
     } else if s.starts_with('\'') && s.ends_with('\'') {
         Ok(s[1..s.len() - 1].to_string())
     } else if s.starts_with('"') || s.starts_with('\'') {
-        return Error::InvalidCharacter.into();
+        Error::InvalidCharacter.into()
     } else {
         Ok(s)
     }
