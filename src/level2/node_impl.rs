@@ -38,6 +38,9 @@ pub(crate) type WeakRefNode = WeakRefCell<NodeImpl>;
 #[derive(Clone, Debug)]
 pub(crate) enum Extension {
     None,
+    Attribute {
+        i_owner_element: Option<WeakRefNode>,
+    },
     Document {
         i_xml_declaration: Option<XmlDecl>,
         i_document_type: Option<RefNode>,
@@ -114,7 +117,9 @@ impl NodeImpl {
             i_parent_node: None,
             i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
-            i_extension: Extension::None,
+            i_extension: Extension::Attribute {
+                i_owner_element: None,
+            },
         }
     }
     pub(crate) fn new_text(owner_document: WeakRefNode, data: &str) -> Self {
@@ -286,6 +291,9 @@ impl NodeImpl {
     pub(crate) fn clone_node(&self, deep: bool) -> Self {
         let extension = match &self.i_extension {
             Extension::None => Extension::None,
+            Extension::Attribute { i_owner_element } => Extension::Attribute {
+                i_owner_element: i_owner_element.clone(),
+            },
             Extension::Document {
                 i_xml_declaration,
                 i_document_type,

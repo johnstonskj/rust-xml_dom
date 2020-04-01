@@ -17,7 +17,29 @@ use std::str::FromStr;
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Attribute for RefNode {}
+impl Attribute for RefNode {
+    fn owner_element(&self) -> Option<Self::NodeRef> {
+        let ref_self = self.borrow();
+        if let Extension::Attribute {
+            i_owner_element, ..
+        } = &ref_self.i_extension
+        {
+            match i_owner_element {
+                None => None,
+                Some(weak_ref) => match weak_ref.clone().upgrade() {
+                    None => {
+                        warn!("{}", MSG_WEAK_REF);
+                        None
+                    }
+                    Some(ref_element) => Some(ref_element),
+                },
+            }
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            None
+        }
+    }
+}
 
 // ------------------------------------------------------------------------------------------------
 

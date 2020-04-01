@@ -72,9 +72,7 @@ pub trait Attribute: Node {
     ///
     /// The `Element` node this attribute is attached to or `null` if this attribute is not in use.
     ///
-    fn owner_element(&self) -> Option<Self::NodeRef> {
-        self.parent_node()
-    }
+    fn owner_element(&self) -> Option<Self::NodeRef>;
 }
 
 // ------------------------------------------------------------------------------------------------
