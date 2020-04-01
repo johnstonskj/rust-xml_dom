@@ -1,4 +1,4 @@
-use xml_dom::level2::convert::{as_attribute_mut, as_document};
+use xml_dom::level2::convert::{as_attribute, as_attribute_mut, as_document, as_element_mut};
 use xml_dom::level2::*;
 pub mod common;
 
@@ -41,4 +41,35 @@ fn test_escaping() {
         attribute.value(),
         Some("hello &#60;&#34;world&#34;&#62; &#38; &#39;everyone&#39; in it".to_string())
     )
+}
+
+#[test]
+fn test_model() {
+    let document_node = common::create_empty_rdf_document();
+    let document = as_document(&document_node).unwrap();
+    let attribute_node = document.create_attribute("test").unwrap();
+    let attribute = as_attribute(&attribute_node).unwrap();
+    assert!(attribute.owner_document().is_some());
+    assert!(attribute.owner_element().is_none());
+    assert!(attribute.parent_node().is_none());
+    assert!(attribute.node_value().is_none());
+    assert!(attribute.specified());
+    assert!(!attribute.has_child_nodes());
+    assert!(!attribute.has_attributes());
+    assert!(attribute.previous_sibling().is_none());
+    assert!(attribute.next_sibling().is_none());
+
+    let mut element_node = document.document_element().unwrap();
+    let element = as_element_mut(&mut element_node).unwrap();
+    assert!(element.set_attribute_node(attribute_node.clone()).is_ok());
+
+    assert!(attribute.owner_document().is_some());
+    assert!(attribute.owner_element().is_some()); // now assigned
+    assert!(attribute.parent_node().is_none());
+    assert!(attribute.node_value().is_none());
+    assert!(attribute.specified());
+    assert!(!attribute.has_child_nodes());
+    assert!(!attribute.has_attributes());
+    assert!(attribute.previous_sibling().is_none());
+    assert!(attribute.next_sibling().is_none());
 }

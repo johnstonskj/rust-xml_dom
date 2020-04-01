@@ -349,31 +349,31 @@ mod tests {
         let ref_root = as_element_namespaced_mut(&mut ref_node).unwrap();
         ref_root.insert_mapping(Some("xsd"), XSD);
 
-        let mut ref_teen_1 = make_node(&mut document, "teen1");
+        let mut teen_1_node = make_node(&mut document, "teen1");
         {
-            let ref_teen_ns = as_element_namespaced_mut(&mut ref_teen_1).unwrap();
+            let ref_teen_ns = as_element_namespaced_mut(&mut teen_1_node).unwrap();
             ref_teen_ns.insert_mapping(None, EX);
         }
-        ref_root.append_child(ref_teen_1.clone());
+        ref_root.append_child(teen_1_node.clone());
 
-        let mut ref_teen_2 = make_node(&mut document, "teen2");
+        let mut teen_2_node = make_node(&mut document, "teen2");
         {
-            let ref_teen_ns = as_element_namespaced_mut(&mut ref_teen_2).unwrap();
+            let ref_teen_ns = as_element_namespaced_mut(&mut teen_2_node).unwrap();
             ref_teen_ns.insert_mapping(None, HTML);
         }
-        ref_root.append_child(ref_teen_2.clone());
+        ref_root.append_child(teen_2_node.clone());
 
-        let mut ref_child = make_node(&mut document, "child");
+        let mut child_node = make_node(&mut document, "child");
         {
-            let ref_child_ns = as_element_namespaced_mut(&mut ref_child).unwrap();
+            let ref_child_ns = as_element_namespaced_mut(&mut child_node).unwrap();
             ref_child_ns.insert_mapping(Some("xslt"), XSLT);
         }
         {
-            let ref_teen = as_element_namespaced_mut(&mut ref_teen_2).unwrap();
-            ref_teen.append_child(ref_child.clone());
+            let ref_teen = as_element_namespaced_mut(&mut teen_2_node).unwrap();
+            ref_teen.append_child(child_node.clone());
         }
 
-        let ns_child = &ref_child as RefNamespaced<'_>;
+        let ns_child = &child_node as RefNamespaced<'_>;
 
         //
         // Get

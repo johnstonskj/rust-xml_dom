@@ -397,6 +397,27 @@ fn test_normalize_empty() {
     }
 }
 
+#[test]
+fn test_wrong_document() {
+    let document_1_node = get_implementation()
+        .create_document(Some("http://example.org/"), Some("root-1"), None)
+        .unwrap();
+    let document_1 = as_document(&document_1_node).unwrap();
+    let root_1_node = document_1.document_element().unwrap();
+    println!("root_1_node {:#?}", root_1_node);
+
+    let document_2_node = get_implementation()
+        .create_document(Some("http://example.org/"), Some("root-2"), None)
+        .unwrap();
+    let document_2 = as_document(&document_2_node).unwrap();
+    let mut root_2_node = document_2.document_element().unwrap();
+    println!("root_2_node {:#?}", root_2_node);
+    let root_2 = as_element_mut(&mut root_2_node).unwrap();
+
+    let result = root_2.append_child(root_1_node);
+    assert_eq!(result, Err(Error::WrongDocument))
+}
+
 // ------------------------------------------------------------------------------------------------
 // Private Functions
 // ------------------------------------------------------------------------------------------------
