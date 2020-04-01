@@ -95,7 +95,7 @@ impl Attribute for RefNode {
                     }
                 }
             }
-            let normalized = text::normalize_attribute_value(&result, false);
+            let normalized = text::normalize_attribute_value(&result, self, false);
             Some(text::escape(&normalized))
         } else {
             None

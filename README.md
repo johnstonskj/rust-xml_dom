@@ -104,11 +104,12 @@ This will parse the document and return a new `RefNode` that corresponds to the 
     `Element::set_attribute_node`.
   * Fixed escaping of values to happen on get not set.
   * Implemented _attribute value normalization_ and _end-of-line handling_ from the XML 1.1 spec.
+    * Required added a dependency on [`regex`](https://crates.io/crates/regex)
+    * Added `EntityResolver` trait for callback into DOM.
+    * Expansion of `Entity` node children is not yet complete.
 * Code clean-up:
   * Added some macros in `trait_impls` for a number of common patterns.
   * Simplified some existing `match` expressions.
-* Added a dependency on [`regex`](https://crates.io/crates/regex) to implement _attribute value normalization_ and 
-  _end-of-line handling_ .
   
 **Version 0.2.0** 
 

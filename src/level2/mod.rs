@@ -98,4 +98,6 @@ pub use traits::*;
 // Private Modules
 // ------------------------------------------------------------------------------------------------
 
+mod entity_resolver;
+
 mod trait_impls;
