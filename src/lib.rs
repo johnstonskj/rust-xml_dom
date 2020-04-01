@@ -123,9 +123,9 @@ specified, and extension, interfaces.
 
 # Logging
 
-As of this time the only dependency `xml_dom` has is the [`log`](https://crates.io/crates/log)
-crate and only `warn!` and `error!` macros are used to provide more information than the set of
-error conditions defined by the DOM.
+The DOM implementation makes use of the  [`log`](https://crates.io/crates/log) crate, although only
+the `warn!` and `error!` macros are used to provide more information than the set of error
+conditions defined by the DOM.
 
 */
 

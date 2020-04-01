@@ -94,6 +94,22 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 
 ## Changes
 
+**Version 0.2.1**
+
+* Bug Fixes:
+  * Fixed a publishing error in Travis
+  * Separated `Attribute::owner_element` from `Node::parent_node`, they aren't the same.
+  * Fixed handling of `owner_element` in `Attribute` tests
+  * Fixed the implementation of `WrongDocument` error in `Node::insert_before` and used the same in 
+    `Element::set_attribute_node`.
+  * Fixed escaping of values to happen on get not set.
+  * Implemented _attribute value normalization_ and _end-of-line handling_ from the XML 1.1 spec.
+* Code clean-up:
+  * Added some macros in `trait_impls` for a number of common patterns.
+  * Simplified some existing `match` expressions.
+* Added a dependency on [`regex`](https://crates.io/crates/regex) to implement _attribute value normalization_ and 
+  _end-of-line handling_ .
+  
 **Version 0.2.0** 
 
 * Cleaned up documentation.
@@ -160,4 +176,4 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 ## TODO
 
 1. Need to build more tests.
-1. Have an XML Parser generate DOM from text.
+
