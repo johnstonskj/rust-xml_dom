@@ -397,6 +397,12 @@ fn test_normalize_empty() {
     }
 }
 
+#[test]
+fn test_wrong_document() {
+    // TODO: test the append of an element from another document.
+    unimplemented!()
+}
+
 // ------------------------------------------------------------------------------------------------
 // Private Functions
 // ------------------------------------------------------------------------------------------------

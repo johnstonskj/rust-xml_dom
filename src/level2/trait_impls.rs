@@ -437,6 +437,23 @@ impl Element for RefNode {
 
     fn set_attribute_node(&mut self, new_attribute: RefNode) -> Result<RefNode> {
         if is_element(self) && is_attribute(&new_attribute) {
+            check_same_document(self, &new_attribute)?;
+
+            {
+                //
+                // Set the attribute's owner. This is *not* the same as parent which remains None.
+                //
+                let mut mut_child = new_attribute.borrow_mut();
+                if let Extension::Attribute {
+                    i_owner_element, ..
+                } = &mut mut_child.i_extension
+                {
+                    *i_owner_element = Some(self.clone().downgrade())
+                } else {
+                    panic!("{}", MSG_INVALID_EXTENSION);
+                }
+            }
+
             let name: Name = new_attribute.node_name();
             if name.is_namespace_attribute() {
                 //
@@ -451,6 +468,7 @@ impl Element for RefNode {
                     Some(prefix) => as_namespaced.insert_mapping(Some(prefix), &namespace_uri),
                 }?;
             }
+
             let mut mut_self = self.borrow_mut();
             if let Extension::Element { i_attributes, .. } = &mut mut_self.i_extension {
                 let _safe_to_ignore =
@@ -910,26 +928,28 @@ impl Node for RefNode {
             },
         };
 
-        {
-            //
-            // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
-            // document than the one that created this node.
-            //
-            let self_parent = &self.borrow().i_parent_node;
-            let child_parent = &self.borrow().i_parent_node;
-            if !match (self_parent, child_parent) {
-                (None, None) => true,
-                (Some(_), None) => true,
-                (None, Some(_)) => false,
-                (Some(self_parent), Some(child_parent)) => {
-                    let self_parent = self_parent.clone().upgrade().unwrap();
-                    let child_parent = child_parent.clone().upgrade().unwrap();
-                    self_parent == child_parent
-                }
-            } {
-                return Err(Error::WrongDocument);
-            }
-        }
+        check_same_document(self, &new_child)?;
+
+        // {
+        //     //
+        //     // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
+        //     // document than the one that created this node.
+        //     //
+        //     let self_parent = &self.borrow().i_parent_node;
+        //     let child_parent = &new_child.borrow().i_parent_node;
+        //     if !match (self_parent, child_parent) {
+        //         (None, None) => true,
+        //         (Some(_), None) => true,
+        //         (None, Some(_)) => false,
+        //         (Some(self_parent), Some(child_parent)) => {
+        //             let self_parent = self_parent.clone().upgrade().unwrap();
+        //             let child_parent = child_parent.clone().upgrade().unwrap();
+        //             self_parent == child_parent
+        //         }
+        //     } {
+        //         return Err(Error::WrongDocument);
+        //     }
+        // }
 
         //
         // Remove from it's current parent
@@ -1163,6 +1183,29 @@ fn namespaced_name_match(
                     || test_local == WILD_CARD
                     || against_local == WILD_CARD)
         }
+    }
+}
+
+fn check_same_document(node1: &RefNode, node2: &RefNode) -> Result<()> {
+    //
+    // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
+    // document than the one that created this node.
+    //
+    let node1_parent = &node1.borrow().i_parent_node;
+    let node2_parent = &node2.borrow().i_parent_node;
+    if match (node1_parent, node2_parent) {
+        (None, None) => true,
+        (Some(_), None) => true,
+        (None, Some(_)) => false,
+        (Some(self_parent), Some(child_parent)) => {
+            let self_parent = self_parent.clone().upgrade().unwrap();
+            let child_parent = child_parent.clone().upgrade().unwrap();
+            self_parent == child_parent
+        }
+    } {
+        Ok(())
+    } else {
+        Err(Error::WrongDocument)
     }
 }
 
