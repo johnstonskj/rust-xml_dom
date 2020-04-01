@@ -439,10 +439,10 @@ impl Element for RefNode {
         if is_element(self) && is_attribute(&new_attribute) {
             check_same_document(self, &new_attribute)?;
 
+            //
+            // Set the attribute's owner. This is *not* the same as parent which remains `None`.
+            //
             {
-                //
-                // Set the attribute's owner. This is *not* the same as parent which remains None.
-                //
                 let mut mut_child = new_attribute.borrow_mut();
                 if let Extension::Attribute {
                     i_owner_element, ..
@@ -891,7 +891,7 @@ impl Node for RefNode {
         }
 
         if !is_child_allowed(self, &new_child) {
-            println!("The child you tried to add is not valid for this parent.");
+            warn!("The child you tried to add is not valid for this parent.");
             return Err(Error::HierarchyRequest);
         }
 
@@ -905,7 +905,7 @@ impl Node for RefNode {
                 .iter()
                 .any(|n| n.node_type() == NodeType::Element)
         {
-            println!("cannot add more than one element to a document");
+            warn!("cannot add more than one element to a document");
             return Error::HierarchyRequest.into();
         }
 
@@ -930,27 +930,6 @@ impl Node for RefNode {
 
         check_same_document(self, &new_child)?;
 
-        // {
-        //     //
-        //     // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
-        //     // document than the one that created this node.
-        //     //
-        //     let self_parent = &self.borrow().i_parent_node;
-        //     let child_parent = &new_child.borrow().i_parent_node;
-        //     if !match (self_parent, child_parent) {
-        //         (None, None) => true,
-        //         (Some(_), None) => true,
-        //         (None, Some(_)) => false,
-        //         (Some(self_parent), Some(child_parent)) => {
-        //             let self_parent = self_parent.clone().upgrade().unwrap();
-        //             let child_parent = child_parent.clone().upgrade().unwrap();
-        //             self_parent == child_parent
-        //         }
-        //     } {
-        //         return Err(Error::WrongDocument);
-        //     }
-        // }
-
         //
         // Remove from it's current parent
         //
@@ -961,10 +940,10 @@ impl Node for RefNode {
             }
         }
 
+        //
+        // update new child with references from self
+        //
         {
-            //
-            // update new child with references from self
-            //
             let ref_self = self.borrow();
             let mut mut_child = new_child.borrow_mut();
             mut_child.i_parent_node = Some(self.to_owned().downgrade());
@@ -975,10 +954,10 @@ impl Node for RefNode {
             }
         }
 
+        //
+        // Special case
+        //
         if is_document_fragment(&new_child) {
-            //
-            // Special case
-            //
             for (index, child) in new_child.child_nodes().iter().enumerate() {
                 match insert_position {
                     None => insert_or_append(self, child, None),
@@ -1186,29 +1165,44 @@ fn namespaced_name_match(
     }
 }
 
-fn check_same_document(node1: &RefNode, node2: &RefNode) -> Result<()> {
-    //
-    // CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
-    // document than the one that created this node.
-    //
-    let node1_parent = &node1.borrow().i_parent_node;
-    let node2_parent = &node2.borrow().i_parent_node;
-    if match (node1_parent, node2_parent) {
-        (None, None) => true,
-        (Some(_), None) => true,
-        (None, Some(_)) => false,
-        (Some(self_parent), Some(child_parent)) => {
-            let self_parent = self_parent.clone().upgrade().unwrap();
-            let child_parent = child_parent.clone().upgrade().unwrap();
-            self_parent == child_parent
+//
+// CHECK: Raise `Error::WrongDocument` if `newChild` was created from a different
+// document than the one that created this node.
+//
+fn check_same_document(self_node: &RefNode, new_child: &RefNode) -> Result<()> {
+    {
+        if self_node.node_type() == NodeType::Document {
+            let child_document = &new_child.borrow().i_owner_document;
+            if !match child_document {
+                None => true,
+                Some(child_document) => {
+                    let child_document = child_document.clone().upgrade().unwrap();
+                    self_node == &child_document
+                }
+            } {
+                warn!("Error::WrongDocument: child could not be added to the document node.");
+                return Err(Error::WrongDocument);
+            }
+        } else {
+            let self_document = &self_node.borrow().i_owner_document;
+            let child_document = &new_child.borrow().i_owner_document;
+            if !match (self_document, child_document) {
+                (None, None) => true,
+                (Some(_), None) => true,
+                (None, Some(_)) => false,
+                (Some(self_document), Some(child_document)) => {
+                    let self_document = self_document.clone().upgrade().unwrap();
+                    let child_document = child_document.clone().upgrade().unwrap();
+                    self_document == child_document
+                }
+            } {
+                warn!("Error::WrongDocument: child could not be added to the current node.");
+                return Err(Error::WrongDocument);
+            }
         }
-    } {
-        Ok(())
-    } else {
-        Err(Error::WrongDocument)
     }
+    Ok(())
 }
-
 //
 // From [https://www.w3.org/TR/DOM-Level-2-Core/core.html#ID-1590626202]
 //
