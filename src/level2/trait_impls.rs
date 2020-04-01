@@ -771,18 +771,12 @@ impl Node for RefNode {
 
     fn first_child(&self) -> Option<RefNode> {
         let ref_self = self.borrow();
-        match ref_self.i_child_nodes.first() {
-            None => None,
-            Some(node) => Some(node.clone()),
-        }
+        ref_self.i_child_nodes.first().map(|node| node.clone())
     }
 
     fn last_child(&self) -> Option<RefNode> {
         let ref_self = self.borrow();
-        match ref_self.i_child_nodes.first() {
-            None => None,
-            Some(node) => Some(node.clone()),
-        }
+        ref_self.i_child_nodes.last().map(|node| node.clone())
     }
 
     fn previous_sibling(&self) -> Option<RefNode> {
