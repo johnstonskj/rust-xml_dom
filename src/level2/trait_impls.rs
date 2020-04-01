@@ -14,30 +14,77 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::str::FromStr;
 
 // ------------------------------------------------------------------------------------------------
+// Macros
+// ------------------------------------------------------------------------------------------------
+
+macro_rules! unwrap_extension_field {
+    ($node:expr, $variant:ident, $field:ident) => {{
+        let ref_self = $node.borrow();
+        if let Extension::$variant { $field, .. } = &ref_self.i_extension {
+            $field.clone()
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            Default::default()
+        }
+    }};
+    ($node:expr, $variant:ident, $field:ident, $closure_fn:expr) => {{
+        let ref_self = $node.borrow();
+        if let Extension::$variant { $field, .. } = &ref_self.i_extension {
+            $closure_fn($field)
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            Default::default()
+        }
+    }};
+    ($node:expr, $variant:ident, $field:ident, $some_closure:expr) => {{
+        let ref_self = $node.borrow();
+        if let Extension::$variant { $field, .. } = &ref_self.i_extension {
+            match $field {
+                None => Default::default(),
+                Some(value) => $some_closure(value),
+            }
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            Default::default()
+        }
+    }};
+    ($node:expr, $variant:ident, $field:ident, $none_closure:expr, $some_closure:expr) => {{
+        let ref_self = $node.borrow();
+        if let Extension::$variant { $field, .. } = &ref_self.i_extension {
+            match $field {
+                None => $none_closure(),
+                Some(value) => $some_closure(value),
+            }
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+            Default::default()
+        }
+    }};
+}
+
+// ------------------------------------------------------------------------------------------------
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
 impl Attribute for RefNode {
     fn owner_element(&self) -> Option<Self::NodeRef> {
-        let ref_self = self.borrow();
-        if let Extension::Attribute {
-            i_owner_element, ..
-        } = &ref_self.i_extension
-        {
-            match i_owner_element {
-                None => None,
-                Some(weak_ref) => match weak_ref.clone().upgrade() {
-                    None => {
-                        warn!("{}", MSG_WEAK_REF);
-                        None
-                    }
-                    Some(ref_element) => Some(ref_element),
-                },
+        unwrap_extension_field!(
+            self,
+            Attribute,
+            i_owner_element,
+            |i_owner_element: &Option<WeakRefNode>| {
+                match i_owner_element {
+                    None => None,
+                    Some(weak_ref) => match weak_ref.clone().upgrade() {
+                        None => {
+                            warn!("{}", MSG_WEAK_REF);
+                            None
+                        }
+                        Some(ref_element) => Some(ref_element),
+                    },
+                }
             }
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
+        )
     }
 }
 
@@ -137,16 +184,7 @@ impl Comment for RefNode {}
 
 impl Document for RefNode {
     fn doc_type(&self) -> Option<RefNode> {
-        let ref_self = self.borrow();
-        if let Extension::Document {
-            i_document_type, ..
-        } = &ref_self.i_extension
-        {
-            i_document_type.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
+        unwrap_extension_field!(self, Document, i_document_type)
     }
 
     fn document_element(&self) -> Option<RefNode> {
@@ -286,56 +324,23 @@ impl DocumentFragment for RefNode {}
 
 impl DocumentType for RefNode {
     fn entities(&self) -> HashMap<Name, Self::NodeRef, RandomState> {
-        let ref_self = self.borrow();
-        if let Extension::DocumentType { i_entities, .. } = &ref_self.i_extension {
-            i_entities.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            HashMap::default()
-        }
+        unwrap_extension_field!(self, DocumentType, i_entities)
     }
 
     fn notations(&self) -> HashMap<Name, Self::NodeRef, RandomState> {
-        let ref_self = self.borrow();
-        if let Extension::DocumentType { i_notations, .. } = &ref_self.i_extension {
-            i_notations.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            HashMap::default()
-        }
+        unwrap_extension_field!(self, DocumentType, i_notations)
     }
 
     fn public_id(&self) -> Option<String> {
-        let ref_self = self.borrow();
-        if let Extension::DocumentType { i_public_id, .. } = &ref_self.i_extension {
-            i_public_id.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
+        unwrap_extension_field!(self, DocumentType, i_public_id)
     }
 
     fn system_id(&self) -> Option<String> {
-        let ref_self = self.borrow();
-        if let Extension::DocumentType { i_system_id, .. } = &ref_self.i_extension {
-            i_system_id.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
+        unwrap_extension_field!(self, DocumentType, i_system_id)
     }
 
     fn internal_subset(&self) -> Option<String> {
-        let ref_self = self.borrow();
-        if let Extension::DocumentType {
-            i_internal_subset, ..
-        } = &ref_self.i_extension
-        {
-            i_internal_subset.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
+        unwrap_extension_field!(self, DocumentType, i_internal_subset)
     }
 }
 
@@ -687,36 +692,15 @@ impl Element for RefNode {
 
 impl Entity for RefNode {
     fn public_id(&self) -> Option<String> {
-        let ref_self = self.borrow();
-        if let Extension::Entity { i_public_id, .. } = &ref_self.i_extension {
-            i_public_id.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
+        unwrap_extension_field!(self, Entity, i_public_id)
     }
 
     fn system_id(&self) -> Option<String> {
-        let ref_self = self.borrow();
-        if let Extension::Entity { i_system_id, .. } = &ref_self.i_extension {
-            i_system_id.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
+        unwrap_extension_field!(self, Entity, i_system_id)
     }
 
     fn notation_name(&self) -> Option<String> {
-        let ref_self = self.borrow();
-        if let Extension::Entity {
-            i_notation_name, ..
-        } = &ref_self.i_extension
-        {
-            i_notation_name.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
+        unwrap_extension_field!(self, Entity, i_notation_name)
     }
 }
 
@@ -865,13 +849,7 @@ impl Node for RefNode {
 
     fn attributes(&self) -> HashMap<Name, RefNode, RandomState> {
         if is_element(self) {
-            let ref_self = self.borrow();
-            if let Extension::Element { i_attributes, .. } = &ref_self.i_extension {
-                i_attributes.clone()
-            } else {
-                warn!("{}", MSG_INVALID_EXTENSION);
-                HashMap::default()
-            }
+            unwrap_extension_field!(self, Element, i_attributes)
         } else {
             warn!("{}", MSG_INVALID_NODE_TYPE);
             HashMap::default()
@@ -1096,23 +1074,11 @@ impl Node for RefNode {
 
 impl Notation for RefNode {
     fn public_id(&self) -> Option<String> {
-        let ref_self = self.borrow();
-        if let Extension::Notation { i_public_id, .. } = &ref_self.i_extension {
-            i_public_id.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
+        unwrap_extension_field!(self, Notation, i_public_id)
     }
 
     fn system_id(&self) -> Option<String> {
-        let ref_self = self.borrow();
-        if let Extension::Notation { i_system_id, .. } = &ref_self.i_extension {
-            i_system_id.clone()
-        } else {
-            warn!("{}", MSG_INVALID_EXTENSION);
-            None
-        }
+        unwrap_extension_field!(self, Notation, i_system_id)
     }
 }
 
