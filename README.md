@@ -18,7 +18,7 @@ view the implementation has the following characteristics:
 1. It maintains a reasonable separation between the node type traits and the tree implementation
    using opaque an `RefNode` reference type.
 1. Where possible the names from IDL are used with minimal conversion.
-1. All IDL attributes become trait functions (`get_`, `set_`, and `unset_`).
+1. All IDL attributes become trait functions (attribute "foo" becomes `foo()`, `set_foo()`, and `unset_foo()`).
 
 This leads to a replication of the typical DOM programmer experience where casting between the
 node traits is required. This is supported by the `xml_dom::convert` module.
@@ -176,5 +176,6 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 
 ## TODO
 
-1. Need to build more tests.
+1. Need to build more tests, especially doc-type.
+1. Notation replacement, model correctness.
 
