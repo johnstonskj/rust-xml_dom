@@ -1,13 +1,18 @@
 /*!
-Provides a basic parser from text to DOM using the [quick-xml](https://github.com/tafia/quick-xml)
+Provides a basic parser from text to DOM using the [quick-xml](https://crates.io/crates/quick-xml)
 crate.
+
+The parsing capability of quick-xml is limited in some ways, it does not support DTD handling other
+than returning the entire DTD content as a string; therefore entities, notations, or entity
+references are not constructed in the DOM. It does parse `Text`, `CDataSection`, and `Comment` nodes
+but does limited entity processing or escaping.
 
 # Example
 
-```ebnf
-use xml_dom::level2::parser::read_xml;
+```rust
+use xml_dom::parser::read_xml;
 
-let dom = read_xml(r#"<?xml version="1.0"?> <xml/>"#);
+let dom = read_xml(r#"<?xml version="1.0"?><xml/>"#);
 assert!(dom.is_ok);
 ```
 
@@ -57,7 +62,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 // ------------------------------------------------------------------------------------------------
 
 ///
-/// Parse the provided string into a DOM structure.
+/// Parse the provided string into a DOM structure; if the result is OK, the result returned
+/// can be safely assumed to be a `Document` node.
 ///
 pub fn read_xml(xml: &str) -> Result<RefNode> {
     let mut reader = Reader::from_str(xml);
