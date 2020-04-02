@@ -1,10 +1,5 @@
 /*!
-One-line description.
-
-More detailed description, with
-
-# Example
-
+Implementation of `EntityResolver` that navigates the `Document` structure.
 */
 
 use crate::level2::convert::{as_document, as_document_type};
