@@ -9,6 +9,9 @@ fn test_get_element_by_id_strict() {
     let document = common::create_example_rdf_document();
     let ref_document = as_document(&document).unwrap();
 
+    //
+    // 'xml:id' works in strict mode
+    //
     let element = ref_document.get_element_by_id("title");
     assert!(element.is_some());
     {
@@ -18,6 +21,9 @@ fn test_get_element_by_id_strict() {
         assert_eq!(ref_element.node_name().prefix(), &Some("dc".to_string()));
     }
 
+    //
+    // plain 'id'  does not
+    //
     let element = ref_document.get_element_by_id("description");
     assert!(element.is_none());
 

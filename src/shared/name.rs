@@ -319,15 +319,20 @@ impl Name {
     /// Does this appear to be an `id` attribute.
     ///
     pub fn is_id_attribute(&self, lax: bool) -> bool {
-        let xml_ns = XML_NS_URI.to_string();
-        let xml_prefix = XML_NS_ATTRIBUTE.to_string();
         let id_attribute = XML_NS_ATTR_ID.to_string();
         if lax {
-            return self.local_name == id_attribute;
+            //
+            // any attribute with the local_name 'id'
+            //
+            self.local_name == id_attribute
+        } else {
+            let xml_ns = XML_NS_URI.to_string();
+            let xml_prefix = XML_NS_ATTRIBUTE.to_string();
+            //
+            // has to be 'xml:id', either by the prefix 'xml' or using the correct namespace
+            self.local_name == id_attribute
+                && (self.namespace_uri == Some(xml_ns) || self.prefix == Some(xml_prefix))
         }
-        self.namespace_uri == Some(xml_ns)
-            && self.prefix == Some(xml_prefix)
-            && self.local_name == id_attribute
     }
 
     ///

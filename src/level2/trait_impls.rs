@@ -534,6 +534,9 @@ impl Element for RefNode {
                             false
                         };
                     if name.is_id_attribute(lax) {
+                        //
+                        // Update the document ID mapping
+                        //
                         if let Extension::Document { i_id_map, .. } = &mut mut_document.i_extension
                         {
                             let id_value = attribute.value().unwrap();
