@@ -13,7 +13,7 @@ but does limited entity processing or escaping.
 use xml_dom::parser::read_xml;
 
 let dom = read_xml(r#"<?xml version="1.0"?><xml/>"#);
-assert!(dom.is_ok);
+assert!(dom.is_ok());
 ```
 
 */
