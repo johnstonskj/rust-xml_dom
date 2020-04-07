@@ -832,8 +832,17 @@ pub trait DOMImplementation {
     ///
     /// **Parameters**
     ///
-    /// * `feature` of type `DOMString`: The name of the feature to test (case-insensitive). The values used by DOM features are defined throughout the DOM Level 2 specifications and listed in the Conformance section. The name must be an XML name. To avoid possible conflicts, as a convention, names referring to features defined outside the DOM specification should be made unique by reversing the name of the Internet domain name of the person (or the organization that the person belongs to) who defines the feature, component by component, and using this as a prefix. For instance, the W3C SVG Working Group defines the feature "org.w3c.dom.svg".
-    /// * `version` of type `DOMString`: This is the version number of the feature to test. In Level 2, the string can be either "2.0" or "1.0". If the version is not specified, supporting any version of the feature causes the method to return true.
+    /// * `feature` of type `DOMString`: The name of the feature to test (case-insensitive). The
+    ///   values used by DOM features are defined throughout the DOM Level 2 specifications and
+    ///   listed in the Conformance section. The name must be an XML name. To avoid possible
+    ///   conflicts, as a convention, names referring to features defined outside the DOM
+    ///   specification should be made unique by reversing the name of the Internet domain name of
+    ///   the person (or the organization that the person belongs to) who defines the feature,
+    ///   component by component, and using this as a prefix. For instance, the W3C SVG Working
+    ///   Group defines the feature "org.w3c.dom.svg".
+    /// * `version` of type `DOMString`: This is the version number of the feature to test. In
+    ///   Level 2, the string can be either "2.0" or "1.0". If the version is not specified,
+    ///   supporting any version of the feature causes the method to return true.
     ///
     /// **Return Value**
     ///
