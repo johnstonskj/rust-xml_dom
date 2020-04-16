@@ -94,6 +94,11 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 
 ## Changes
 
+**Version 0.2.3**
+
+* Mostly documentation updates/fixes.
+* Made namespace support respect `ProcessingOptions`.
+
 **Version 0.2.2**
 
 * Mostly documentation updates/fixes.
