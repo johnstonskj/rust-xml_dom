@@ -3,9 +3,8 @@ This module provides support types for the [`Namespaced`](trait.Namespaced.html)
 */
 
 use crate::level2::ext::traits::Namespaced;
-use crate::level2::node_impl::Extension;
-use crate::level2::node_impl::RefNode;
-use crate::level2::traits::NodeType;
+use crate::level2::node_impl::{Extension, RefNode};
+use crate::level2::traits::{Node, NodeType};
 use crate::shared::error::{
     Error, Result, MSG_INVALID_EXTENSION, MSG_INVALID_NODE_TYPE, MSG_WEAK_REF,
 };
@@ -95,8 +94,23 @@ impl NamespacePrefix {
 
 // ------------------------------------------------------------------------------------------------
 
+fn add_namespaces(element_node: &RefNode) -> bool {
+    if let Some(document) = element_node.owner_document() {
+        let ref_document = document.borrow();
+        if let Extension::Document { i_options, .. } = &ref_document.i_extension {
+            return i_options.has_add_namespaces();
+        } else {
+            warn!("{}", MSG_INVALID_EXTENSION);
+        }
+    }
+    false
+}
+
 impl Namespaced for RefNode {
     fn contains_mapping(&self, prefix: Option<&str>) -> bool {
+        if !add_namespaces(self) {
+            return false;
+        }
         let ref_self = self.borrow();
         if ref_self.i_node_type == NodeType::Element {
             if let Extension::Element { i_namespaces, .. } = &ref_self.i_extension {
@@ -112,6 +126,9 @@ impl Namespaced for RefNode {
     }
 
     fn get_namespace(&self, prefix: Option<&str>) -> Option<String> {
+        if !add_namespaces(self) {
+            return None;
+        }
         let ref_self = self.borrow();
         if ref_self.i_node_type == NodeType::Element {
             if let Extension::Element { i_namespaces, .. } = &ref_self.i_extension {
@@ -128,6 +145,9 @@ impl Namespaced for RefNode {
     }
 
     fn resolve_namespace(&self, prefix: Option<&str>) -> Option<String> {
+        if !add_namespaces(self) {
+            return None;
+        }
         match self.get_namespace(prefix) {
             None => {
                 let ref_self = self.borrow();
@@ -149,6 +169,9 @@ impl Namespaced for RefNode {
     }
 
     fn get_prefix(&self, namespace_uri: &str) -> NamespacePrefix {
+        if !add_namespaces(self) {
+            return NamespacePrefix::None;
+        }
         let ref_self = self.borrow();
         if ref_self.i_node_type == NodeType::Element {
             if let Extension::Element { i_namespaces, .. } = &ref_self.i_extension {
@@ -170,6 +193,9 @@ impl Namespaced for RefNode {
     }
 
     fn resolve_prefix(&self, namespace_uri: &str) -> NamespacePrefix {
+        if !add_namespaces(self) {
+            return NamespacePrefix::None;
+        }
         match self.get_prefix(namespace_uri) {
             NamespacePrefix::None => {
                 let ref_self = self.borrow();
@@ -193,6 +219,9 @@ impl MutNamespaced for RefNode {
         prefix: Option<&str>,
         namespace_uri: &str,
     ) -> Result<Option<String>> {
+        if !add_namespaces(self) {
+            return Ok(None);
+        }
         let mut mut_self = self.borrow_mut();
         if mut_self.i_node_type == NodeType::Element {
             if let Extension::Element { i_namespaces, .. } = &mut mut_self.i_extension {
@@ -208,6 +237,9 @@ impl MutNamespaced for RefNode {
     }
 
     fn remove_mapping(&mut self, prefix: Option<&str>) -> Result<Option<String>> {
+        if !add_namespaces(self) {
+            return Ok(None);
+        }
         let mut mut_self = self.borrow_mut();
         if mut_self.i_node_type == NodeType::Element {
             if let Extension::Element { i_namespaces, .. } = &mut mut_self.i_extension {
@@ -224,6 +256,9 @@ impl MutNamespaced for RefNode {
 
     fn normalize_mappings(&mut self) -> Result<()> {
         // TODO: ensure this element has a mapping for it's own namespace and for any namespaced attributes
+        if !add_namespaces(self) {
+            return Ok(());
+        }
         unimplemented!()
     }
 }
@@ -238,8 +273,9 @@ mod tests {
     use crate::level2::ext::convert::{
         as_element_namespaced, as_element_namespaced_mut, MutRefNamespaced, RefNamespaced,
     };
-    use crate::level2::ext::NamespacePrefix;
-    use crate::level2::{get_implementation, RefNode};
+    use crate::level2::ext::dom_impl::get_implementation_ext;
+    use crate::level2::ext::{NamespacePrefix, ProcessingOptions};
+    use crate::level2::RefNode;
 
     const HTML: &str = "http://www.w3.org/1999/xhtml";
     const XSD: &str = "http://www.w3.org/2001/XMLSchema";
@@ -247,8 +283,12 @@ mod tests {
     const EX: &str = "http://example.org/xmlns/example";
 
     fn make_document_node() -> RefNode {
-        get_implementation()
-            .create_document(Some("http://example.org/"), Some("root"), None)
+        let mut options = ProcessingOptions::new();
+        options.set_add_namespaces();
+
+        let implementation = get_implementation_ext();
+        implementation
+            .create_document_with_options(Some("http://example.org/"), Some("root"), None, options)
             .unwrap()
     }
 

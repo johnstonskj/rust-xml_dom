@@ -401,7 +401,9 @@ impl DOMImplementation for Implementation {
         qualified_name: Option<&str>,
         doc_type: Option<RefNode>,
     ) -> Result<RefNode> {
-        create_document_with_options(namespace_uri, qualified_name, doc_type, Default::default())
+        let mut options = ProcessingOptions::new();
+        options.set_add_namespaces();
+        create_document_with_options(namespace_uri, qualified_name, doc_type, options)
     }
 
     fn create_document_type(
