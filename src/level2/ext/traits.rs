@@ -51,9 +51,10 @@ pub trait DocumentDecl: base::Document {
 pub trait DOMImplementation: base::DOMImplementation {
     ///
     /// Extension to the standard DOM `create_document` method that takes an options structure to
-    /// control the processing of nodes.
+    /// control the processing of nodes. See the documentation for [`ProcessingOptions`](options/struct.ProcessingOptions.html)
+    /// examples.
     ///
-    /// * `options` of type `ProcessingOptions`: the options to be set fot this document.
+    /// * `options` of type `ProcessingOptions`: the options to be set for this document.
     ///
     fn create_document_with_options(
         &self,
