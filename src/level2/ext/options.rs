@@ -19,6 +19,11 @@ use std::ops::{BitAnd, BitOr};
 ///
 /// # Example
 ///
+/// The following will set an option to relax the rules on ID handling. By default the processor
+/// will treat all attributes with the prefix and local name `xml:id` _or_ local name `id` and the
+/// namespace `http://www.w3.org/XML/1998/namespace` as IDs. With this option set all all attributes
+/// with the local name `id` regardless of prefix or namespace will be treated as an ID.
+///
 /// ```rust
 /// use xml_dom::level2::*;
 /// use xml_dom::level2::convert::*;
