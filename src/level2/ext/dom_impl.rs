@@ -19,7 +19,7 @@ const THIS_IMPLEMENTATION: &'static dyn DOMImplementation<NodeRef = RefNode> = &
 /// Return a reference to an instance of this `DOMImplementation` implementation.
 ///
 /// This function gets around the DOM bootstrap issue, the `implementation` method on the
-/// [`Document`](trait.Document.html) trait requires an instance of `Document`; however, the
+/// [`Document`](../trait.Document.html) trait requires an instance of `Document`; however, the
 /// `create_document` method on `DOMImplementation` requires an instance from `implementation`.
 ///
 /// # Example
@@ -38,9 +38,9 @@ pub fn get_implementation_ext() -> &'static dyn DOMImplementation<NodeRef = RefN
 }
 
 ///
-/// Required to create instances of the [`Entity`](trait.Entity.html) extended interface.
+/// Required to create instances of the [`Entity`](../trait.Entity.html) extended interface.
 ///
-/// Rather than add a non-standard member to the [`Document`](trait.Document.html) trait
+/// Rather than add a non-standard member to the [`Document`](../trait.Document.html) trait
 /// this function takes a `Document` as the first parameter.
 ///
 pub fn create_notation(
@@ -56,9 +56,9 @@ pub fn create_notation(
 }
 
 ///
-/// Required to create instances of the [`Entity`](trait.Entity.html) extended interface.
+/// Required to create instances of the [`Entity`](../trait.Entity.html) extended interface.
 ///
-/// Rather than add a non-standard member to the [`Document`](trait.Document.html) trait
+/// Rather than add a non-standard member to the [`Document`](../trait.Document.html) trait
 /// this function takes a `Document` as the first parameter.
 ///
 pub fn create_entity(
@@ -74,9 +74,9 @@ pub fn create_entity(
 }
 
 ///
-/// Required to create instances of the [`Notation`](trait.Notation.html) Extended interface.
+/// Required to create instances of the [`Notation`](../trait.Notation.html) Extended interface.
 ///
-/// Rather than add a non-standard member to the [`Document`](trait.Document.html) trait
+/// Rather than add a non-standard member to the [`Document`](../trait.Document.html) trait
 /// this function takes a `Document` as the first parameter.
 ///
 pub fn create_internal_entity(

@@ -1,6 +1,6 @@
 /*!
 This module provides support types for the `DOMImplementation`'s
-[`create_document_with_options`](trait.DOMImplementation.html#method.create_document_with_options).
+[`create_document_with_options`](../trait.DOMImplementation.html#method.create_document_with_options).
 */
 
 use std::fmt::{Binary, Display, Formatter, Result};

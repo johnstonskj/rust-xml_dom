@@ -40,8 +40,8 @@ pub trait DocumentDecl: base::Document {
 /// This corresponds to the DOM `DOMImplementation` interface.
 ///
 /// The instance used to create a document can be retrieved using the `implementation` method on
-/// [`Document`](trait.Document.html). To fetch an implementation to create a document iun the
-/// first place use the function [`get_implementation`](fn.get_implementation.html).
+/// [`Document`](../trait.Document.html). To fetch an implementation to create a document iun the
+/// first place use the function [`get_implementation`](../dom_impl/fn.get_implementation.html).
 ///
 /// # Specification
 ///
