@@ -760,6 +760,10 @@ pub trait DOMImplementation {
     ///
     /// **Note:** This method will panic if it cannot create the document node.
     ///
+    /// **Note**: This will create a new document that includes namespace support and strict ID
+    /// processing. If you wish to change these options, see
+    /// [`create_document_with_options`](ext/trait.DOMImplementation.html#method.create_document_with_options)
+    ///
     /// # Specification
     ///
     /// HTML-only DOM

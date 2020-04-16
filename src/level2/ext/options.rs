@@ -12,7 +12,9 @@ use std::ops::{BitAnd, BitOr};
 
 ///
 /// This type encapsulates a set of options that a client can set that affect the processing of
-/// nodes as they are added/removed from the DOM.
+/// nodes as they are added/removed from the DOM. The default for `ProcessingOptions` is that none
+/// of the options are set, if the usual `DOMImplementation::create_document` method turns on any
+/// settings these *are not* set by default by `create_document_with_options`.
 ///
 /// This type has a set of methods that turn on options, i.e. `set_assume_ids`,  and retrieve the
 /// state of an option, i.e. `has_assume_ids`.
