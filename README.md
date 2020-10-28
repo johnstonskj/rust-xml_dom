@@ -7,7 +7,7 @@ A Rust crate providing a reasonably faithful implementation of the  W3C
 ![Minimum Rust Version](https://img.shields.io/badge/Min%20Rust-1.40-green.svg)
 [![crates.io](https://img.shields.io/crates/v/xml_dom.svg)](https://crates.io/crates/xml_dom)
 [![docs.rs](https://docs.rs/xml_dom/badge.svg)](https://docs.rs/xml_dom)
-[![travis.ci](https://travis-ci.org/johnstonskj/rust-xml_dom.svg?branch=master)](https://travis-ci.org/johnstonskj/rust-xml_dom)
+![Rust](https://github.com/johnstonskj/rust-xml_dom/workflows/Rust/badge.svg)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=johnstonskj/rust-xml_dom)](https://dependabot.com)
 [![GitHub stars](https://img.shields.io/github/stars/johnstonskj/rust-xml_dom.svg)](https://github.com/johnstonskj/rust-xml_dom/stargazers)
 
@@ -94,6 +94,12 @@ pub fn read_xml(xml: &str) -> Result<RefNode>;
 This will parse the document and return a new `RefNode` that corresponds to the `Document` trait.
 
 ## Changes
+
+**Version 0.2.4**
+
+* Updated [quick-xml](https://crates.io/crates/quick-xml) dependency.
+* Moved TODOs into [GitHub issues](https://github.com/johnstonskj/rust-xml_dom/issues).
+* Started migration to [GitHub actions](https://github.com/johnstonskj/rust-xml_dom/actions) for build.
 
 **Version 0.2.3**
 
@@ -187,6 +193,7 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 
 ## TODO
 
-1. Need to build more tests, especially doc-type.
-1. Notation replacement, model correctness.
+1. [More tests required](https://github.com/johnstonskj/rust-xml_dom/issues/4).
+1. [More doc test/examples](https://github.com/johnstonskj/rust-xml_dom/issues/5).
+1. [Ensure correct notation replacement](https://github.com/johnstonskj/rust-xml_dom/issues/6).
 
