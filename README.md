@@ -7,8 +7,8 @@ A Rust crate providing a reasonably faithful implementation of the  W3C
 ![Minimum Rust Version](https://img.shields.io/badge/Min%20Rust-1.40-green.svg)
 [![crates.io](https://img.shields.io/crates/v/xml_dom.svg)](https://crates.io/crates/xml_dom)
 [![docs.rs](https://docs.rs/xml_dom/badge.svg)](https://docs.rs/xml_dom)
-![Rust](https://github.com/johnstonskj/rust-xml_dom/workflows/Rust/badge.svg)
-[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=johnstonskj/rust-xml_dom)](https://dependabot.com)
+![Build](https://github.com/johnstonskj/rust-xml_dom/workflows/Rust/badge.svg)
+![Audit](https://github.com/johnstonskj/rust-xml_dom/workflows/Security%20audit/badge.svg)
 [![GitHub stars](https://img.shields.io/github/stars/johnstonskj/rust-xml_dom.svg)](https://github.com/johnstonskj/rust-xml_dom/stargazers)
 
 This crate provides a trait-based implementation of the DOM with minimal changes to the style
