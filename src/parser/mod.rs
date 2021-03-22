@@ -27,6 +27,7 @@ use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::Reader;
 use std::borrow::Borrow;
 use std::fmt::{Display, Formatter};
+use std::io::BufRead;
 use std::str::FromStr;
 
 // ------------------------------------------------------------------------------------------------
@@ -67,6 +68,19 @@ pub type Result<T> = std::result::Result<T, Error>;
 ///
 pub fn read_xml(xml: &str) -> Result<RefNode> {
     let mut reader = Reader::from_str(xml);
+    let _safe_to_ignore = reader.trim_text(true);
+
+    let mut event_buffer: Vec<u8> = Vec::new();
+
+    document(&mut reader, &mut event_buffer)
+}
+
+///
+/// Parse the provided string into a DOM structure; if the result is OK, the result returned
+/// can be safely assumed to be a `Document` node.
+///
+pub fn read_reader<B: BufRead>(reader: B) -> Result<RefNode> {
+    let mut reader = Reader::from_reader(reader);
     let _safe_to_ignore = reader.trim_text(true);
 
     let mut event_buffer: Vec<u8> = Vec::new();
@@ -163,7 +177,7 @@ impl From<quick_xml::Error> for Error {
 /// S                 ::= (#x20 | #x9 | #xD | #xA)+
 /// ```
 ///
-fn document(reader: &mut Reader<&[u8]>, event_buffer: &mut Vec<u8>) -> Result<RefNode> {
+fn document<T: BufRead>(reader: &mut Reader<T>, event_buffer: &mut Vec<u8>) -> Result<RefNode> {
     let mut document = get_implementation()
         .create_document(None, None, None)
         .unwrap();
@@ -241,8 +255,8 @@ fn document(reader: &mut Reader<&[u8]>, event_buffer: &mut Vec<u8>) -> Result<Re
 /// EmptyElemTag      ::= '<' Name (S Attribute)* S? '/>'
 /// ```
 ///
-fn element(
-    reader: &mut Reader<&[u8]>,
+fn element<T: BufRead>(
+    reader: &mut Reader<T>,
     event_buffer: &mut Vec<u8>,
     document: &mut RefNode,
     parent_element: &mut RefNode,
@@ -286,8 +300,8 @@ fn element(
 
 // ------------------------------------------------------------------------------------------------
 
-fn handle_start(
-    reader: &mut Reader<&[u8]>,
+fn handle_start<T: BufRead>(
+    reader: &mut Reader<T>,
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     ev: BytesStart<'_>,
@@ -316,8 +330,8 @@ fn handle_start(
     Ok(element)
 }
 
-fn handle_end(
-    _reader: &mut Reader<&[u8]>,
+fn handle_end<T: BufRead>(
+    _reader: &mut Reader<T>,
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     _ev: BytesEnd<'_>,
@@ -329,8 +343,8 @@ fn handle_end(
     .clone())
 }
 
-fn handle_comment(
-    reader: &mut Reader<&[u8]>,
+fn handle_comment<T: BufRead>(
+    reader: &mut Reader<T>,
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     ev: BytesText<'_>,
@@ -345,8 +359,8 @@ fn handle_comment(
     actual_parent.append_child(new_node).map_err(|e| e.into())
 }
 
-fn handle_text(
-    reader: &mut Reader<&[u8]>,
+fn handle_text<T: BufRead>(
+    reader: &mut Reader<T>,
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     ev: BytesText<'_>,
@@ -361,8 +375,8 @@ fn handle_text(
     actual_parent.append_child(new_node).map_err(|e| e.into())
 }
 
-fn handle_cdata(
-    reader: &mut Reader<&[u8]>,
+fn handle_cdata<T: BufRead>(
+    reader: &mut Reader<T>,
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     ev: BytesText<'_>,
@@ -377,8 +391,8 @@ fn handle_cdata(
     actual_parent.append_child(new_node).map_err(|e| e.into())
 }
 
-fn handle_pi(
-    reader: &mut Reader<&[u8]>,
+fn handle_pi<T: BufRead>(
+    reader: &mut Reader<T>,
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     ev: BytesText<'_>,
@@ -417,12 +431,12 @@ fn handle_pi(
 
 // ------------------------------------------------------------------------------------------------
 
-fn make_text(reader: &mut Reader<&[u8]>, ev: BytesText<'_>) -> Result<String> {
+fn make_text<T: BufRead>(reader: &mut Reader<T>, ev: BytesText<'_>) -> Result<String> {
     Ok(ev.unescape_and_decode(&reader)?)
 }
 
-fn make_decl(
-    reader: &mut Reader<&[u8]>,
+fn make_decl<T: BufRead>(
+    reader: &mut Reader<T>,
     ev: BytesDecl<'_>,
 ) -> Result<(String, Option<String>, Option<bool>)> {
     let version = ev.version().unwrap();
