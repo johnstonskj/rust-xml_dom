@@ -95,6 +95,11 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 
 ## Changes
 
+**Version 0.2.5**
+
+* Added `parser::from_reader` function alongside the existing `parser::from_str` to allow for streaming input
+  of the underlying source.
+
 **Version 0.2.4**
 
 * Updated [quick-xml](https://crates.io/crates/quick-xml) dependency.

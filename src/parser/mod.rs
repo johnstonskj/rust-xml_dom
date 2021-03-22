@@ -67,12 +67,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// can be safely assumed to be a `Document` node.
 ///
 pub fn read_xml(xml: &str) -> Result<RefNode> {
-    let mut reader = Reader::from_str(xml);
-    let _safe_to_ignore = reader.trim_text(true);
-
-    let mut event_buffer: Vec<u8> = Vec::new();
-
-    document(&mut reader, &mut event_buffer)
+    inner_read(&mut Reader::from_str(xml))
 }
 
 ///
@@ -80,12 +75,7 @@ pub fn read_xml(xml: &str) -> Result<RefNode> {
 /// can be safely assumed to be a `Document` node.
 ///
 pub fn read_reader<B: BufRead>(reader: B) -> Result<RefNode> {
-    let mut reader = Reader::from_reader(reader);
-    let _safe_to_ignore = reader.trim_text(true);
-
-    let mut event_buffer: Vec<u8> = Vec::new();
-
-    document(&mut reader, &mut event_buffer)
+    inner_read(&mut Reader::from_reader(reader))
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -155,6 +145,14 @@ impl From<quick_xml::Error> for Error {
 // ------------------------------------------------------------------------------------------------
 // Private Functions
 // ------------------------------------------------------------------------------------------------
+
+fn inner_read<T: BufRead>(reader: &mut Reader<T>) -> Result<RefNode> {
+    let _safe_to_ignore = reader.trim_text(true);
+
+    let mut event_buffer: Vec<u8> = Vec::new();
+
+    document(reader, &mut event_buffer)
+}
 
 ///
 /// This only needs to deal with the events that could start a document.
