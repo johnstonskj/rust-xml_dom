@@ -23,7 +23,7 @@ use crate::level2::ext::{XmlDecl, XmlVersion};
 use crate::level2::node_impl::Extension;
 use crate::level2::*;
 use crate::shared::error::Error as DOMError;
-use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
+use quick_xml::events::{BytesCData, BytesDecl, BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::Reader;
 use std::borrow::Borrow;
 use std::fmt::{Display, Formatter};
@@ -125,18 +125,19 @@ impl From<quick_xml::Error> for Error {
     fn from(err: quick_xml::Error) -> Self {
         error!("quick_xml::Error: {:?}", err);
         match err {
+            quick_xml::Error::InvalidAttr(_) => Error::Malformed,
             quick_xml::Error::Io(_) => Error::IO,
             quick_xml::Error::Utf8(_) => Error::Encoding,
             quick_xml::Error::UnexpectedEof(_) => Error::Malformed,
             quick_xml::Error::EndEventMismatch { .. } => Error::Malformed,
             quick_xml::Error::UnexpectedToken(_) => Error::Malformed,
-            quick_xml::Error::UnexpectedBang => Error::Malformed,
+            quick_xml::Error::UnexpectedBang(_) => Error::Malformed,
             quick_xml::Error::TextNotFound => Error::Malformed,
             quick_xml::Error::XmlDeclWithoutVersion(_) => Error::Malformed,
-            quick_xml::Error::NameWithQuote(_) => Error::Malformed,
-            quick_xml::Error::NoEqAfterName(_) => Error::Malformed,
-            quick_xml::Error::UnquotedValue(_) => Error::Malformed,
-            quick_xml::Error::DuplicatedAttribute(_, _) => Error::Malformed,
+            //            quick_xml::Error::NameWithQuote(_) => Error::Malformed,
+            //            quick_xml::Error::NoEqAfterName(_) => Error::Malformed,
+            //            quick_xml::Error::UnquotedValue(_) => Error::Malformed,
+            //            quick_xml::Error::DuplicatedAttribute(_, _) => Error::Malformed,
             quick_xml::Error::EscapeError(_) => Error::InvalidCharacter,
         }
     }
@@ -348,7 +349,7 @@ fn handle_comment<T: BufRead>(
     ev: BytesText<'_>,
 ) -> Result<RefNode> {
     let mut_document = as_document_mut(document).unwrap();
-    let text = make_text(reader, ev).unwrap();
+    let text = make_text(reader, ev)?;
     let new_node = mut_document.create_comment(&text);
     let actual_parent = match parent_node {
         None => document,
@@ -364,7 +365,7 @@ fn handle_text<T: BufRead>(
     ev: BytesText<'_>,
 ) -> Result<RefNode> {
     let mut_document = as_document_mut(document).unwrap();
-    let text = make_text(reader, ev).unwrap();
+    let text = make_text(reader, ev)?;
     let new_node = mut_document.create_text_node(&text);
     let actual_parent = match parent_node {
         None => document,
@@ -377,11 +378,11 @@ fn handle_cdata<T: BufRead>(
     reader: &mut Reader<T>,
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
-    ev: BytesText<'_>,
+    ev: BytesCData<'_>,
 ) -> Result<RefNode> {
     let mut_document = as_document_mut(document).unwrap();
-    let text = make_text(reader, ev).unwrap();
-    let new_node = mut_document.create_cdata_section(&text).unwrap();
+    let text = make_cdata(reader, ev)?;
+    let new_node = mut_document.create_cdata_section(text.as_ref()).unwrap();
     let actual_parent = match parent_node {
         None => document,
         Some(actual) => actual,
@@ -431,6 +432,12 @@ fn handle_pi<T: BufRead>(
 
 fn make_text<T: BufRead>(reader: &mut Reader<T>, ev: BytesText<'_>) -> Result<String> {
     Ok(ev.unescape_and_decode(&reader)?)
+}
+
+fn make_cdata<T: BufRead>(reader: &mut Reader<T>, ev: BytesCData<'_>) -> Result<String> {
+    let cdata_bytes = ev.into_inner();
+    let decoded_string = reader.decode(cdata_bytes.as_ref())?;
+    Ok(decoded_string.to_string())
 }
 
 fn make_decl<T: BufRead>(
