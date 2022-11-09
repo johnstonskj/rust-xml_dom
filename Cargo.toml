@@ -28,4 +28,4 @@ log = "0.4"
 regex = "1.6"
 
 # Feature specific dependencies
-quick-xml = { optional = true, version = "0.24" }
+quick-xml = { optional = true, version = "0.26" }
