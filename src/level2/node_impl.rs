@@ -137,22 +137,22 @@ impl NodeImpl {
             },
         }
     }
-    pub(crate) fn new_text(owner_document: WeakRefNode, data: &str) -> Self {
+    pub(crate) fn new_text(owner_document: WeakRefNode, data: impl Into<String>) -> Self {
         Self {
             i_node_type: NodeType::Text,
             i_name: Name::for_text(),
-            i_value: Some(data.to_string()),
+            i_value: Some(data.into()),
             i_parent_node: None,
             i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
             i_extension: Extension::None,
         }
     }
-    pub(crate) fn new_cdata(owner_document: WeakRefNode, data: &str) -> Self {
+    pub(crate) fn new_cdata(owner_document: WeakRefNode, data: impl Into<String>) -> Self {
         Self {
             i_node_type: NodeType::CData,
             i_name: Name::for_cdata(),
-            i_value: Some(data.to_string()),
+            i_value: Some(data.into()),
             i_parent_node: None,
             i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
@@ -174,11 +174,11 @@ impl NodeImpl {
             i_extension: Extension::None,
         }
     }
-    pub(crate) fn new_comment(owner_document: WeakRefNode, data: &str) -> Self {
+    pub(crate) fn new_comment(owner_document: WeakRefNode, data: impl Into<String>) -> Self {
         Self {
             i_node_type: NodeType::Comment,
             i_name: Name::for_comment(),
-            i_value: Some(data.to_string()),
+            i_value: Some(data.into()),
             i_parent_node: None,
             i_owner_document: Some(owner_document),
             i_child_nodes: vec![],
@@ -269,12 +269,12 @@ impl NodeImpl {
     pub(crate) fn new_internal_entity(
         owner_document: Option<WeakRefNode>,
         notation_name: Name,
-        value: &str,
+        value: impl Into<String>,
     ) -> Self {
         Self {
             i_node_type: NodeType::Entity,
             i_name: notation_name,
-            i_value: Some(value.to_string()),
+            i_value: Some(value.into()),
             i_parent_node: None,
             i_owner_document: owner_document,
             i_child_nodes: vec![],
