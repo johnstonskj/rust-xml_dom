@@ -1,6 +1,6 @@
 [package]
 name = "xml_dom"
-version = "0.2.6"
+version = "0.2.7"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2021"
 description = "A Rust crate providing a reasonably faithful implementation of the W3C DOM Core"
