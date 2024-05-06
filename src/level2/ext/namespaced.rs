@@ -46,8 +46,8 @@ impl NamespacePrefix {
     ///
     /// Construct a new `NamespacePrefix::Some` value with the provided prefix.
     ///
-    pub fn new_some(prefix: &str) -> Self {
-        Self::Some(prefix.to_string())
+    pub fn new_some(prefix: impl Into<String>) -> Self {
+        Self::Some(prefix.into())
     }
 
     ///
