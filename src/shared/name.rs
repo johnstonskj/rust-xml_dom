@@ -1,7 +1,6 @@
 use crate::shared::error::*;
 use crate::shared::syntax::*;
 use crate::shared::text::is_xml_name;
-use std::convert::TryFrom;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::result::Result as StdResult;
 use std::str::{from_utf8, FromStr};
@@ -125,10 +124,10 @@ impl Name {
     ///
     /// Note, errors include a malformed URI, or malformed prefix or local name.
     ///
-    pub fn new_ns(namespace_uri: &str, qualified_name: &str) -> Result<Self> {
-        let mut parsed = Name::from_str(qualified_name)?;
+    pub fn new_ns(namespace_uri: impl AsRef<str>, qualified_name: impl AsRef<str>) -> Result<Self> {
+        let mut parsed = Name::from_str(qualified_name.as_ref())?;
         parsed.namespace_uri = Some(Self::check_namespace_uri(
-            namespace_uri,
+            namespace_uri.as_ref(),
             &parsed.prefix,
             &parsed.local_name,
         )?);
@@ -168,7 +167,8 @@ impl Name {
         })
     }
 
-    fn check_part(part: &str) -> Result<String> {
+    fn check_part(part: impl AsRef<str>) -> Result<String> {
+        let part = part.as_ref();
         if part.is_empty() {
             Err(Error::Syntax)
         } else if is_xml_name(part) {
@@ -179,28 +179,30 @@ impl Name {
     }
 
     fn check_namespace_uri(
-        namespace_uri: &str,
+        namespace_uri: impl AsRef<str>,
         prefix: &Option<String>,
-        local: &str,
+        local: impl AsRef<str>,
     ) -> Result<String> {
+        let namespace_uri = namespace_uri.as_ref();
+        let local = local.as_ref();
+
         if namespace_uri.is_empty() {
-            Err(Error::Syntax)
-        } else {
-            if let Some(prefix) = prefix {
-                if (prefix == XML_NS_ATTRIBUTE && namespace_uri != XML_NS_URI)
-                    || (prefix == XMLNS_NS_ATTRIBUTE && namespace_uri != XMLNS_NS_URI)
-                {
-                    return Err(Error::Namespace);
-                }
-            }
-            if (local == XML_NS_ATTRIBUTE && namespace_uri != XML_NS_URI)
-                || (local == XMLNS_NS_ATTRIBUTE && namespace_uri != XMLNS_NS_URI)
-            {
-                Err(Error::Namespace)
-            } else {
-                Ok(namespace_uri.to_string())
+            return Err(Error::Syntax)
+        }
+
+        if let Some(prefix) = prefix {
+            if (prefix == XML_NS_ATTRIBUTE && namespace_uri != XML_NS_URI)
+                || (prefix == XMLNS_NS_ATTRIBUTE && namespace_uri != XMLNS_NS_URI) {
+                return Err(Error::Namespace);
             }
         }
+
+        if (local == XML_NS_ATTRIBUTE && namespace_uri != XML_NS_URI)
+            || (local == XMLNS_NS_ATTRIBUTE && namespace_uri != XMLNS_NS_URI) {
+            return Err(Error::Namespace)
+        }
+
+        Ok(namespace_uri.to_string())
     }
 
     ///
