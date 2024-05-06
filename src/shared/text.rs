@@ -1,5 +1,4 @@
 use crate::shared::syntax::*;
-use std::convert::TryFrom;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::str::FromStr;
 
@@ -61,10 +60,11 @@ pub(crate) trait EntityResolver {
 /// has been read.
 ///
 pub(crate) fn normalize_attribute_value(
-    value: &str,
+    value: impl AsRef<str>,
     resolver: &dyn EntityResolver,
     is_cdata: bool,
 ) -> String {
+    let value = value.as_ref();
     let step_1 = normalize_end_of_lines(value);
     let step_3 = if step_1.is_empty() {
         step_1
@@ -137,7 +137,8 @@ pub(crate) fn normalize_attribute_value(
 /// encoding declaration (if present) has been read. Therefore, it is a fatal error to use them
 /// within the XML declaration or text declaration.
 ///
-pub(crate) fn normalize_end_of_lines(value: &str) -> String {
+pub(crate) fn normalize_end_of_lines(value: impl AsRef<str>) -> String {
+    let value = value.as_ref();
     if value.is_empty() {
         value.to_string()
     } else {
@@ -178,7 +179,8 @@ pub(crate) fn normalize_end_of_lines(value: &str) -> String {
 /// single-quote character (') may be represented as "&apos;", and the double-quote character (")
 /// as "&quot;".
 ///
-pub(crate) fn escape(input: &str) -> String {
+pub(crate) fn escape(input: impl AsRef<str>) -> String {
+    let input = input.as_ref();
     let mut result = String::with_capacity(input.len());
 
     for c in input.chars() {
@@ -209,7 +211,8 @@ pub(crate) fn to_entity_hex(c: char) -> String {
     )
 }
 
-fn char_from_entity(entity: &str) -> String {
+fn char_from_entity(entity: impl AsRef<str>) -> String {
+    let entity = entity.as_ref();
     assert!(entity.starts_with("&#"));
     assert!(entity.ends_with(';'));
     let code_point = if &entity[2..3] == "x" {
@@ -379,7 +382,8 @@ pub(crate) fn is_xml_name_char(c: char) -> bool {
 /// Name   ::=  NameStartChar (NameChar)*
 /// ```
 ///
-pub(crate) fn is_xml_name(s: &str) -> bool {
+pub(crate) fn is_xml_name(s: impl AsRef<str>) -> bool {
+    let s = s.as_ref();
     !s.is_empty() && s.starts_with(is_xml_name_start_char) && s[1..].chars().all(is_xml_name_char)
 }
 
@@ -389,7 +393,8 @@ pub(crate) fn is_xml_name(s: &str) -> bool {
 /// ```
 ///
 #[allow(dead_code)]
-pub(crate) fn is_xml_names(s: &str) -> bool {
+pub(crate) fn is_xml_names(s: impl AsRef<str>) -> bool {
+    let s = s.as_ref();
     !s.is_empty() && s.split(' ').all(is_xml_name)
 }
 
@@ -399,7 +404,8 @@ pub(crate) fn is_xml_names(s: &str) -> bool {
 /// ```
 ///
 #[allow(dead_code)]
-pub(crate) fn is_xml_nmtoken(s: &str) -> bool {
+pub(crate) fn is_xml_nmtoken(s: impl AsRef<str>) -> bool {
+    let s = s.as_ref();
     !s.is_empty() && s.chars().all(is_xml_name_char)
 }
 
@@ -409,7 +415,8 @@ pub(crate) fn is_xml_nmtoken(s: &str) -> bool {
 /// ```
 ///
 #[allow(dead_code)]
-pub(crate) fn is_xml_nmtokens(s: &str) -> bool {
+pub(crate) fn is_xml_nmtokens(s: impl AsRef<str>) -> bool {
+    let s = s.as_ref();
     !s.is_empty() && s.split(' ').all(is_xml_nmtoken)
 }
 
