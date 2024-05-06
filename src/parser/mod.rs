@@ -25,9 +25,7 @@ use crate::level2::*;
 use crate::shared::error::Error as DOMError;
 use quick_xml::events::{BytesCData, BytesDecl, BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::reader::Reader;
-use quick_xml::*;
 use std::borrow::Borrow;
-//use std::fmt::{Display, Formatter};
 use std::io::BufRead;
 use std::str::FromStr;
 
@@ -42,24 +40,18 @@ use thiserror::Error as E;
 ///
 #[derive(Debug, E)]
 pub enum Error {
-    /// From the DOM Error.
-    #[error("bad hierarchy request")]
-    HierarchyRequest,
-    /// From the DOM Error.
+    /// Usually a missing quote.
     #[error("invalid character")]
     InvalidCharacter,
-    /// From the DOM Error.
-    #[error("not supported")]
-    NotSupported,
-    /// From quick_xml Error.
-    #[error("io error")]
-    IO,
-    /// From quick_xml Error.
-    #[error("encoding error")]
-    Encoding,
     /// Everything else.
     #[error("malformed")]
     Malformed,
+    /// Errors passed through from DOMError
+    #[error("DOM error: {0}")]
+    DOMError(
+        #[from]
+        DOMError
+    ),
     /// Errors passed through from quick-xml
     #[error("quick-xml error: {0}")]
     QuickXMLError(
@@ -81,8 +73,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// Parse the provided string into a DOM structure; if the result is OK, the result returned
 /// can be safely assumed to be a `Document` node.
 ///
-pub fn read_xml(xml: &str) -> Result<RefNode> {
-    inner_read(&mut Reader::from_str(xml))
+pub fn read_xml(xml: impl AsRef<str>) -> Result<RefNode> {
+    inner_read(&mut Reader::from_str(xml.as_ref()))
 }
 
 ///
@@ -93,46 +85,9 @@ pub fn read_reader<B: BufRead>(reader: B) -> Result<RefNode> {
     inner_read(&mut Reader::from_reader(reader))
 }
 
-// ------------------------------------------------------------------------------------------------
-// Implementations
-// ------------------------------------------------------------------------------------------------
-
-/*impl Display for Error {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Error::HierarchyRequest => "An attempt insert a node somewhere it doesn't belong",
-                Error::InvalidCharacter =>
-                    "An invalid or illegal character was specified, such as in a name",
-                Error::NotSupported =>
-                    "The implementation does not support the requested type of object or operation",
-                Error::IO => "I/O Error reading data",
-                Error::Encoding => "Issue decoding bytes to UTF-8",
-                Error::Malformed => "Input document malformed",
-            }
-        )
-    }
-}*/
-
-//impl std::error::Error for Error {}
-
 impl<T> Into<Result<T>> for Error {
     fn into(self) -> Result<T> {
         Err(self)
-    }
-}
-
-impl From<DOMError> for Error {
-    fn from(err: DOMError) -> Self {
-        error!("shared::Error: {:?}", err);
-        match err {
-            DOMError::HierarchyRequest => Error::HierarchyRequest,
-            DOMError::InvalidCharacter => Error::InvalidCharacter,
-            DOMError::NotSupported => Error::NotSupported,
-            _ => Error::Malformed,
-        }
     }
 }
 
@@ -383,7 +338,7 @@ fn handle_cdata<T: BufRead>(
 }
 
 fn handle_pi<T: BufRead>(
-    reader: &mut Reader<T>,
+    _reader: &mut Reader<T>,
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     ev: BytesText<'_>,
