@@ -24,11 +24,14 @@ use crate::level2::node_impl::Extension;
 use crate::level2::*;
 use crate::shared::error::Error as DOMError;
 use quick_xml::events::{BytesCData, BytesDecl, BytesEnd, BytesStart, BytesText, Event};
-use quick_xml::Reader;
+use quick_xml::reader::Reader;
+use quick_xml::*;
 use std::borrow::Borrow;
-use std::fmt::{Display, Formatter};
+//use std::fmt::{Display, Formatter};
 use std::io::BufRead;
 use std::str::FromStr;
+
+use thiserror::Error as E;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -37,20 +40,32 @@ use std::str::FromStr;
 ///
 /// Errors constructing a DOM from text.
 ///
-#[derive(Clone, Debug)]
+#[derive(Debug, E)]
 pub enum Error {
     /// From the DOM Error.
+    #[error("bad hierarchy request")]
     HierarchyRequest,
     /// From the DOM Error.
+    #[error("invalid character")]
     InvalidCharacter,
     /// From the DOM Error.
+    #[error("not supported")]
     NotSupported,
     /// From quick_xml Error.
+    #[error("io error")]
     IO,
     /// From quick_xml Error.
+    #[error("encoding error")]
     Encoding,
     /// Everything else.
+    #[error("malformed")]
     Malformed,
+    /// Errors passed through from quick-xml
+    #[error("quick-xml error: {0}")]
+    QuickXMLError(
+        #[from]
+        quick_xml::Error
+    ),
 }
 
 ///
@@ -82,7 +97,7 @@ pub fn read_reader<B: BufRead>(reader: B) -> Result<RefNode> {
 // Implementations
 // ------------------------------------------------------------------------------------------------
 
-impl Display for Error {
+/*impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -99,9 +114,9 @@ impl Display for Error {
             }
         )
     }
-}
+}*/
 
-impl std::error::Error for Error {}
+//impl std::error::Error for Error {}
 
 impl<T> Into<Result<T>> for Error {
     fn into(self) -> Result<T> {
@@ -117,28 +132,6 @@ impl From<DOMError> for Error {
             DOMError::InvalidCharacter => Error::InvalidCharacter,
             DOMError::NotSupported => Error::NotSupported,
             _ => Error::Malformed,
-        }
-    }
-}
-
-impl From<quick_xml::Error> for Error {
-    fn from(err: quick_xml::Error) -> Self {
-        error!("quick_xml::Error: {:?}", err);
-        match err {
-            quick_xml::Error::InvalidAttr(_) => Error::Malformed,
-            quick_xml::Error::Io(_) => Error::IO,
-            quick_xml::Error::Utf8(_) => Error::Encoding,
-            quick_xml::Error::UnexpectedEof(_) => Error::Malformed,
-            quick_xml::Error::EndEventMismatch { .. } => Error::Malformed,
-            quick_xml::Error::UnexpectedToken(_) => Error::Malformed,
-            quick_xml::Error::UnexpectedBang(_) => Error::Malformed,
-            quick_xml::Error::TextNotFound => Error::Malformed,
-            quick_xml::Error::XmlDeclWithoutVersion(_) => Error::Malformed,
-            //            quick_xml::Error::NameWithQuote(_) => Error::Malformed,
-            //            quick_xml::Error::NoEqAfterName(_) => Error::Malformed,
-            //            quick_xml::Error::UnquotedValue(_) => Error::Malformed,
-            //            quick_xml::Error::DuplicatedAttribute(_, _) => Error::Malformed,
-            quick_xml::Error::EscapeError(_) => Error::InvalidCharacter,
         }
     }
 }
@@ -180,9 +173,8 @@ fn document<T: BufRead>(reader: &mut Reader<T>, event_buffer: &mut Vec<u8>) -> R
     let mut document = get_implementation()
         .create_document(None, None, None)
         .unwrap();
-
     loop {
-        match reader.read_event(event_buffer) {
+        match reader.read_event_into(event_buffer) {
             Ok(Event::Decl(ev)) => {
                 let mut mut_document = document.borrow_mut();
                 if let Extension::Document {
@@ -261,7 +253,7 @@ fn element<T: BufRead>(
     parent_element: &mut RefNode,
 ) -> Result<RefNode> {
     loop {
-        match reader.read_event(event_buffer) {
+        match reader.read_event_into(event_buffer) {
             Ok(Event::Start(ev)) => {
                 let mut new_element = handle_start(reader, document, Some(parent_element), ev)?;
                 let _safe_to_ignore = element(reader, event_buffer, document, &mut new_element)?;
@@ -307,8 +299,8 @@ fn handle_start<T: BufRead>(
 ) -> Result<RefNode> {
     let mut element = {
         let mut_document = as_document_mut(document).unwrap();
-        let name = ev.name();
-        let name = reader.decode(name)?;
+        let name = ev.name().into_inner();
+        let name = reader.decoder().decode(name)?;
         let new_node = mut_document.create_element(&name).unwrap();
         let mut actual_parent = match parent_node {
             None => document.clone(),
@@ -319,9 +311,9 @@ fn handle_start<T: BufRead>(
 
     for attribute in ev.attributes() {
         let attribute = attribute.unwrap();
-        let value = attribute.unescape_and_decode_value(reader)?;
-        let name = reader.decode(attribute.key)?;
-        let attribute_node = document.create_attribute_with(name, &value)?;
+        let value = attribute.decode_and_unescape_value(reader)?;
+        let name = reader.decoder().decode(attribute.key.into_inner())?;
+        let attribute_node = document.create_attribute_with(name.as_ref(), &value)?;
 
         let _safe_to_ignore = element.set_attribute_node(attribute_node)?;
     }
@@ -397,21 +389,19 @@ fn handle_pi<T: BufRead>(
     ev: BytesText<'_>,
 ) -> Result<RefNode> {
     let mut_document = as_document_mut(document).unwrap();
-    let (target, data) = {
-        let text = ev.unescape_and_decode(&reader)?;
-        let parts = text.splitn(2, ' ').collect::<Vec<&str>>();
-        match parts.len() {
-            1 => (parts[0].to_string(), None),
-            2 => {
-                let data = parts[1].trim();
-                if data.is_empty() {
-                    (parts[0].to_string(), None)
-                } else {
-                    (parts[0].to_string(), Some(data.to_string()))
-                }
+    let text = ev.unescape()?;
+    let parts = text.splitn(2, ' ').collect::<Vec<&str>>();
+    let (target, data) = match parts.len() {
+        1 => (parts[0].to_string(), None),
+        2 => {
+            let data = parts[1].trim();
+            if data.is_empty() {
+                (parts[0].to_string(), None)
+            } else {
+                (parts[0].to_string(), Some(data.to_string()))
             }
-            _ => return Error::Malformed.into(),
         }
+        _ => return Error::Malformed.into(),
     };
     let new_node = match data {
         None => mut_document
@@ -431,12 +421,12 @@ fn handle_pi<T: BufRead>(
 // ------------------------------------------------------------------------------------------------
 
 fn make_text<T: BufRead>(reader: &mut Reader<T>, ev: BytesText<'_>) -> Result<String> {
-    Ok(ev.unescape_and_decode(&reader)?)
+    Ok(ev.unescape()?.to_string())
 }
 
 fn make_cdata<T: BufRead>(reader: &mut Reader<T>, ev: BytesCData<'_>) -> Result<String> {
     let cdata_bytes = ev.into_inner();
-    let decoded_string = reader.decode(cdata_bytes.as_ref())?;
+    let decoded_string = reader.decoder().decode(cdata_bytes.as_ref())?;
     Ok(decoded_string.to_string())
 }
 
@@ -446,12 +436,12 @@ fn make_decl<T: BufRead>(
 ) -> Result<(String, Option<String>, Option<bool>)> {
     let version = ev.version().unwrap();
     let version = version.borrow();
-    let version = reader.decode(version).unwrap();
+    let version = reader.decoder().decode(version).unwrap();
     let version = unquote(version.to_string())?;
     let encoding = if let Some(ev_value) = ev.encoding() {
         let encoding = ev_value.unwrap();
         let encoding = encoding.borrow();
-        let encoding = reader.decode(encoding).unwrap();
+        let encoding = reader.decoder().decode(encoding).unwrap();
         Some(encoding.to_string())
     } else {
         None
@@ -459,7 +449,7 @@ fn make_decl<T: BufRead>(
     let standalone = if let Some(ev_value) = ev.standalone() {
         let standalone = ev_value.unwrap();
         let standalone = standalone.borrow();
-        let standalone = reader.decode(standalone).unwrap();
+        let standalone = reader.decoder().decode(standalone).unwrap();
         Some(standalone == "yes")
     } else {
         None
