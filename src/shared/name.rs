@@ -49,9 +49,9 @@ use std::str::{from_utf8, FromStr};
 /// > * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
 /// > * `NAMESPACE_ERR`: Raised if the specified prefix is malformed, if the namespaceURI of this
 /// >   node is null, if the specified prefix is "xml" and the namespaceURI of this node is
-/// >   different from "http://www.w3.org/XML/1998/namespace", if this node is an attribute and the
+/// >   different from `<http://www.w3.org/XML/1998/namespace>`, if this node is an attribute and the
 /// >   specified prefix is "xmlns" and the namespaceURI of this node is different from
-/// >   "http://www.w3.org/2000/xmlns/", or if this node is an attribute and the qualifiedName of
+/// >   `<http://www.w3.org/2000/xmlns/>`, or if this node is an attribute and the qualifiedName of
 /// >   this node is "xmlns".
 ///
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

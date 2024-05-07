@@ -19,9 +19,9 @@ use std::str::FromStr;
 ///
 #[derive(Clone, Debug, PartialEq)]
 pub enum XmlVersion {
-    /// Version 1.0 [https://www.w3.org/TR/xml]
+    /// Version 1.0 [`<https://www.w3.org/TR/xml>`]
     V10,
-    /// Version 1.1 [https://www.w3.org/TR/xml11]
+    /// Version 1.1 [`<https://www.w3.org/TR/xml11>`]
     V11,
 }
 

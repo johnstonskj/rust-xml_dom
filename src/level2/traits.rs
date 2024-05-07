@@ -384,9 +384,9 @@ pub trait Document: Node {
     ///   character.
     /// * `NAMESPACE_ERR`: Raised if the `qualifiedName` is malformed, if the `qualifiedName` has
     ///   a `prefix` and the `namespaceURI` is `null`, if the `qualifiedName` has a `prefix` that
-    ///   is "xml" and the `namespaceURI` is different from "http://www.w3.org/XML/1998/namespace",
+    ///   is "xml" and the `namespaceURI` is different from `<http://www.w3.org/XML/1998/namespace>`,
     ///   or if the `qualifiedName` is "xmlns" and the namespaceURI is different from
-    ///   "http://www.w3.org/2000/xmlns/".
+    ///   `<http://www.w3.org/2000/xmlns/>`.
     ///
     fn create_attribute_ns(
         &self,
@@ -523,9 +523,9 @@ pub trait Document: Node {
     ///   character.
     /// * `NAMESPACE_ERR`: Raised if the `qualifiedName` is malformed, if the `qualifiedName` has
     ///   a `prefix` and the `namespaceURI` is `null`, if the `qualifiedName` has a `prefix` that
-    ///   is "xml" and the `namespaceURI` is different from "http://www.w3.org/XML/1998/namespace",
+    ///   is "xml" and the `namespaceURI` is different from `<http://www.w3.org/XML/1998/namespace`>,
     ///   or if the `qualifiedName` is "xmlns" and the namespaceURI is different from
-    ///   "http://www.w3.org/2000/xmlns/".
+    ///   `<http://www.w3.org/2000/xmlns/>`.
     ///
     fn create_element_ns(&self, namespace_uri: &str, qualified_name: &str)
         -> Result<Self::NodeRef>;
@@ -785,7 +785,7 @@ pub trait DOMImplementation {
     /// * `INVALID_CHARACTER_ERR`: Raised if the specified qualified name contains an illegal character.
     /// * `NAMESPACE_ERR`: Raised if the qualifiedName is malformed, if the qualifiedName has a prefix
     ///   and the namespaceURI is null, or if the qualifiedName has a prefix that is "xml" and the
-    ///   namespaceURI is different from "http://www.w3.org/XML/1998/namespace".
+    ///   namespaceURI is different from <`http://www.w3.org/XML/1998/namespace>`.
     /// * `WRONG_DOCUMENT_ERR`: Raised if doctype has already been used with a different document or
     ///   was created from a different implementation.
     ///
@@ -1090,9 +1090,9 @@ pub trait Element: Node {
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     /// * `NAMESPACE_ERR`: Raised if the `qualifiedName` is malformed, if the `qualifiedName` has a
     ///   prefix and the `namespaceURI` is null, if the `qualifiedName` has a prefix that is "xml"
-    ///   and the `namespaceURI` is different from "http://www.w3.org/XML/1998/namespace", or if
+    ///   and the `namespaceURI` is different from '<http://www.w3.org/XML/1998/namespace>', or if
     ///   the `qualifiedName` is "xmlns" and the `namespaceURI` is different from
-    /// "http://www.w3.org/2000/xmlns/".
+    /// `<http://www.w3.org/2000/xmlns/>`.
     ///
     fn set_attribute_ns(
         &mut self,
@@ -1687,9 +1687,9 @@ pub trait Node {
     /// * `NO_MODIFICATION_ALLOWED_ERR`: Raised if this node is readonly.
     /// * `NAMESPACE_ERR`: Raised if the specified prefix is malformed, if the `namespaceURI` of this
     ///   node is `null`, if the specified prefix is "xml" and the namespaceURI of this node is
-    ///   different from "http://www.w3.org/XML/1998/namespace", if this node is an attribute and
-    ///   the specified prefix is "xmlns" and the namespaceURI of this node is different from  
-    ///   "http://www.w3.org/2000/xmlns/", or if this node is an attribute and the `qualifiedName`
+    ///   different from `<http://www.w3.org/XML/1998/namespace>`, if this node is an attribute and
+    ///   the specified prefix is "xmlns" and the namespaceURI of this node is different from
+    ///   `<http://www.w3.org/2000/xmlns/>`, or if this node is an attribute and the `qualifiedName`
     ///   of this node is "xmlns".
     ///
     fn prefix(&self) -> Option<String> {
