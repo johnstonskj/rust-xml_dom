@@ -187,19 +187,21 @@ impl Name {
         let local = local.as_ref();
 
         if namespace_uri.is_empty() {
-            return Err(Error::Syntax)
+            return Err(Error::Syntax);
         }
 
         if let Some(prefix) = prefix {
             if (prefix == XML_NS_ATTRIBUTE && namespace_uri != XML_NS_URI)
-                || (prefix == XMLNS_NS_ATTRIBUTE && namespace_uri != XMLNS_NS_URI) {
+                || (prefix == XMLNS_NS_ATTRIBUTE && namespace_uri != XMLNS_NS_URI)
+            {
                 return Err(Error::Namespace);
             }
         }
 
         if (local == XML_NS_ATTRIBUTE && namespace_uri != XML_NS_URI)
-            || (local == XMLNS_NS_ATTRIBUTE && namespace_uri != XMLNS_NS_URI) {
-            return Err(Error::Namespace)
+            || (local == XMLNS_NS_ATTRIBUTE && namespace_uri != XMLNS_NS_URI)
+        {
+            return Err(Error::Namespace);
         }
 
         Ok(namespace_uri.to_string())

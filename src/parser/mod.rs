@@ -48,16 +48,10 @@ pub enum Error {
     Malformed,
     /// Errors passed through from DOMError
     #[error("DOM error: {0}")]
-    DOMError(
-        #[from]
-        DOMError
-    ),
+    DOMError(#[from] DOMError),
     /// Errors passed through from quick-xml
     #[error("quick-xml error: {0}")]
-    QuickXMLError(
-        #[from]
-        quick_xml::Error
-    ),
+    QuickXMLError(#[from] quick_xml::Error),
 }
 
 ///
