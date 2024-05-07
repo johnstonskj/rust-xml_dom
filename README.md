@@ -95,6 +95,15 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 
 ## Changes
 
+### Version 0.2.7
+
+* Updated to 2021 Edition of Rust
+* Updated [quick-xml](https://crates.io/crates/quick-xml) dependency.
+* Refactored `Error` type with [thiserror](https://crates.io/crates/thiserror)
+  * Encapsulated errors from dependant libraries and removed manual `From` implementations.
+  * Removed unused `Error` enum types.
+* Made several interfaces more generic with `AsRef<str>` and `Into<String>`.
+
 ### Version 0.2.6
 
 * Updated [quick-xml](https://crates.io/crates/quick-xml) dependency.
@@ -103,8 +112,7 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 
 ### Version 0.2.5
 
-* Added `parser::from_reader` function alongside the existing `parser::from_str` to allow for streaming input
-  of the underlying source.
+* Added `parser::from_reader` function alongside the existing `parser::from_str` to allow for streaming input of the underlying source.
 
 ### Version 0.2.4
 
