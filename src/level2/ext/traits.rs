@@ -13,7 +13,7 @@ use crate::shared::error::Result;
 /// of the XML declaration from the document prolog.
 ///
 /// # Specification
-///  
+///
 /// From XML 1.1 [§2.8 Prolog and Document Type Declaration](https://www.w3.org/TR/xml11/#sec-prolog-dtd)
 /// -- Definition: XML 1.1 documents **must** begin with an **XML declaration** which specifies the
 /// version of XML being used.
@@ -108,13 +108,13 @@ pub trait Namespaced: base::Element {
     ///
     /// Returns the namespace URI associated with the provided `prefix`, `None` if the prefix is not
     /// mapped to a URI for this, and only this, element.
-    ///  
+    ///
     fn get_namespace(&self, prefix: Option<&str>) -> Option<String>;
     ///
     /// Returns the namespace URI associated with the provided `prefix` for this element by looking
     /// up the DOM tree through `parent_node` links. Returns `None` if the prefix is not mapped to a
     /// URI on this, or any parent, element.
-    ///  
+    ///
     fn resolve_namespace(&self, prefix: Option<&str>) -> Option<String>;
 
     ///
@@ -125,12 +125,12 @@ pub trait Namespaced: base::Element {
     ///
     /// Returns the prefix associated with the provided `namespace_uri`, `None` if the namespace
     /// URI is not mapped with a prefix for this, and only this, element.
-    ///  
+    ///
     fn get_prefix(&self, namespace_uri: &str) -> NamespacePrefix;
     ///
     /// Returns the prefix associated with the provided `namespace_uri` for this element by looking
     /// up the DOM tree through `parent_node` links. Returns `None` if the namespace is not mapped
     /// with a prefix for this, or any parent, element.
-    ///  
+    ///
     fn resolve_prefix(&self, namespace_uri: &str) -> NamespacePrefix;
 }
