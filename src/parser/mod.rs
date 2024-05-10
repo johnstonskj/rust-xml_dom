@@ -79,9 +79,9 @@ pub fn read_reader<B: BufRead>(reader: B) -> Result<RefNode> {
     inner_read(&mut Reader::from_reader(reader))
 }
 
-impl<T> Into<Result<T>> for Error {
-    fn into(self) -> Result<T> {
-        Err(self)
+impl<T> From<Error> for Result<T> {
+    fn from(val: Error) -> Self {
+        Err(val)
     }
 }
 
