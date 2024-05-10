@@ -11,10 +11,12 @@ fn test_text_node_contents() {
     //
     // Note, this test character escaping, "&" should be "&#38;" in the tree.
     //
-    let text_values = ["Rose Bush",
+    let text_values = [
+        "Rose Bush",
         "A Guide to Growing Roses",
         "Describes process for planting &#38; nurturing different kinds of rose bushes.",
-        "2001-01-20"];
+        "2001-01-20",
+    ];
     let root_node = common::create_example_rdf_document();
     let document = as_document(&root_node).unwrap();
 

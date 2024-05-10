@@ -61,11 +61,7 @@ fn is_encoding_start_char(c: char) -> bool {
 }
 
 fn is_encoding_rest_char(c: char) -> bool {
-    c.is_ascii_uppercase()
-        || c.is_ascii_lowercase()
-        || c.is_ascii_digit()
-        || c == '.'
-        || c == '_'
+    c.is_ascii_uppercase() || c.is_ascii_lowercase() || c.is_ascii_digit() || c == '.' || c == '_'
 }
 
 fn is_encoding_sub_string(s: &str) -> bool {
