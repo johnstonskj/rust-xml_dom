@@ -6,8 +6,9 @@ use std::str::FromStr;
 //  Public Types
 // ------------------------------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub(crate) enum SpaceHandling {
+    #[default]
     Default,
     Preserve,
 }
@@ -422,14 +423,6 @@ pub(crate) fn is_xml_nmtokens(s: impl AsRef<str>) -> bool {
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
-// ------------------------------------------------------------------------------------------------
-
-impl Default for SpaceHandling {
-    fn default() -> Self {
-        SpaceHandling::Default
-    }
-}
-
 // ------------------------------------------------------------------------------------------------
 
 impl Display for SpaceHandling {
