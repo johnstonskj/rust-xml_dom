@@ -26,7 +26,7 @@ fn main() {
 }
 
 #[allow(unused_must_use)]
-fn create_user<'a>(
+fn create_user(
     doc: RefDocument,
     id: &str,
     first_name: &str,
