@@ -334,8 +334,8 @@ mod tests {
         // prefix
         let ns_result = Some(XSD.to_string());
 
-        assert_eq!(namespaced.contains_mapping(None), false);
-        assert_eq!(namespaced.contains_mapping(Some("xsd")), true);
+        assert!(!namespaced.contains_mapping(None));
+        assert!(namespaced.contains_mapping(Some("xsd")));
         assert_eq!(namespaced.get_namespace(None), None);
         assert_eq!(namespaced.get_namespace(Some("xsd")), ns_result);
         assert_eq!(namespaced.resolve_namespace(None), None);
@@ -344,8 +344,8 @@ mod tests {
         // namespace
         let prefix_result = NamespacePrefix::new_some("xsd");
 
-        assert_eq!(namespaced.contains_mapped_namespace(HTML), false);
-        assert_eq!(namespaced.contains_mapped_namespace(XSD), true);
+        assert!(!namespaced.contains_mapped_namespace(HTML));
+        assert!(namespaced.contains_mapped_namespace(XSD));
         assert_eq!(namespaced.get_prefix(XSD), prefix_result);
         assert_eq!(namespaced.resolve_prefix(XSD), prefix_result);
     }
@@ -362,8 +362,8 @@ mod tests {
         // prefix
         let ns_result = Some(XSD.to_string());
 
-        assert_eq!(namespaced.contains_mapping(None), true);
-        assert_eq!(namespaced.contains_mapping(Some("xsd")), false);
+        assert!(namespaced.contains_mapping(None));
+        assert!(!namespaced.contains_mapping(Some("xsd")));
         assert_eq!(namespaced.get_namespace(None), ns_result);
         assert_eq!(namespaced.get_namespace(Some("xsd")), None);
         assert_eq!(namespaced.resolve_namespace(None), ns_result);
@@ -372,8 +372,8 @@ mod tests {
         // namespace
         let prefix_result = NamespacePrefix::Default;
 
-        assert_eq!(namespaced.contains_mapped_namespace(HTML), false);
-        assert_eq!(namespaced.contains_mapped_namespace(XSD), true);
+        assert!(!namespaced.contains_mapped_namespace(HTML));
+        assert!(namespaced.contains_mapped_namespace(XSD));
         assert_eq!(namespaced.get_prefix(XSD), prefix_result);
         assert_eq!(namespaced.resolve_prefix(XSD), prefix_result);
     }

@@ -45,7 +45,7 @@ use std::ops::{BitAnd, BitOr};
 ///     .unwrap();
 /// ```
 ///
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ProcessingOptions(u8);
 
 // ------------------------------------------------------------------------------------------------
@@ -63,14 +63,6 @@ enum ProcessingOptionFlags {
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
-// ------------------------------------------------------------------------------------------------
-
-impl Default for ProcessingOptions {
-    fn default() -> Self {
-        Self(0)
-    }
-}
-
 // ------------------------------------------------------------------------------------------------
 
 impl Display for ProcessingOptions {

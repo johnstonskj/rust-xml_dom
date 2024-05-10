@@ -88,10 +88,10 @@ impl FromStr for Name {
                 .map(|s| s.to_string())
                 .collect::<Vec<String>>();
             match parts.len() {
-                1 => Name::new(Name::check_part(parts.get(0).unwrap())?, None, None),
+                1 => Name::new(Name::check_part(parts.first().unwrap())?, None, None),
                 2 => Name::new(
                     Name::check_part(parts.get(1).unwrap())?,
-                    Some(Name::check_part(parts.get(0).unwrap())?),
+                    Some(Name::check_part(parts.first().unwrap())?),
                     None,
                 ),
                 _ => Err(Error::Syntax),
@@ -303,7 +303,7 @@ impl Name {
         let xmlns_ns = Some(XMLNS_NS_URI.to_string());
         let xmlns_attribute = XMLNS_NS_ATTRIBUTE.to_string();
         self.namespace_uri == xmlns_ns
-            && ((self.local_name == xmlns_attribute && self.prefix == None)
+            && ((self.local_name == xmlns_attribute && self.prefix.is_none())
                 || self.prefix == Some(xmlns_attribute))
     }
 

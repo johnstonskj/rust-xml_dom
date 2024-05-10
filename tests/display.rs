@@ -205,7 +205,7 @@ fn test_display_document_fragment() {
     let mut test_node = document.create_document_fragment().unwrap();
     let mut_fragment = as_document_fragment_mut(&mut test_node).unwrap();
 
-    for name in vec!["one", "two", "three"] {
+    for name in ["one", "two", "three"] {
         let node = document.create_element(name).unwrap();
         let _safe_to_ignore = mut_fragment.append_child(node).unwrap();
     }

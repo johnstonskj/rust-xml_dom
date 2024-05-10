@@ -91,12 +91,12 @@ impl Attribute for RefNode {
                     //
                     let ref_node = child_node.borrow();
                     if let Some(data) = &ref_node.i_value {
-                        result.push_str(&data);
+                        result.push_str(data);
                     }
                 }
             }
             let normalized = text::normalize_attribute_value(&result, self, false);
-            Some(text::escape(&normalized))
+            Some(text::escape(normalized))
         } else {
             None
         }
@@ -234,7 +234,7 @@ impl Document for RefNode {
     }
 
     fn document_element(&self) -> Option<RefNode> {
-        self.child_nodes().first().map(Clone::clone)
+        self.child_nodes().first().cloned()
     }
 
     fn implementation(&self) -> &dyn DOMImplementation<NodeRef = RefNode> {
@@ -686,7 +686,7 @@ impl Element for RefNode {
                     None => None,
                     Some(s) => Some(s.as_str()),
                 },
-                &ref_self.i_name.local_name(),
+                ref_self.i_name.local_name(),
                 &namespace_uri,
                 &local_name,
             ) {
@@ -1076,7 +1076,7 @@ impl Node for RefNode {
                     }
                 } else if let Some(last_child_node) = child_node.previous_sibling() {
                     let last_child_node = &mut last_child_node.clone();
-                    if is_text(&last_child_node) {
+                    if is_text(last_child_node) {
                         if last_child_node
                             .append_data(&child_node.node_value().unwrap())
                             .is_err()

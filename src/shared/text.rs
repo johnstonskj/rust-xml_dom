@@ -262,9 +262,9 @@ pub(crate) fn is_xml_10_char(c: char) -> bool {
     c == '\u{0009}'
         || c == '\u{000A}'
         || c == '\u{000D}'
-        || (c >= '\u{0020}' && c <= '\u{D7FF}')
-        || (c >= '\u{E000}' && c <= '\u{FFFD}')
-        || (c >= '\u{10000}' && c <= '\u{10FFF}')
+        || ('\u{0020}'..='\u{D7FF}').contains(&c)
+        || ('\u{E000}'..='\u{FFFD}').contains(&c)
+        || ('\u{10000}'..='\u{10FFF}').contains(&c)
 }
 
 #[allow(dead_code)]
@@ -290,9 +290,9 @@ pub(crate) fn is_xml_11_char(c: char) -> bool {
     // below ranges are always valid for XML 1.1 documents
     // from https://en.wikipedia.org/wiki/XML#Valid_characters
     //
-    (c >= '\u{0001}' && c <= '\u{D7FF}')
-        || (c >= '\u{E000}' && c <= '\u{FFFD}')
-        || (c >= '\u{10000}' && c <= '\u{10FFF}')
+    ('\u{0001}'..='\u{D7FF}').contains(&c)
+        || ('\u{E000}'..='\u{FFFD}').contains(&c)
+        || ('\u{10000}'..='\u{10FFF}').contains(&c)
 }
 
 ///
@@ -308,11 +308,11 @@ pub(crate) fn is_xml_11_restricted_char(c: char) -> bool {
     // below ranges are always valid for XML 1.1 documents
     // from https://en.wikipedia.org/wiki/XML#Valid_characters
     //
-    (c >= '\u{01}' && c <= '\u{08}')
-        || (c >= '\u{0B}' && c <= '\u{0C}')
-        || (c >= '\u{0E}' && c <= '\u{1F}')
-        || (c >= '\u{7F}' && c <= '\u{84}')
-        || (c >= '\u{86}' && c <= '\u{9F}')
+    ('\u{01}'..='\u{08}').contains(&c)
+        || ('\u{0B}'..='\u{0C}').contains(&c)
+        || ('\u{0E}'..='\u{1F}').contains(&c)
+        || ('\u{7F}'..='\u{84}').contains(&c)
+        || ('\u{86}'..='\u{9F}').contains(&c)
 }
 
 ///
@@ -345,21 +345,21 @@ pub(crate) fn is_xml_space(c: char) -> bool {
 #[allow(dead_code)]
 pub(crate) fn is_xml_name_start_char(c: char) -> bool {
     c == ':'
-        || (c >= 'A' && c <= 'Z')
+        || c.is_ascii_uppercase()
         || c == '_'
-        || (c >= 'a' && c <= 'z')
-        || (c >= '\u{C0}' && c <= '\u{D6}')
-        || (c >= '\u{D8}' && c <= '\u{F6}')
-        || (c >= '\u{0F8}' && c <= '\u{2FF}')
-        || (c >= '\u{370}' && c <= '\u{37D}')
-        || (c >= '\u{037F}' && c <= '\u{1FFF}')
-        || (c >= '\u{200C}' && c <= '\u{200D}')
-        || (c >= '\u{2070}' && c <= '\u{218F}')
-        || (c >= '\u{2C00}' && c <= '\u{2FEF}')
-        || (c >= '\u{3001}' && c <= '\u{D7FF}')
-        || (c >= '\u{F900}' && c <= '\u{FDCF}')
-        || (c >= '\u{FDF0}' && c <= '\u{FFFD}')
-        || (c >= '\u{10000}' && c <= '\u{EFFFF}')
+        || c.is_ascii_lowercase()
+        || ('\u{C0}'..='\u{D6}').contains(&c)
+        || ('\u{D8}'..='\u{F6}').contains(&c)
+        || ('\u{0F8}'..='\u{2FF}').contains(&c)
+        || ('\u{370}'..='\u{37D}').contains(&c)
+        || ('\u{037F}'..='\u{1FFF}').contains(&c)
+        || ('\u{200C}'..='\u{200D}').contains(&c)
+        || ('\u{2070}'..='\u{218F}').contains(&c)
+        || ('\u{2C00}'..='\u{2FEF}').contains(&c)
+        || ('\u{3001}'..='\u{D7FF}').contains(&c)
+        || ('\u{F900}'..='\u{FDCF}').contains(&c)
+        || ('\u{FDF0}'..='\u{FFFD}').contains(&c)
+        || ('\u{10000}'..='\u{EFFFF}').contains(&c)
 }
 
 ///
@@ -372,10 +372,10 @@ pub(crate) fn is_xml_name_char(c: char) -> bool {
     is_xml_name_start_char(c)
         || c == '-'
         || c == '.'
-        || (c >= '0' && c <= '9')
+        || c.is_ascii_digit()
         || c == '\u{B7}'
-        || (c >= '\u{0300}' && c <= '\u{036F}')
-        || (c >= '\u{203F}' && c <= '\u{2040}')
+        || ('\u{0300}'..='\u{036F}').contains(&c)
+        || ('\u{203F}'..='\u{2040}').contains(&c)
 }
 
 ///
@@ -508,7 +508,7 @@ mod tests {
     #[test]
     fn test_end_of_line_handling() {
         let input = "one\u{0D}two\u{0D}\u{0A}\u{0A}three\u{0A}\u{0D}\u{85}four\u{85}five\u{2028}";
-        let output = normalize_end_of_lines(&input.to_string());
+        let output = normalize_end_of_lines(input);
         assert_eq!(
             output,
             "one\u{0A}two\u{0A}\u{0A}three\u{0A}\u{0A}four\u{0A}five\u{0A}".to_string()

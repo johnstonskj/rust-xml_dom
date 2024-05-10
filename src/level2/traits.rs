@@ -162,7 +162,7 @@ pub trait CharacterData: Node {
         ) {
             (None, _) => None,
             (v @ Some(_), false) => v,
-            (Some(value), true) => Some(text::escape(&value)),
+            (Some(value), true) => Some(text::escape(value)),
         }
     }
     ///

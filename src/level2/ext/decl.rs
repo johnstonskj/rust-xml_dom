@@ -57,13 +57,13 @@ pub struct XmlDecl {
 pub(crate) const ENCODING_SEP_CHAR: char = '-';
 
 fn is_encoding_start_char(c: char) -> bool {
-    (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
+    c.is_ascii_uppercase() || c.is_ascii_lowercase()
 }
 
 fn is_encoding_rest_char(c: char) -> bool {
-    (c >= 'A' && c <= 'Z')
-        || (c >= 'a' && c <= 'z')
-        || (c >= '0' && c <= '9')
+    c.is_ascii_uppercase()
+        || c.is_ascii_lowercase()
+        || c.is_ascii_digit()
         || c == '.'
         || c == '_'
 }

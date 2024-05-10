@@ -89,10 +89,7 @@ impl<T> WeakRefCell<T> {
     }
 
     pub fn upgrade(self) -> Option<RcRefCell<T>> {
-        match self.inner.upgrade() {
-            None => None,
-            Some(inner) => Some(RcRefCell { inner }),
-        }
+        self.inner.upgrade().map(|inner| RcRefCell { inner })
     }
 }
 

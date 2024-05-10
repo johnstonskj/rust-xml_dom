@@ -481,13 +481,13 @@ fn test_parent(document: RefNode, parent_type: NodeType, allowed: &Vec<NodeType>
                 "{:?}.append_child({:?}) -> {}?",
                 parent_type,
                 child_type,
-                allowed.contains(&child_type)
+                allowed.contains(child_type)
             ),
         );
         let child_node = make_node(document.clone(), child_type.clone(), "child");
         assert_eq!(
             parent_node.append_child(child_node).is_ok(),
-            allowed.contains(&child_type)
+            allowed.contains(child_type)
         );
     }
 }
