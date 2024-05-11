@@ -988,7 +988,7 @@ impl Node for RefNode {
             if is_document(self) {
                 mut_child.i_owner_document = Some(self.clone().downgrade());
             } else {
-                mut_child.i_owner_document = ref_self.i_owner_document.clone();
+                mut_child.i_owner_document.clone_from(&ref_self.i_owner_document);
             }
         }
 
