@@ -988,7 +988,9 @@ impl Node for RefNode {
             if is_document(self) {
                 mut_child.i_owner_document = Some(self.clone().downgrade());
             } else {
-                mut_child.i_owner_document.clone_from(&ref_self.i_owner_document);
+                mut_child
+                    .i_owner_document
+                    .clone_from(&ref_self.i_owner_document);
             }
         }
 
@@ -1266,55 +1268,54 @@ fn is_child_allowed(parent: &RefNode, child: &RefNode) -> bool {
     let self_node_type = { &parent.borrow().i_node_type };
     let child_node_type = { &child.borrow().i_node_type };
     match self_node_type {
-        NodeType::Element => match child_node_type {
+        NodeType::Element => matches!(
+            child_node_type,
             NodeType::Element
-            | NodeType::Text
-            | NodeType::Comment
-            | NodeType::ProcessingInstruction
-            | NodeType::CData
-            | NodeType::EntityReference => true,
-            _ => false,
-        },
-        NodeType::Attribute => match child_node_type {
-            NodeType::Text | NodeType::EntityReference => true,
-            _ => false,
-        },
+                | NodeType::Text
+                | NodeType::Comment
+                | NodeType::ProcessingInstruction
+                | NodeType::CData
+                | NodeType::EntityReference
+        ),
+        NodeType::Attribute => {
+            matches!(child_node_type, NodeType::Text | NodeType::EntityReference)
+        }
         NodeType::Text => false,
         NodeType::CData => false,
-        NodeType::EntityReference => match child_node_type {
+        NodeType::EntityReference => matches!(
+            child_node_type,
             NodeType::Element
-            | NodeType::Text
-            | NodeType::Comment
-            | NodeType::ProcessingInstruction
-            | NodeType::CData
-            | NodeType::EntityReference => true,
-            _ => false,
-        },
-        NodeType::Entity => match child_node_type {
+                | NodeType::Text
+                | NodeType::Comment
+                | NodeType::ProcessingInstruction
+                | NodeType::CData
+                | NodeType::EntityReference
+        ),
+        NodeType::Entity => matches!(
+            child_node_type,
             NodeType::Element
-            | NodeType::Text
-            | NodeType::Comment
-            | NodeType::ProcessingInstruction
-            | NodeType::CData
-            | NodeType::EntityReference => true,
-            _ => false,
-        },
+                | NodeType::Text
+                | NodeType::Comment
+                | NodeType::ProcessingInstruction
+                | NodeType::CData
+                | NodeType::EntityReference
+        ),
         NodeType::ProcessingInstruction => false,
         NodeType::Comment => false,
-        NodeType::Document => match child_node_type {
-            NodeType::Element | NodeType::Comment | NodeType::ProcessingInstruction => true,
-            _ => false,
-        },
+        NodeType::Document => matches!(
+            child_node_type,
+            NodeType::Element | NodeType::Comment | NodeType::ProcessingInstruction
+        ),
         NodeType::DocumentType => false,
-        NodeType::DocumentFragment => match child_node_type {
+        NodeType::DocumentFragment => matches!(
+            child_node_type,
             NodeType::Element
-            | NodeType::Text
-            | NodeType::Comment
-            | NodeType::ProcessingInstruction
-            | NodeType::CData
-            | NodeType::EntityReference => true,
-            _ => false,
-        },
+                | NodeType::Text
+                | NodeType::Comment
+                | NodeType::ProcessingInstruction
+                | NodeType::CData
+                | NodeType::EntityReference
+        ),
         NodeType::Notation => false,
     }
 }
