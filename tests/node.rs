@@ -536,7 +536,11 @@ fn make_sibling_document() -> RefNode {
 }
 
 fn compare_node_names(nodes: impl AsRef<[RefNode]>, expected_names: &[&str]) {
-    let names: Vec<String> = nodes.as_ref().iter().map(|n| n.node_name().to_string()).collect();
+    let names: Vec<String> = nodes
+        .as_ref()
+        .iter()
+        .map(|n| n.node_name().to_string())
+        .collect();
     let expected_names: Vec<String> = expected_names.iter().map(|s| String::from(*s)).collect();
     assert_eq!(names, expected_names);
 }
