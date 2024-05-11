@@ -54,30 +54,21 @@ impl NamespacePrefix {
     /// Returns `true` of this is a `NamespacePrefix::None` value, otherwise `false`.
     ///
     pub fn is_none(&self) -> bool {
-        match *self {
-            NamespacePrefix::None => true,
-            _ => false,
-        }
+        matches!(*self, NamespacePrefix::None)
     }
 
     ///
     /// Returns `true` of this is a `NamespacePrefix::Default` value, otherwise `false`.
     ///
     pub fn is_default(&self) -> bool {
-        match *self {
-            NamespacePrefix::Default => true,
-            _ => false,
-        }
+        matches!(*self, NamespacePrefix::Default)
     }
 
     ///
     /// Returns `true` of this is a `NamespacePrefix::Some` value, otherwise `false`.
     ///
     pub fn is_some(&self) -> bool {
-        match *self {
-            NamespacePrefix::Some(_) => true,
-            _ => false,
-        }
+        matches!(*self, NamespacePrefix::Some(_))
     }
 
     ///
