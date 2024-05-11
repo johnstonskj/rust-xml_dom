@@ -155,7 +155,7 @@ fn document<T: BufRead>(reader: &mut Reader<T>, event_buffer: &mut Vec<u8>) -> R
                 let _safe_to_ignore = handle_end(reader, &mut document, None, ev)?;
             }
             Ok(Event::Comment(ev)) => {
-                let _safe_to_ignore = handle_comment(reader, &mut document, None, ev)?;
+                let _safe_to_ignore = handle_comment(&mut document, None, ev)?;
             }
             Ok(Event::PI(ev)) => {
                 let _safe_to_ignore = handle_pi(reader, &mut document, None, ev)?;
@@ -215,13 +215,13 @@ fn element<T: BufRead>(
                 return Ok(parent_element.clone());
             }
             Ok(Event::Comment(ev)) => {
-                let _safe_to_ignore = handle_comment(reader, document, Some(parent_element), ev)?;
+                let _safe_to_ignore = handle_comment(document, Some(parent_element), ev)?;
             }
             Ok(Event::PI(ev)) => {
                 let _safe_to_ignore = handle_pi(reader, document, Some(parent_element), ev)?;
             }
             Ok(Event::Text(ev)) => {
-                let _safe_to_ignore = handle_text(reader, document, Some(parent_element), ev)?;
+                let _safe_to_ignore = handle_text(document, Some(parent_element), ev)?;
             }
             Ok(Event::CData(ev)) => {
                 let _safe_to_ignore = handle_cdata(reader, document, Some(parent_element), ev)?;
@@ -283,14 +283,13 @@ fn handle_end<T: BufRead>(
     .clone())
 }
 
-fn handle_comment<T: BufRead>(
-    reader: &mut Reader<T>,
+fn handle_comment(
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     ev: BytesText<'_>,
 ) -> Result<RefNode> {
     let mut_document = as_document_mut(document).unwrap();
-    let text = make_text(reader, ev)?;
+    let text = make_text(ev)?;
     let new_node = mut_document.create_comment(&text);
     let actual_parent = match parent_node {
         None => document,
@@ -299,14 +298,13 @@ fn handle_comment<T: BufRead>(
     actual_parent.append_child(new_node).map_err(|e| e.into())
 }
 
-fn handle_text<T: BufRead>(
-    reader: &mut Reader<T>,
+fn handle_text(
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     ev: BytesText<'_>,
 ) -> Result<RefNode> {
     let mut_document = as_document_mut(document).unwrap();
-    let text = make_text(reader, ev)?;
+    let text = make_text(ev)?;
     let new_node = mut_document.create_text_node(&text);
     let actual_parent = match parent_node {
         None => document,
@@ -369,7 +367,7 @@ fn handle_pi<T: BufRead>(
 
 // ------------------------------------------------------------------------------------------------
 
-fn make_text<T: BufRead>(reader: &mut Reader<T>, ev: BytesText<'_>) -> Result<String> {
+fn make_text(ev: BytesText<'_>) -> Result<String> {
     Ok(ev.unescape()?.to_string())
 }
 
