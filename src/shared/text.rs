@@ -221,7 +221,7 @@ fn char_from_entity(entity: impl AsRef<str>) -> String {
         u32::from_str_radix(code_point, 16).unwrap()
     } else {
         let code_point = &entity[2..entity.len() - 1];
-        u32::from_str_radix(code_point, 10).unwrap()
+        code_point.parse::<u32>().unwrap()
     };
     let character = char::try_from(code_point).unwrap();
     character.to_string()
