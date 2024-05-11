@@ -79,10 +79,10 @@ make_is_as_functions!(
 ///
 #[inline]
 pub fn is_character_data(ref_node: &RefNode) -> bool {
-    match ref_node.borrow().i_node_type {
-        NodeType::CData | NodeType::Comment | NodeType::Text => true,
-        _ => false,
-    }
+    matches!(
+        ref_node.borrow().i_node_type,
+        NodeType::CData | NodeType::Comment | NodeType::Text
+    )
 }
 
 ///
