@@ -197,7 +197,7 @@ fn test_display_document_type() {
 #[test]
 fn test_display_document_fragment() {
     let implementation = get_implementation();
-    let mut document_node = implementation
+    let document_node = implementation
         .create_document(Some(common::RDF_NS), Some("rdf:RDF"), None)
         .unwrap();
     let document = as_document(&document_node).unwrap();
