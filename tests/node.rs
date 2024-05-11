@@ -472,8 +472,9 @@ const ALL_CHILDREN: [NodeType; 12] = [
     NodeType::Notation,
 ];
 
-fn test_parent(document: RefNode, parent_type: NodeType, allowed: &Vec<NodeType>) {
+fn test_parent(document: RefNode, parent_type: NodeType, allowed: impl AsRef<[NodeType]>) {
     let mut parent_node = make_node(document.clone(), parent_type.clone(), "parent");
+    let allowed = allowed.as_ref();
     for child_type in ALL_CHILDREN.iter() {
         common::sub_test(
             "test_is_child_allowed",
