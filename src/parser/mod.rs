@@ -248,8 +248,7 @@ fn handle_start<T: BufRead>(
 ) -> Result<RefNode> {
     let mut element = {
         let mut_document = as_document_mut(document).unwrap();
-        let name = ev.name().into_inner();
-        let name = reader.decoder().decode(name)?;
+        let name = reader.decoder().decode(ev.name().into_inner())?;
         let new_node = mut_document.create_element(&name).unwrap();
         let mut actual_parent = match parent_node {
             None => document.clone(),
@@ -262,8 +261,7 @@ fn handle_start<T: BufRead>(
         let attribute = attribute.unwrap();
         let value = attribute.decode_and_unescape_value(reader)?;
         let name = reader.decoder().decode(attribute.key.into_inner())?;
-        let attribute_node = document.create_attribute_with(name.as_ref(), &value)?;
-
+        let attribute_node = document.create_attribute_with(&name, &value)?;
         let _safe_to_ignore = element.set_attribute_node(attribute_node)?;
     }
 

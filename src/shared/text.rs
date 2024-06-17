@@ -1,6 +1,7 @@
 use crate::shared::syntax::*;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::str::FromStr;
+use std::sync::OnceLock;
 
 // ------------------------------------------------------------------------------------------------
 //  Public Types
@@ -70,10 +71,11 @@ pub(crate) fn normalize_attribute_value(
     let step_3 = if step_1.is_empty() {
         step_1
     } else {
-        let find = regex::Regex::new(
+        static FIND: OnceLock<regex::Regex> = OnceLock::new();
+        let find = FIND.get_or_init(|| {regex::Regex::new(
             r"(?P<entity_ref>[&%][\pL_][\pL\.\d_\-]*;)|(?P<char>&#\d+;)|(?P<char_hex>&#x[0-9a-fA-F]+;)|(?P<ws>[\u{09}\u{0A}\u{0D}])",
         )
-        .unwrap();
+        .unwrap()});
         let mut step_2 = String::new();
         let mut last_end = 0;
         for capture in find.captures_iter(&step_1) {
@@ -143,7 +145,9 @@ pub(crate) fn normalize_end_of_lines(value: impl AsRef<str>) -> String {
     if value.is_empty() {
         value.to_string()
     } else {
-        let line_ends = regex::Regex::new(r"\u{0D}[\u{0A}\u{85}]?|\u{85}|\u{2028}").unwrap();
+        static LINE_ENDS: OnceLock<regex::Regex> = OnceLock::new();
+        let line_ends = LINE_ENDS
+            .get_or_init(|| regex::Regex::new(r"\u{0D}[\u{0A}\u{85}]?|\u{85}|\u{2028}").unwrap());
         line_ends.replace_all(value, "\u{0A}").to_string()
     }
 }
