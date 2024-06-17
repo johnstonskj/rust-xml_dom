@@ -91,12 +91,12 @@ impl Attribute for RefNode {
                     //
                     let ref_node = child_node.borrow();
                     if let Some(data) = &ref_node.i_value {
-                        result.push_str(&data);
+                        result.push_str(data);
                     }
                 }
             }
             let normalized = text::normalize_attribute_value(&result, self, false);
-            Some(text::escape(&normalized))
+            Some(text::escape(normalized))
         } else {
             None
         }
@@ -234,7 +234,7 @@ impl Document for RefNode {
     }
 
     fn document_element(&self) -> Option<RefNode> {
-        self.child_nodes().first().map(Clone::clone)
+        self.child_nodes().first().cloned()
     }
 
     fn implementation(&self) -> &dyn DOMImplementation<NodeRef = RefNode> {
@@ -686,7 +686,7 @@ impl Element for RefNode {
                     None => None,
                     Some(s) => Some(s.as_str()),
                 },
-                &ref_self.i_name.local_name(),
+                ref_self.i_name.local_name(),
                 &namespace_uri,
                 &local_name,
             ) {
@@ -988,7 +988,9 @@ impl Node for RefNode {
             if is_document(self) {
                 mut_child.i_owner_document = Some(self.clone().downgrade());
             } else {
-                mut_child.i_owner_document = ref_self.i_owner_document.clone();
+                mut_child
+                    .i_owner_document
+                    .clone_from(&ref_self.i_owner_document);
             }
         }
 
@@ -1076,7 +1078,7 @@ impl Node for RefNode {
                     }
                 } else if let Some(last_child_node) = child_node.previous_sibling() {
                     let last_child_node = &mut last_child_node.clone();
-                    if is_text(&last_child_node) {
+                    if is_text(last_child_node) {
                         if last_child_node
                             .append_data(&child_node.node_value().unwrap())
                             .is_err()
@@ -1266,55 +1268,54 @@ fn is_child_allowed(parent: &RefNode, child: &RefNode) -> bool {
     let self_node_type = { &parent.borrow().i_node_type };
     let child_node_type = { &child.borrow().i_node_type };
     match self_node_type {
-        NodeType::Element => match child_node_type {
+        NodeType::Element => matches!(
+            child_node_type,
             NodeType::Element
-            | NodeType::Text
-            | NodeType::Comment
-            | NodeType::ProcessingInstruction
-            | NodeType::CData
-            | NodeType::EntityReference => true,
-            _ => false,
-        },
-        NodeType::Attribute => match child_node_type {
-            NodeType::Text | NodeType::EntityReference => true,
-            _ => false,
-        },
+                | NodeType::Text
+                | NodeType::Comment
+                | NodeType::ProcessingInstruction
+                | NodeType::CData
+                | NodeType::EntityReference
+        ),
+        NodeType::Attribute => {
+            matches!(child_node_type, NodeType::Text | NodeType::EntityReference)
+        }
         NodeType::Text => false,
         NodeType::CData => false,
-        NodeType::EntityReference => match child_node_type {
+        NodeType::EntityReference => matches!(
+            child_node_type,
             NodeType::Element
-            | NodeType::Text
-            | NodeType::Comment
-            | NodeType::ProcessingInstruction
-            | NodeType::CData
-            | NodeType::EntityReference => true,
-            _ => false,
-        },
-        NodeType::Entity => match child_node_type {
+                | NodeType::Text
+                | NodeType::Comment
+                | NodeType::ProcessingInstruction
+                | NodeType::CData
+                | NodeType::EntityReference
+        ),
+        NodeType::Entity => matches!(
+            child_node_type,
             NodeType::Element
-            | NodeType::Text
-            | NodeType::Comment
-            | NodeType::ProcessingInstruction
-            | NodeType::CData
-            | NodeType::EntityReference => true,
-            _ => false,
-        },
+                | NodeType::Text
+                | NodeType::Comment
+                | NodeType::ProcessingInstruction
+                | NodeType::CData
+                | NodeType::EntityReference
+        ),
         NodeType::ProcessingInstruction => false,
         NodeType::Comment => false,
-        NodeType::Document => match child_node_type {
-            NodeType::Element | NodeType::Comment | NodeType::ProcessingInstruction => true,
-            _ => false,
-        },
+        NodeType::Document => matches!(
+            child_node_type,
+            NodeType::Element | NodeType::Comment | NodeType::ProcessingInstruction
+        ),
         NodeType::DocumentType => false,
-        NodeType::DocumentFragment => match child_node_type {
+        NodeType::DocumentFragment => matches!(
+            child_node_type,
             NodeType::Element
-            | NodeType::Text
-            | NodeType::Comment
-            | NodeType::ProcessingInstruction
-            | NodeType::CData
-            | NodeType::EntityReference => true,
-            _ => false,
-        },
+                | NodeType::Text
+                | NodeType::Comment
+                | NodeType::ProcessingInstruction
+                | NodeType::CData
+                | NodeType::EntityReference
+        ),
         NodeType::Notation => false,
     }
 }

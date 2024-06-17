@@ -472,8 +472,9 @@ const ALL_CHILDREN: [NodeType; 12] = [
     NodeType::Notation,
 ];
 
-fn test_parent(document: RefNode, parent_type: NodeType, allowed: &Vec<NodeType>) {
+fn test_parent(document: RefNode, parent_type: NodeType, allowed: impl AsRef<[NodeType]>) {
     let mut parent_node = make_node(document.clone(), parent_type.clone(), "parent");
+    let allowed = allowed.as_ref();
     for child_type in ALL_CHILDREN.iter() {
         common::sub_test(
             "test_is_child_allowed",
@@ -481,13 +482,13 @@ fn test_parent(document: RefNode, parent_type: NodeType, allowed: &Vec<NodeType>
                 "{:?}.append_child({:?}) -> {}?",
                 parent_type,
                 child_type,
-                allowed.contains(&child_type)
+                allowed.contains(child_type)
             ),
         );
         let child_node = make_node(document.clone(), child_type.clone(), "child");
         assert_eq!(
             parent_node.append_child(child_node).is_ok(),
-            allowed.contains(&child_type)
+            allowed.contains(child_type)
         );
     }
 }
@@ -534,8 +535,12 @@ fn make_sibling_document() -> RefNode {
     document_node
 }
 
-fn compare_node_names(nodes: &Vec<RefNode>, expected_names: &[&str]) {
-    let names: Vec<String> = nodes.iter().map(|n| n.node_name().to_string()).collect();
+fn compare_node_names(nodes: impl AsRef<[RefNode]>, expected_names: &[&str]) {
+    let names: Vec<String> = nodes
+        .as_ref()
+        .iter()
+        .map(|n| n.node_name().to_string())
+        .collect();
     let expected_names: Vec<String> = expected_names.iter().map(|s| String::from(*s)).collect();
     assert_eq!(names, expected_names);
 }

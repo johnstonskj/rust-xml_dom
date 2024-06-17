@@ -19,9 +19,9 @@ use std::str::FromStr;
 ///
 #[derive(Clone, Debug, PartialEq)]
 pub enum XmlVersion {
-    /// Version 1.0 [https://www.w3.org/TR/xml]
+    /// Version 1.0 [`<https://www.w3.org/TR/xml>`]
     V10,
-    /// Version 1.1 [https://www.w3.org/TR/xml11]
+    /// Version 1.1 [`<https://www.w3.org/TR/xml11>`]
     V11,
 }
 
@@ -57,15 +57,11 @@ pub struct XmlDecl {
 pub(crate) const ENCODING_SEP_CHAR: char = '-';
 
 fn is_encoding_start_char(c: char) -> bool {
-    (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
+    c.is_ascii_uppercase() || c.is_ascii_lowercase()
 }
 
 fn is_encoding_rest_char(c: char) -> bool {
-    (c >= 'A' && c <= 'Z')
-        || (c >= 'a' && c <= 'z')
-        || (c >= '0' && c <= '9')
-        || c == '.'
-        || c == '_'
+    c.is_ascii_uppercase() || c.is_ascii_lowercase() || c.is_ascii_digit() || c == '.' || c == '_'
 }
 
 fn is_encoding_sub_string(s: &str) -> bool {

@@ -11,11 +11,11 @@ use std::fmt::{Formatter, Result as FmtResult};
 pub(crate) fn fmt_element(element: RefElement<'_>, f: &mut Formatter<'_>) -> FmtResult {
     write!(f, "{}{}", XML_ELEMENT_START_START, element.node_name())?;
     for attr in element.attributes().values() {
-        write!(f, " {}", attr.to_string())?;
+        write!(f, " {}", attr)?;
     }
     write!(f, "{}", XML_ELEMENT_START_END)?;
     for child in element.child_nodes() {
-        write!(f, "{}", child.to_string())?;
+        write!(f, "{}", child)?;
     }
     write!(
         f,
@@ -77,7 +77,7 @@ pub(crate) fn fmt_document(document: RefDocumentDecl<'_>, f: &mut Formatter<'_>)
         write!(f, "{}", doc_type)?;
     }
     for child in document.child_nodes() {
-        write!(f, "{}", child.to_string())?;
+        write!(f, "{}", child)?;
     }
     Ok(())
 }
@@ -114,7 +114,7 @@ pub(crate) fn fmt_document_fragment(
 ) -> FmtResult {
     write!(f, "{}{} ", XML_CDATA_START, fragment.node_name())?;
     for child in fragment.child_nodes() {
-        write!(f, "{}", child.to_string())?;
+        write!(f, "{}", child)?;
     }
     write!(f, "{}", XML_CDATA_END)
 }

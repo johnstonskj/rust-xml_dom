@@ -46,38 +46,29 @@ impl NamespacePrefix {
     ///
     /// Construct a new `NamespacePrefix::Some` value with the provided prefix.
     ///
-    pub fn new_some(prefix: &str) -> Self {
-        Self::Some(prefix.to_string())
+    pub fn new_some(prefix: impl Into<String>) -> Self {
+        Self::Some(prefix.into())
     }
 
     ///
     /// Returns `true` of this is a `NamespacePrefix::None` value, otherwise `false`.
     ///
     pub fn is_none(&self) -> bool {
-        match *self {
-            NamespacePrefix::None => true,
-            _ => false,
-        }
+        matches!(*self, NamespacePrefix::None)
     }
 
     ///
     /// Returns `true` of this is a `NamespacePrefix::Default` value, otherwise `false`.
     ///
     pub fn is_default(&self) -> bool {
-        match *self {
-            NamespacePrefix::Default => true,
-            _ => false,
-        }
+        matches!(*self, NamespacePrefix::Default)
     }
 
     ///
     /// Returns `true` of this is a `NamespacePrefix::Some` value, otherwise `false`.
     ///
     pub fn is_some(&self) -> bool {
-        match *self {
-            NamespacePrefix::Some(_) => true,
-            _ => false,
-        }
+        matches!(*self, NamespacePrefix::Some(_))
     }
 
     ///
@@ -334,8 +325,8 @@ mod tests {
         // prefix
         let ns_result = Some(XSD.to_string());
 
-        assert_eq!(namespaced.contains_mapping(None), false);
-        assert_eq!(namespaced.contains_mapping(Some("xsd")), true);
+        assert!(!namespaced.contains_mapping(None));
+        assert!(namespaced.contains_mapping(Some("xsd")));
         assert_eq!(namespaced.get_namespace(None), None);
         assert_eq!(namespaced.get_namespace(Some("xsd")), ns_result);
         assert_eq!(namespaced.resolve_namespace(None), None);
@@ -344,8 +335,8 @@ mod tests {
         // namespace
         let prefix_result = NamespacePrefix::new_some("xsd");
 
-        assert_eq!(namespaced.contains_mapped_namespace(HTML), false);
-        assert_eq!(namespaced.contains_mapped_namespace(XSD), true);
+        assert!(!namespaced.contains_mapped_namespace(HTML));
+        assert!(namespaced.contains_mapped_namespace(XSD));
         assert_eq!(namespaced.get_prefix(XSD), prefix_result);
         assert_eq!(namespaced.resolve_prefix(XSD), prefix_result);
     }
@@ -362,8 +353,8 @@ mod tests {
         // prefix
         let ns_result = Some(XSD.to_string());
 
-        assert_eq!(namespaced.contains_mapping(None), true);
-        assert_eq!(namespaced.contains_mapping(Some("xsd")), false);
+        assert!(namespaced.contains_mapping(None));
+        assert!(!namespaced.contains_mapping(Some("xsd")));
         assert_eq!(namespaced.get_namespace(None), ns_result);
         assert_eq!(namespaced.get_namespace(Some("xsd")), None);
         assert_eq!(namespaced.resolve_namespace(None), ns_result);
@@ -372,8 +363,8 @@ mod tests {
         // namespace
         let prefix_result = NamespacePrefix::Default;
 
-        assert_eq!(namespaced.contains_mapped_namespace(HTML), false);
-        assert_eq!(namespaced.contains_mapped_namespace(XSD), true);
+        assert!(!namespaced.contains_mapped_namespace(HTML));
+        assert!(namespaced.contains_mapped_namespace(XSD));
         assert_eq!(namespaced.get_prefix(XSD), prefix_result);
         assert_eq!(namespaced.resolve_prefix(XSD), prefix_result);
     }

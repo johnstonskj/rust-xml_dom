@@ -1,5 +1,4 @@
 use crate::shared::syntax::*;
-use std::convert::TryFrom;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::str::FromStr;
 use std::sync::OnceLock;
@@ -8,8 +7,9 @@ use std::sync::OnceLock;
 //  Public Types
 // ------------------------------------------------------------------------------------------------
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub(crate) enum SpaceHandling {
+    #[default]
     Default,
     Preserve,
 }
@@ -62,10 +62,11 @@ pub(crate) trait EntityResolver {
 /// has been read.
 ///
 pub(crate) fn normalize_attribute_value(
-    value: &str,
+    value: impl AsRef<str>,
     resolver: &dyn EntityResolver,
     is_cdata: bool,
 ) -> String {
+    let value = value.as_ref();
     let step_1 = normalize_end_of_lines(value);
     let step_3 = if step_1.is_empty() {
         step_1
@@ -139,7 +140,8 @@ pub(crate) fn normalize_attribute_value(
 /// encoding declaration (if present) has been read. Therefore, it is a fatal error to use them
 /// within the XML declaration or text declaration.
 ///
-pub(crate) fn normalize_end_of_lines(value: &str) -> String {
+pub(crate) fn normalize_end_of_lines(value: impl AsRef<str>) -> String {
+    let value = value.as_ref();
     if value.is_empty() {
         value.to_string()
     } else {
@@ -182,7 +184,8 @@ pub(crate) fn normalize_end_of_lines(value: &str) -> String {
 /// single-quote character (') may be represented as "&apos;", and the double-quote character (")
 /// as "&quot;".
 ///
-pub(crate) fn escape(input: &str) -> String {
+pub(crate) fn escape(input: impl AsRef<str>) -> String {
+    let input = input.as_ref();
     let mut result = String::with_capacity(input.len());
 
     for c in input.chars() {
@@ -213,7 +216,8 @@ pub(crate) fn to_entity_hex(c: char) -> String {
     )
 }
 
-fn char_from_entity(entity: &str) -> String {
+fn char_from_entity(entity: impl AsRef<str>) -> String {
+    let entity = entity.as_ref();
     assert!(entity.starts_with("&#"));
     assert!(entity.ends_with(';'));
     let code_point = if &entity[2..3] == "x" {
@@ -221,7 +225,7 @@ fn char_from_entity(entity: &str) -> String {
         u32::from_str_radix(code_point, 16).unwrap()
     } else {
         let code_point = &entity[2..entity.len() - 1];
-        u32::from_str_radix(code_point, 10).unwrap()
+        code_point.parse::<u32>().unwrap()
     };
     let character = char::try_from(code_point).unwrap();
     character.to_string()
@@ -262,9 +266,9 @@ pub(crate) fn is_xml_10_char(c: char) -> bool {
     c == '\u{0009}'
         || c == '\u{000A}'
         || c == '\u{000D}'
-        || (c >= '\u{0020}' && c <= '\u{D7FF}')
-        || (c >= '\u{E000}' && c <= '\u{FFFD}')
-        || (c >= '\u{10000}' && c <= '\u{10FFF}')
+        || ('\u{0020}'..='\u{D7FF}').contains(&c)
+        || ('\u{E000}'..='\u{FFFD}').contains(&c)
+        || ('\u{10000}'..='\u{10FFF}').contains(&c)
 }
 
 #[allow(dead_code)]
@@ -290,9 +294,9 @@ pub(crate) fn is_xml_11_char(c: char) -> bool {
     // below ranges are always valid for XML 1.1 documents
     // from https://en.wikipedia.org/wiki/XML#Valid_characters
     //
-    (c >= '\u{0001}' && c <= '\u{D7FF}')
-        || (c >= '\u{E000}' && c <= '\u{FFFD}')
-        || (c >= '\u{10000}' && c <= '\u{10FFF}')
+    ('\u{0001}'..='\u{D7FF}').contains(&c)
+        || ('\u{E000}'..='\u{FFFD}').contains(&c)
+        || ('\u{10000}'..='\u{10FFF}').contains(&c)
 }
 
 ///
@@ -308,11 +312,11 @@ pub(crate) fn is_xml_11_restricted_char(c: char) -> bool {
     // below ranges are always valid for XML 1.1 documents
     // from https://en.wikipedia.org/wiki/XML#Valid_characters
     //
-    (c >= '\u{01}' && c <= '\u{08}')
-        || (c >= '\u{0B}' && c <= '\u{0C}')
-        || (c >= '\u{0E}' && c <= '\u{1F}')
-        || (c >= '\u{7F}' && c <= '\u{84}')
-        || (c >= '\u{86}' && c <= '\u{9F}')
+    ('\u{01}'..='\u{08}').contains(&c)
+        || ('\u{0B}'..='\u{0C}').contains(&c)
+        || ('\u{0E}'..='\u{1F}').contains(&c)
+        || ('\u{7F}'..='\u{84}').contains(&c)
+        || ('\u{86}'..='\u{9F}').contains(&c)
 }
 
 ///
@@ -345,21 +349,21 @@ pub(crate) fn is_xml_space(c: char) -> bool {
 #[allow(dead_code)]
 pub(crate) fn is_xml_name_start_char(c: char) -> bool {
     c == ':'
-        || (c >= 'A' && c <= 'Z')
+        || c.is_ascii_uppercase()
         || c == '_'
-        || (c >= 'a' && c <= 'z')
-        || (c >= '\u{C0}' && c <= '\u{D6}')
-        || (c >= '\u{D8}' && c <= '\u{F6}')
-        || (c >= '\u{0F8}' && c <= '\u{2FF}')
-        || (c >= '\u{370}' && c <= '\u{37D}')
-        || (c >= '\u{037F}' && c <= '\u{1FFF}')
-        || (c >= '\u{200C}' && c <= '\u{200D}')
-        || (c >= '\u{2070}' && c <= '\u{218F}')
-        || (c >= '\u{2C00}' && c <= '\u{2FEF}')
-        || (c >= '\u{3001}' && c <= '\u{D7FF}')
-        || (c >= '\u{F900}' && c <= '\u{FDCF}')
-        || (c >= '\u{FDF0}' && c <= '\u{FFFD}')
-        || (c >= '\u{10000}' && c <= '\u{EFFFF}')
+        || c.is_ascii_lowercase()
+        || ('\u{C0}'..='\u{D6}').contains(&c)
+        || ('\u{D8}'..='\u{F6}').contains(&c)
+        || ('\u{0F8}'..='\u{2FF}').contains(&c)
+        || ('\u{370}'..='\u{37D}').contains(&c)
+        || ('\u{037F}'..='\u{1FFF}').contains(&c)
+        || ('\u{200C}'..='\u{200D}').contains(&c)
+        || ('\u{2070}'..='\u{218F}').contains(&c)
+        || ('\u{2C00}'..='\u{2FEF}').contains(&c)
+        || ('\u{3001}'..='\u{D7FF}').contains(&c)
+        || ('\u{F900}'..='\u{FDCF}').contains(&c)
+        || ('\u{FDF0}'..='\u{FFFD}').contains(&c)
+        || ('\u{10000}'..='\u{EFFFF}').contains(&c)
 }
 
 ///
@@ -372,10 +376,10 @@ pub(crate) fn is_xml_name_char(c: char) -> bool {
     is_xml_name_start_char(c)
         || c == '-'
         || c == '.'
-        || (c >= '0' && c <= '9')
+        || c.is_ascii_digit()
         || c == '\u{B7}'
-        || (c >= '\u{0300}' && c <= '\u{036F}')
-        || (c >= '\u{203F}' && c <= '\u{2040}')
+        || ('\u{0300}'..='\u{036F}').contains(&c)
+        || ('\u{203F}'..='\u{2040}').contains(&c)
 }
 
 ///
@@ -383,7 +387,8 @@ pub(crate) fn is_xml_name_char(c: char) -> bool {
 /// Name   ::=  NameStartChar (NameChar)*
 /// ```
 ///
-pub(crate) fn is_xml_name(s: &str) -> bool {
+pub(crate) fn is_xml_name(s: impl AsRef<str>) -> bool {
+    let s = s.as_ref();
     !s.is_empty() && s.starts_with(is_xml_name_start_char) && s[1..].chars().all(is_xml_name_char)
 }
 
@@ -393,7 +398,8 @@ pub(crate) fn is_xml_name(s: &str) -> bool {
 /// ```
 ///
 #[allow(dead_code)]
-pub(crate) fn is_xml_names(s: &str) -> bool {
+pub(crate) fn is_xml_names(s: impl AsRef<str>) -> bool {
+    let s = s.as_ref();
     !s.is_empty() && s.split(' ').all(is_xml_name)
 }
 
@@ -403,7 +409,8 @@ pub(crate) fn is_xml_names(s: &str) -> bool {
 /// ```
 ///
 #[allow(dead_code)]
-pub(crate) fn is_xml_nmtoken(s: &str) -> bool {
+pub(crate) fn is_xml_nmtoken(s: impl AsRef<str>) -> bool {
+    let s = s.as_ref();
     !s.is_empty() && s.chars().all(is_xml_name_char)
 }
 
@@ -413,20 +420,13 @@ pub(crate) fn is_xml_nmtoken(s: &str) -> bool {
 /// ```
 ///
 #[allow(dead_code)]
-pub(crate) fn is_xml_nmtokens(s: &str) -> bool {
+pub(crate) fn is_xml_nmtokens(s: impl AsRef<str>) -> bool {
+    let s = s.as_ref();
     !s.is_empty() && s.split(' ').all(is_xml_nmtoken)
 }
 
 // ------------------------------------------------------------------------------------------------
 // Implementations
-// ------------------------------------------------------------------------------------------------
-
-impl Default for SpaceHandling {
-    fn default() -> Self {
-        SpaceHandling::Default
-    }
-}
-
 // ------------------------------------------------------------------------------------------------
 
 impl Display for SpaceHandling {
@@ -512,7 +512,7 @@ mod tests {
     #[test]
     fn test_end_of_line_handling() {
         let input = "one\u{0D}two\u{0D}\u{0A}\u{0A}three\u{0A}\u{0D}\u{85}four\u{85}five\u{2028}";
-        let output = normalize_end_of_lines(&input.to_string());
+        let output = normalize_end_of_lines(input);
         assert_eq!(
             output,
             "one\u{0A}two\u{0A}\u{0A}three\u{0A}\u{0A}four\u{0A}five\u{0A}".to_string()

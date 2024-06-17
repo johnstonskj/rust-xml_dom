@@ -24,11 +24,12 @@ use crate::level2::node_impl::Extension;
 use crate::level2::*;
 use crate::shared::error::Error as DOMError;
 use quick_xml::events::{BytesCData, BytesDecl, BytesEnd, BytesStart, BytesText, Event};
-use quick_xml::Reader;
+use quick_xml::reader::Reader;
 use std::borrow::Borrow;
-use std::fmt::{Display, Formatter};
 use std::io::BufRead;
 use std::str::FromStr;
+
+use thiserror::Error as E;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -37,20 +38,20 @@ use std::str::FromStr;
 ///
 /// Errors constructing a DOM from text.
 ///
-#[derive(Clone, Debug)]
+#[derive(Debug, E)]
 pub enum Error {
-    /// From the DOM Error.
-    HierarchyRequest,
-    /// From the DOM Error.
+    /// Usually a missing quote.
+    #[error("invalid character")]
     InvalidCharacter,
-    /// From the DOM Error.
-    NotSupported,
-    /// From quick_xml Error.
-    IO,
-    /// From quick_xml Error.
-    Encoding,
     /// Everything else.
+    #[error("malformed")]
     Malformed,
+    /// Errors passed through from DOMError
+    #[error("DOM error: {0}")]
+    DOMError(#[from] DOMError),
+    /// Errors passed through from quick-xml
+    #[error("quick-xml error: {0}")]
+    QuickXMLError(#[from] quick_xml::Error),
 }
 
 ///
@@ -66,8 +67,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// Parse the provided string into a DOM structure; if the result is OK, the result returned
 /// can be safely assumed to be a `Document` node.
 ///
-pub fn read_xml(xml: &str) -> Result<RefNode> {
-    inner_read(&mut Reader::from_str(xml))
+pub fn read_xml(xml: impl AsRef<str>) -> Result<RefNode> {
+    inner_read(&mut Reader::from_str(xml.as_ref()))
 }
 
 ///
@@ -78,69 +79,9 @@ pub fn read_reader<B: BufRead>(reader: B) -> Result<RefNode> {
     inner_read(&mut Reader::from_reader(reader))
 }
 
-// ------------------------------------------------------------------------------------------------
-// Implementations
-// ------------------------------------------------------------------------------------------------
-
-impl Display for Error {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Error::HierarchyRequest => "An attempt insert a node somewhere it doesn't belong",
-                Error::InvalidCharacter =>
-                    "An invalid or illegal character was specified, such as in a name",
-                Error::NotSupported =>
-                    "The implementation does not support the requested type of object or operation",
-                Error::IO => "I/O Error reading data",
-                Error::Encoding => "Issue decoding bytes to UTF-8",
-                Error::Malformed => "Input document malformed",
-            }
-        )
-    }
-}
-
-impl std::error::Error for Error {}
-
-impl<T> Into<Result<T>> for Error {
-    fn into(self) -> Result<T> {
-        Err(self)
-    }
-}
-
-impl From<DOMError> for Error {
-    fn from(err: DOMError) -> Self {
-        error!("shared::Error: {:?}", err);
-        match err {
-            DOMError::HierarchyRequest => Error::HierarchyRequest,
-            DOMError::InvalidCharacter => Error::InvalidCharacter,
-            DOMError::NotSupported => Error::NotSupported,
-            _ => Error::Malformed,
-        }
-    }
-}
-
-impl From<quick_xml::Error> for Error {
-    fn from(err: quick_xml::Error) -> Self {
-        error!("quick_xml::Error: {:?}", err);
-        match err {
-            quick_xml::Error::InvalidAttr(_) => Error::Malformed,
-            quick_xml::Error::Io(_) => Error::IO,
-            quick_xml::Error::NonDecodable(_) => Error::Encoding,
-            quick_xml::Error::UnexpectedEof(_) => Error::Malformed,
-            quick_xml::Error::EndEventMismatch { .. } => Error::Malformed,
-            quick_xml::Error::UnexpectedToken(_) => Error::Malformed,
-            quick_xml::Error::UnexpectedBang(_) => Error::Malformed,
-            quick_xml::Error::TextNotFound => Error::Malformed,
-            quick_xml::Error::XmlDeclWithoutVersion(_) => Error::Malformed,
-            quick_xml::Error::UnknownPrefix(_) => Error::Malformed,
-            //            quick_xml::Error::NameWithQuote(_) => Error::Malformed,
-            //            quick_xml::Error::NoEqAfterName(_) => Error::Malformed,
-            //            quick_xml::Error::UnquotedValue(_) => Error::Malformed,
-            //            quick_xml::Error::DuplicatedAttribute(_, _) => Error::Malformed,
-            quick_xml::Error::EscapeError(_) => Error::InvalidCharacter,
-        }
+impl<T> From<Error> for Result<T> {
+    fn from(val: Error) -> Self {
+        Err(val)
     }
 }
 
@@ -181,7 +122,6 @@ fn document<T: BufRead>(reader: &mut Reader<T>, event_buffer: &mut Vec<u8>) -> R
     let mut document = get_implementation()
         .create_document(None, None, None)
         .unwrap();
-
     loop {
         match reader.read_event_into(event_buffer) {
             Ok(Event::Decl(ev)) => {
@@ -215,7 +155,7 @@ fn document<T: BufRead>(reader: &mut Reader<T>, event_buffer: &mut Vec<u8>) -> R
                 let _safe_to_ignore = handle_end(reader, &mut document, None, ev)?;
             }
             Ok(Event::Comment(ev)) => {
-                let _safe_to_ignore = handle_comment(reader, &mut document, None, ev)?;
+                let _safe_to_ignore = handle_comment(&mut document, None, ev)?;
             }
             Ok(Event::PI(ev)) => {
                 let _safe_to_ignore = handle_pi(reader, &mut document, None, ev)?;
@@ -275,13 +215,13 @@ fn element<T: BufRead>(
                 return Ok(parent_element.clone());
             }
             Ok(Event::Comment(ev)) => {
-                let _safe_to_ignore = handle_comment(reader, document, Some(parent_element), ev)?;
+                let _safe_to_ignore = handle_comment(document, Some(parent_element), ev)?;
             }
             Ok(Event::PI(ev)) => {
                 let _safe_to_ignore = handle_pi(reader, document, Some(parent_element), ev)?;
             }
             Ok(Event::Text(ev)) => {
-                let _safe_to_ignore = handle_text(reader, document, Some(parent_element), ev)?;
+                let _safe_to_ignore = handle_text(document, Some(parent_element), ev)?;
             }
             Ok(Event::CData(ev)) => {
                 let _safe_to_ignore = handle_cdata(reader, document, Some(parent_element), ev)?;
@@ -322,7 +262,6 @@ fn handle_start<T: BufRead>(
         let value = attribute.decode_and_unescape_value(reader)?;
         let name = reader.decoder().decode(attribute.key.into_inner())?;
         let attribute_node = document.create_attribute_with(&name, &value)?;
-
         let _safe_to_ignore = element.set_attribute_node(attribute_node)?;
     }
 
@@ -342,14 +281,13 @@ fn handle_end<T: BufRead>(
     .clone())
 }
 
-fn handle_comment<T: BufRead>(
-    reader: &mut Reader<T>,
+fn handle_comment(
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     ev: BytesText<'_>,
 ) -> Result<RefNode> {
     let mut_document = as_document_mut(document).unwrap();
-    let text = make_text(reader, ev)?;
+    let text = make_text(ev)?;
     let new_node = mut_document.create_comment(&text);
     let actual_parent = match parent_node {
         None => document,
@@ -358,14 +296,13 @@ fn handle_comment<T: BufRead>(
     actual_parent.append_child(new_node).map_err(|e| e.into())
 }
 
-fn handle_text<T: BufRead>(
-    reader: &mut Reader<T>,
+fn handle_text(
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     ev: BytesText<'_>,
 ) -> Result<RefNode> {
     let mut_document = as_document_mut(document).unwrap();
-    let text = make_text(reader, ev)?;
+    let text = make_text(ev)?;
     let new_node = mut_document.create_text_node(&text);
     let actual_parent = match parent_node {
         None => document,
@@ -397,21 +334,19 @@ fn handle_pi<T: BufRead>(
     ev: BytesText<'_>,
 ) -> Result<RefNode> {
     let mut_document = as_document_mut(document).unwrap();
-    let (target, data) = {
-        let text = ev.unescape()?;
-        let parts = text.splitn(2, ' ').collect::<Vec<&str>>();
-        match parts.len() {
-            1 => (parts[0].to_string(), None),
-            2 => {
-                let data = parts[1].trim();
-                if data.is_empty() {
-                    (parts[0].to_string(), None)
-                } else {
-                    (parts[0].to_string(), Some(data.to_string()))
-                }
+    let text = ev.unescape()?;
+    let parts = text.splitn(2, ' ').collect::<Vec<&str>>();
+    let (target, data) = match parts.len() {
+        1 => (parts[0].to_string(), None),
+        2 => {
+            let data = parts[1].trim();
+            if data.is_empty() {
+                (parts[0].to_string(), None)
+            } else {
+                (parts[0].to_string(), Some(data.to_string()))
             }
-            _ => return Error::Malformed.into(),
         }
+        _ => return Error::Malformed.into(),
     };
     let new_node = match data {
         None => mut_document
@@ -430,7 +365,7 @@ fn handle_pi<T: BufRead>(
 
 // ------------------------------------------------------------------------------------------------
 
-fn make_text<T: BufRead>(_reader: &mut Reader<T>, ev: BytesText<'_>) -> Result<String> {
+fn make_text(ev: BytesText<'_>) -> Result<String> {
     Ok(ev.unescape()?.to_string())
 }
 
