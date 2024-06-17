@@ -127,13 +127,14 @@ impl From<quick_xml::Error> for Error {
         match err {
             quick_xml::Error::InvalidAttr(_) => Error::Malformed,
             quick_xml::Error::Io(_) => Error::IO,
-            quick_xml::Error::Utf8(_) => Error::Encoding,
+            quick_xml::Error::NonDecodable(_) => Error::Encoding,
             quick_xml::Error::UnexpectedEof(_) => Error::Malformed,
             quick_xml::Error::EndEventMismatch { .. } => Error::Malformed,
             quick_xml::Error::UnexpectedToken(_) => Error::Malformed,
             quick_xml::Error::UnexpectedBang(_) => Error::Malformed,
             quick_xml::Error::TextNotFound => Error::Malformed,
             quick_xml::Error::XmlDeclWithoutVersion(_) => Error::Malformed,
+            quick_xml::Error::UnknownPrefix(_) => Error::Malformed,
             //            quick_xml::Error::NameWithQuote(_) => Error::Malformed,
             //            quick_xml::Error::NoEqAfterName(_) => Error::Malformed,
             //            quick_xml::Error::UnquotedValue(_) => Error::Malformed,
@@ -182,7 +183,7 @@ fn document<T: BufRead>(reader: &mut Reader<T>, event_buffer: &mut Vec<u8>) -> R
         .unwrap();
 
     loop {
-        match reader.read_event(event_buffer) {
+        match reader.read_event_into(event_buffer) {
             Ok(Event::Decl(ev)) => {
                 let mut mut_document = document.borrow_mut();
                 if let Extension::Document {
@@ -261,7 +262,7 @@ fn element<T: BufRead>(
     parent_element: &mut RefNode,
 ) -> Result<RefNode> {
     loop {
-        match reader.read_event(event_buffer) {
+        match reader.read_event_into(event_buffer) {
             Ok(Event::Start(ev)) => {
                 let mut new_element = handle_start(reader, document, Some(parent_element), ev)?;
                 let _safe_to_ignore = element(reader, event_buffer, document, &mut new_element)?;
@@ -307,8 +308,7 @@ fn handle_start<T: BufRead>(
 ) -> Result<RefNode> {
     let mut element = {
         let mut_document = as_document_mut(document).unwrap();
-        let name = ev.name();
-        let name = reader.decode(name)?;
+        let name = reader.decoder().decode(ev.name().into_inner())?;
         let new_node = mut_document.create_element(&name).unwrap();
         let mut actual_parent = match parent_node {
             None => document.clone(),
@@ -319,9 +319,9 @@ fn handle_start<T: BufRead>(
 
     for attribute in ev.attributes() {
         let attribute = attribute.unwrap();
-        let value = attribute.unescape_and_decode_value(reader)?;
-        let name = reader.decode(attribute.key)?;
-        let attribute_node = document.create_attribute_with(name, &value)?;
+        let value = attribute.decode_and_unescape_value(reader)?;
+        let name = reader.decoder().decode(attribute.key.into_inner())?;
+        let attribute_node = document.create_attribute_with(&name, &value)?;
 
         let _safe_to_ignore = element.set_attribute_node(attribute_node)?;
     }
@@ -391,14 +391,14 @@ fn handle_cdata<T: BufRead>(
 }
 
 fn handle_pi<T: BufRead>(
-    reader: &mut Reader<T>,
+    _reader: &mut Reader<T>,
     document: &mut RefNode,
     parent_node: Option<&mut RefNode>,
     ev: BytesText<'_>,
 ) -> Result<RefNode> {
     let mut_document = as_document_mut(document).unwrap();
     let (target, data) = {
-        let text = ev.unescape_and_decode(&reader)?;
+        let text = ev.unescape()?;
         let parts = text.splitn(2, ' ').collect::<Vec<&str>>();
         match parts.len() {
             1 => (parts[0].to_string(), None),
@@ -430,13 +430,13 @@ fn handle_pi<T: BufRead>(
 
 // ------------------------------------------------------------------------------------------------
 
-fn make_text<T: BufRead>(reader: &mut Reader<T>, ev: BytesText<'_>) -> Result<String> {
-    Ok(ev.unescape_and_decode(&reader)?)
+fn make_text<T: BufRead>(_reader: &mut Reader<T>, ev: BytesText<'_>) -> Result<String> {
+    Ok(ev.unescape()?.to_string())
 }
 
 fn make_cdata<T: BufRead>(reader: &mut Reader<T>, ev: BytesCData<'_>) -> Result<String> {
     let cdata_bytes = ev.into_inner();
-    let decoded_string = reader.decode(cdata_bytes.as_ref())?;
+    let decoded_string = reader.decoder().decode(cdata_bytes.as_ref())?;
     Ok(decoded_string.to_string())
 }
 
@@ -446,12 +446,12 @@ fn make_decl<T: BufRead>(
 ) -> Result<(String, Option<String>, Option<bool>)> {
     let version = ev.version().unwrap();
     let version = version.borrow();
-    let version = reader.decode(version).unwrap();
+    let version = reader.decoder().decode(version).unwrap();
     let version = unquote(version.to_string())?;
     let encoding = if let Some(ev_value) = ev.encoding() {
         let encoding = ev_value.unwrap();
         let encoding = encoding.borrow();
-        let encoding = reader.decode(encoding).unwrap();
+        let encoding = reader.decoder().decode(encoding).unwrap();
         Some(encoding.to_string())
     } else {
         None
@@ -459,7 +459,7 @@ fn make_decl<T: BufRead>(
     let standalone = if let Some(ev_value) = ev.standalone() {
         let standalone = ev_value.unwrap();
         let standalone = standalone.borrow();
-        let standalone = reader.decode(standalone).unwrap();
+        let standalone = reader.decoder().decode(standalone).unwrap();
         Some(standalone == "yes")
     } else {
         None
