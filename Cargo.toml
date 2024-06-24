@@ -28,5 +28,5 @@ log = "0.4"
 regex = "1.10"
 
 # Feature specific dependencies
-quick-xml = { optional = true, version = "0.31" }
+quick-xml = { optional = true, version = "0.33" }
 thiserror = "1.0.59"
