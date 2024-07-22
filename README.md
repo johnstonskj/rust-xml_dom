@@ -11,18 +11,21 @@ A Rust crate providing a reasonably faithful implementation of the  W3C
 ![Audit](https://github.com/johnstonskj/rust-xml_dom/workflows/Security%20audit/badge.svg)
 [![GitHub stars](https://img.shields.io/github/stars/johnstonskj/rust-xml_dom.svg)](https://github.com/johnstonskj/rust-xml_dom/stargazers)
 
-This crate provides a trait-based implementation of the DOM with minimal changes to the style
-and semantics defined in the Level 2 specification. The specific mapping from the IDL in the
-specification is described in the documentation, however from a purely style point of
-view the implementation has the following characteristics:
+This crate provides a trait-based implementation of the DOM with minimal changes
+to the style and semantics defined in the Level 2 specification. The specific
+mapping from the IDL in the specification is described in the documentation,
+however from a purely style point of view the implementation has the following
+characteristics:
 
-1. It maintains a reasonable separation between the node type traits and the tree implementation
-   using opaque an `RefNode` reference type.
+1. It maintains a reasonable separation between the node type traits and the
+   tree implementation using opaque an `RefNode` reference type.
 1. Where possible the names from IDL are used with minimal conversion.
-1. All IDL attributes become trait functions (attribute "foo" becomes `foo()`, `set_foo()`, and `unset_foo()`).
+1. All IDL attributes become trait functions (attribute "foo" becomes `foo()`,
+   `set_foo()`, and `unset_foo()`).
 
-This leads to a replication of the typical DOM programmer experience where casting between the
-node traits is required. This is supported by the `xml_dom::convert` module.
+This leads to a replication of the typical DOM programmer experience where
+casting between the node traits is required. This is supported by the
+`xml_dom::convert` module.
 
 ## Example
 
@@ -46,7 +49,10 @@ let document_type = implementation
 // Create a new `Document` using the document type defined above. Note that this
 // also has the side-effect of creating the document's root element named "html".
 let mut document_node = implementation
-    .create_document(Some("http://www.w3.org/1999/xhtml"), Some("html"), Some(document_type))
+    .create_document(
+        Some("http://www.w3.org/1999/xhtml"),
+        Some("html"),
+        Some(document_type))
     .unwrap();
 
 // Cast the returned document `RefNode` into a `RefDocument` trait reference
@@ -68,8 +74,9 @@ let xml = document_node.to_string();
 println!("document 2: {}", xml);
 ```
 
-This should result in the following XML; note that formatting was added for this document, the provided
-implementation of `Display` for `RefNode` does not format the output.
+This should result in the following XML; note that formatting was added for this
+document, the provided implementation of `Display` for `RefNode` does not format the
+output.
 
 ```xml
 <!DOCTYPE
@@ -84,23 +91,33 @@ implementation of `Display` for `RefNode` does not format the output.
 
 ## Features
 
-Currently only one feature, `quick_parser`, is provided which provides a new module `parser` with the
-single public function. This feature is enabled by default.
+Currently only one feature, `quick_parser`, is provided which provides a new
+module `parser` with the single public function. This feature is enabled by
+default.
 
 ``` rust
 pub fn read_xml(xml: AsRef<str>) -> Result<RefNode>;
 ```
 
-This will parse the document and return a new `RefNode` that corresponds to the `Document` trait.
+This will parse the document and return a new `RefNode` that corresponds to the
+`Document` trait.
 
 ## Changes
+
+### Version 0.2.8
+
+* Dependency management:
+  * Updated `quick-xml` which had some breaking API changes.
+  * Moved from `log` crate to `tracing`.
+  * Removed `this_error` dependency.
 
 ### Version 0.2.7
 
 * Updated to 2021 Edition of Rust
 * Updated [quick-xml](https://crates.io/crates/quick-xml) dependency.
 * Refactored `Error` type with [thiserror](https://crates.io/crates/thiserror)
-  * Encapsulated errors from dependant libraries and removed manual `From` implementations.
+  * Encapsulated errors from dependant libraries and removed manual `From`
+    implementations.
   * Removed unused `Error` enum types.
 * Made several interfaces more generic with `AsRef<str>` and `Into<String>`.
 
@@ -112,7 +129,8 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 
 ### Version 0.2.5
 
-* Added `parser::from_reader` function alongside the existing `parser::from_str` to allow for streaming input of the underlying source.
+* Added `parser::from_reader` function alongside the existing `parser::from_str` to
+  allow for streaming input of the underlying source.
 
 ### Version 0.2.4
 
@@ -134,12 +152,14 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 
 * Bug Fixes:
   * Fixed a publishing error in Travis
-  * Separated `Attribute::owner_element` from `Node::parent_node`, they aren't the same.
+  * Separated `Attribute::owner_element` from `Node::parent_node`, they aren't the
+    same.
   * Fixed handling of `owner_element` in `Attribute` tests
-  * Fixed the implementation of `WrongDocument` error in `Node::insert_before` and used the same in
-    `Element::set_attribute_node`.
+  * Fixed the implementation of `WrongDocument` error in `Node::insert_before` and
+    used the same in `Element::set_attribute_node`.
   * Fixed escaping of values to happen on get not set.
-  * Implemented _attribute value normalization_ and _end-of-line handling_ from the XML 1.1 spec.
+  * Implemented _attribute value normalization_ and _end-of-line handling_ from the
+    XML 1.1 spec.
     * Required added a dependency on [`regex`](https://crates.io/crates/regex)
     * Added `EntityResolver` trait for callback into DOM.
     * Expansion of `Entity` node children is not yet complete.
@@ -154,8 +174,8 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 
 ### Version 0.1.4
 
-* **BREAKING** refactored to add a `level2` module, allowing other levels to be added at a later time. Also
-  moved extensions into `level2::ext` module.
+* **BREAKING** refactored to add a `level2` module, allowing other levels to be added
+  at a later time. Also moved extensions into `level2::ext` module.
 * **BREAKING** renamed methods to conform with DOM names:
   * `Node::name` to `Node::node_name`;
   * `CharacterData::substring` to `CharacterData::substring_data`;
@@ -179,11 +199,15 @@ This will parse the document and return a new `RefNode` that corresponds to the 
 ### Version 0.1.3
 
 * More unit tests overall, especially for append/insert/replace child
-* Add support for xml declaration (`XmlDecl`, `XmlVersion`), not reusing processing instruction
-* Support the last Level 2 _extended interfaces_ (`Entity`, `EntityReference`, and `Notation`).
-  * Also, add `create_notation`, `create_entity`, and `create_internal_entity` to `dom_impl`.
-* Implement an options (`ProcessingOptions` and `DOMImplementation::create_document_with_options`) capability to turn
-  on extended processing behaviors.
+* Add support for xml declaration (`XmlDecl`, `XmlVersion`), not reusing processing
+  instruction
+* Support the last Level 2 _extended interfaces_ (`Entity`, `EntityReference`, and
+  `Notation`).
+  * Also, add `create_notation`, `create_entity`, and `create_internal_entity` to
+    `dom_impl`.
+* Implement an options (`ProcessingOptions` and
+  `DOMImplementation::create_document_with_options`) capability to turn on
+  extended processing behaviors.
 * Fixed some nested borrow issues.
 
 ### Version 0.1.2

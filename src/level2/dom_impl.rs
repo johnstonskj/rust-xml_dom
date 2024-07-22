@@ -1,6 +1,7 @@
 /*!
 This module implements certain capabilities required by, but not specified by, the DOM Core.
-*/
+ */
+
 use crate::level2::node_impl::RefNode;
 use crate::level2::traits::DOMImplementation;
 

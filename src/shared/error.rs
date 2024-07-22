@@ -19,7 +19,7 @@ use std::result::Result as StdResult;
 /// implementation has become unstable). In general, DOM methods return specific error values in
 /// ordinary processing situation, such as out-of-bound errors when using `NodeList`.
 ///
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[repr(u16)]
 pub enum Error {
     /// If index or size is negative, or greater than the allowed value

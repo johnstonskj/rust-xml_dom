@@ -33,7 +33,7 @@ macro_rules! make_is_as_functions {
             if ref_node.borrow().i_node_type == $is_t {
                 Ok(ref_node as $as_t<'_>)
             } else {
-                warn!("{}", MSG_INVALID_NODE_TYPE);
+                ::tracing::warn!("{}", MSG_INVALID_NODE_TYPE);
                 Err(Error::InvalidState)
             }
         }
@@ -55,7 +55,7 @@ macro_rules! make_is_as_functions {
             if ref_node.borrow().i_node_type == $is_t {
                 Ok(ref_node as $as_t<'_>)
             } else {
-                warn!("{}", MSG_INVALID_NODE_TYPE);
+                ::tracing::warn!("{}", MSG_INVALID_NODE_TYPE);
                 Err(Error::InvalidState)
             }
         }
@@ -68,7 +68,7 @@ macro_rules! make_is_as_functions {
             if ref_node.borrow().i_node_type == $is_t {
                 Ok(ref_node as $as_mut_t<'_>)
             } else {
-                warn!("{}", MSG_INVALID_NODE_TYPE);
+                ::tracing::warn!("{}", MSG_INVALID_NODE_TYPE);
                 Err(Error::InvalidState)
             }
         }

@@ -4,6 +4,7 @@ use crate::shared::text::is_xml_name;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::result::Result as StdResult;
 use std::str::{from_utf8, FromStr};
+use tracing::{error, warn};
 
 // ------------------------------------------------------------------------------------------------
 // Public Types

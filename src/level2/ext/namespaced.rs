@@ -8,6 +8,7 @@ use crate::level2::traits::{Node, NodeType};
 use crate::shared::error::{
     Error, Result, MSG_INVALID_EXTENSION, MSG_INVALID_NODE_TYPE, MSG_WEAK_REF,
 };
+use tracing::warn;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types
@@ -34,7 +35,9 @@ pub(crate) trait MutNamespaced: Namespaced {
         prefix: Option<&str>,
         namespace_uri: &str,
     ) -> Result<Option<String>>;
+    #[allow(dead_code)]
     fn remove_mapping(&mut self, prefix: Option<&str>) -> Result<Option<String>>;
+    #[allow(dead_code)]
     fn normalize_mappings(&mut self) -> Result<()>;
 }
 

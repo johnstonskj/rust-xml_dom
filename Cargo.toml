@@ -1,6 +1,6 @@
 [package]
 name = "xml_dom"
-version = "0.2.7"
+version = "0.2.8"
 authors = ["Simon Johnston <johnstonskj@gmail.com>"]
 edition = "2021"
 description = "A Rust crate providing a reasonably faithful implementation of the W3C DOM Core"
@@ -26,7 +26,7 @@ quick_parser = ["quick-xml"]
 [dependencies]
 log = "0.4"
 regex = "1.10"
+tracing = "0.1.40"
 
 # Feature specific dependencies
-quick-xml = { optional = true, version = "0.35" }
-thiserror = "1.0.59"
+quick-xml = { optional = true, version = "0.36" }

@@ -8,8 +8,8 @@ use crate::level2::ext::traits::*;
 use crate::level2::node_impl::*;
 use crate::level2::traits::NodeType;
 use crate::shared::error::{Error, Result, MSG_INVALID_NODE_TYPE};
-
 use crate::{make_is_as_functions, make_ref_type};
+use tracing::warn;
 
 // ------------------------------------------------------------------------------------------------
 // Public Types

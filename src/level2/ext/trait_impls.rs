@@ -5,6 +5,7 @@ use crate::level2::ext::traits::*;
 use crate::level2::node_impl::*;
 use crate::level2::trait_impls::create_document_with_options;
 use crate::shared::error::*;
+use tracing::warn;
 
 // ------------------------------------------------------------------------------------------------
 // Implementations

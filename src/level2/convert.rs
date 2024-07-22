@@ -7,12 +7,13 @@ Note that all of the `as_{name}` functions work as follows.
 * If the `node_type` does not correspond to the correct type, it returns `Error::InvalidState`.
 * If the `node_type` is not implemented it returns `Error::NotSupported`.
 
-*/
+ */
+
 use crate::level2::node_impl::*;
 use crate::level2::traits::*;
 use crate::shared::error::{Error, Result, MSG_INVALID_NODE_TYPE};
-
 use crate::{make_is_as_functions, make_ref_type};
+use tracing::warn;
 
 // ------------------------------------------------------------------------------------------------
 // Public Functions
