@@ -25,13 +25,15 @@ const THIS_IMPLEMENTATION: &'static dyn DOMImplementation<NodeRef = RefNode> = &
 /// # Example
 ///
 /// ```rust
-/// use xml_dom::level2::get_implementation;
+/// use xml_dom::level2::ext::get_implementation_ext();
 ///
-/// let implementation = get_implementation();
+/// let implementation = get_implementation_ext();
 /// let mut document_node = implementation
 ///     .create_document(Some("http://www.w3.org/1999/xhtml"), Some("html"), None)
 ///     .unwrap();
 /// ```
+///
+/// See also the [`crate::level2::get_implementation`].
 ///
 pub fn get_implementation_ext() -> &'static dyn DOMImplementation<NodeRef = RefNode> {
     THIS_IMPLEMENTATION as &'static dyn DOMImplementation<NodeRef = RefNode>

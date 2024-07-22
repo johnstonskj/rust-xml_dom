@@ -12,6 +12,7 @@ pub mod decl;
 pub use decl::{XmlDecl, XmlVersion};
 
 pub mod dom_impl;
+pub use dom_impl::get_implementation_ext;
 
 pub mod options;
 pub use options::ProcessingOptions;

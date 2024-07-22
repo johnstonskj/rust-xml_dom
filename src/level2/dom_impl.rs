@@ -20,7 +20,7 @@ pub(crate) struct Implementation {}
 const THIS_IMPLEMENTATION: &'static dyn DOMImplementation<NodeRef = RefNode> = &Implementation {};
 
 ///
-/// Return a reference to an instance of this `DOMImplementation` implementation.
+/// Return a reference to an instance of this (extended) `DOMImplementation` implementation.
 ///
 /// This function gets around the DOM bootstrap issue, the `implementation` method on the
 /// [`Document`](trait.Document.html) trait requires an instance of `Document`; however, the
@@ -36,6 +36,8 @@ const THIS_IMPLEMENTATION: &'static dyn DOMImplementation<NodeRef = RefNode> = &
 ///     .create_document(Some("http://www.w3.org/1999/xhtml"), Some("html"), None)
 ///     .unwrap();
 /// ```
+///
+/// See also the [`crate::level2::ext::get_implementation_ext`].
 ///
 pub fn get_implementation() -> &'static dyn DOMImplementation<NodeRef = RefNode> {
     THIS_IMPLEMENTATION
