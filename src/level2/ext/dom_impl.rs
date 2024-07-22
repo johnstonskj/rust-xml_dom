@@ -25,7 +25,7 @@ const THIS_IMPLEMENTATION: &'static dyn DOMImplementation<NodeRef = RefNode> = &
 /// # Example
 ///
 /// ```rust
-/// use xml_dom::level2::ext::get_implementation_ext();
+/// use xml_dom::level2::ext::get_implementation_ext;
 ///
 /// let implementation = get_implementation_ext();
 /// let mut document_node = implementation
