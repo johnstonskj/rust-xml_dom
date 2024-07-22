@@ -319,3 +319,21 @@ fn test_replace_root() {
     let expected_name = Name::from_str("should_work").unwrap();
     assert_eq!(element.node_name(), expected_name);
 }
+
+// Regression test: GitHub issue #19
+#[test]
+fn test_get_non_first_root() {
+    use xml_dom::level2::*;
+    let doc = xml_dom::parser::read_xml(
+        r#"
+    <?xml version="1.0" ?>
+    <!-- comment -->
+    <document />
+"#,
+    )
+    .unwrap();
+    assert_eq!(
+        doc.document_element().unwrap().node_type(),
+        NodeType::Element
+    );
+}

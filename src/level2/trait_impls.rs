@@ -235,7 +235,11 @@ impl Document for RefNode {
     }
 
     fn document_element(&self) -> Option<RefNode> {
-        self.child_nodes().first().cloned()
+        // GitHub issue: #19, calling `first` is naive as it may not be an element.
+        self.child_nodes()
+            .iter()
+            .find(|node| node.node_type() == NodeType::Element)
+            .cloned()
     }
 
     fn implementation(&self) -> &dyn DOMImplementation<NodeRef = RefNode> {
